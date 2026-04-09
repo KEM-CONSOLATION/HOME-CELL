@@ -72,14 +72,36 @@ export default function DashboardPage() {
   ];
 
   const chartData = [
-    { day: "Sun", value: 85 },
-    { day: "Mon", value: 42 },
-    { day: "Tue", value: 68 },
-    { day: "Wed", value: 94 },
-    { day: "Thu", value: 55 },
-    { day: "Fri", value: 72 },
-    { day: "Sat", value: 110 },
+    { date: "2026-03-29", value: 85 },
+    { date: "2026-03-30", value: 42 },
+    { date: "2026-03-31", value: 68 },
+    { date: "2026-04-01", value: 94 },
+    { date: "2026-04-02", value: 55 },
+    { date: "2026-04-03", value: 72 },
+    { date: "2026-04-04", value: 110 },
   ];
+
+  const maxY = Math.max(...chartData.map((d) => d.value), 1);
+  const minY = 0;
+  const padding = { top: 16, right: 16, bottom: 28, left: 36 };
+  const w = 900;
+  const h = 240;
+  const innerW = w - padding.left - padding.right;
+  const innerH = h - padding.top - padding.bottom;
+
+  const points = chartData.map((d, i) => {
+    const x =
+      padding.left +
+      (chartData.length === 1 ? innerW / 2 : (i / (chartData.length - 1)) * innerW);
+    const y =
+      padding.top +
+      (1 - (d.value - minY) / (maxY - minY || 1)) * innerH;
+    return { x, y, d };
+  });
+
+  const lineD = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(" ");
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -173,27 +195,90 @@ export default function DashboardPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-10">
-            <div className="h-[240px] w-full flex items-end justify-between gap-2 px-2">
-              {chartData.map((d, i) => (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center gap-4 group"
-                >
-                  <div className="w-full relative flex flex-col items-center justify-end h-full">
-                    <div className="absolute -top-10 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-xl opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                      {d.value} Active
-                    </div>
-                    <div
-                      style={{ height: `${(d.value / 120) * 100}%` }}
-                      className="w-full max-w-[48px] bg-slate-50 border-x border-t rounded-t-2xl group-hover:bg-primary group-hover:border-primary transition-all duration-500 cursor-pointer"
+          <CardContent className="pt-6">
+            <div className="w-full">
+              <svg
+                viewBox={`0 0 ${w} ${h}`}
+                className="h-[260px] w-full"
+                role="img"
+                aria-label="Attendance line chart"
+                preserveAspectRatio="none"
+              >
+                {/* grid */}
+                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+                  const y = padding.top + t * innerH;
+                  const v = Math.round(maxY * (1 - t));
+                  return (
+                    <g key={t}>
+                      <line
+                        x1={padding.left}
+                        y1={y}
+                        x2={w - padding.right}
+                        y2={y}
+                        stroke="rgba(15,23,42,0.08)"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x={padding.left - 10}
+                        y={y + 4}
+                        textAnchor="end"
+                        fontSize="12"
+                        fill="rgba(15,23,42,0.55)"
+                      >
+                        {v}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* line */}
+                <path
+                  d={lineD}
+                  fill="none"
+                  stroke="var(--brand-blue)"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+
+                {/* points */}
+                {points.map((p, i) => (
+                  <g key={i}>
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={5}
+                      fill="#ffffff"
+                      stroke="var(--brand-blue)"
+                      strokeWidth="3"
                     />
-                  </div>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                    {d.day}
-                  </span>
-                </div>
-              ))}
+                    <title>
+                      {new Date(p.d.date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "2-digit",
+                      })}{" "}
+                      • {p.d.value}
+                    </title>
+                  </g>
+                ))}
+
+                {/* x labels */}
+                {points.map((p, i) => (
+                  <text
+                    key={i}
+                    x={p.x}
+                    y={h - 8}
+                    textAnchor="middle"
+                    fontSize="12"
+                    fill="rgba(15,23,42,0.55)"
+                  >
+                    {new Date(p.d.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "2-digit",
+                    })}
+                  </text>
+                ))}
+              </svg>
             </div>
           </CardContent>
         </Card>
@@ -215,11 +300,7 @@ export default function DashboardPage() {
                   icon: UserPlus,
                   href: "/app/members/new",
                 },
-                {
-                  label: "Submit Report",
-                  icon: CalendarCheck,
-                  href: "/app/attendance/new",
-                },
+                // Submit Attendance is already the primary CTA above.
                 { label: "Send Broadcast", icon: Target, href: "/app/chat" },
                 {
                   label: "View Compliance",

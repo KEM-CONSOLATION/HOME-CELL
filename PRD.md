@@ -139,7 +139,3 @@ We will build the authenticated, role-based **dashboard app** first:
 - **New convert registration + assignment + follow-up tracking**
 - **Reports pages** (weekly attendance, compliance, new converts)
 - **Communication module** scaffolding (WhatsApp + email integrations)
-
-### Phase B (Later): Landing Page
-
-Landing/marketing pages will be built **after** the dashboard app is complete.
