@@ -29,7 +29,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         classNames: {
-          toast: "group toast group-[.toaster]:shadow-lg group-[.toaster]:border",
+          toast:
+            "group toast group-[.toaster]:shadow-lg group-[.toaster]:border",
           title: "text-sm font-medium",
           description: "text-sm text-muted-foreground",
         },
@@ -48,4 +49,3 @@ const Toaster = ({ ...props }: ToasterProps) => {
 };
 
 export { Toaster };
-

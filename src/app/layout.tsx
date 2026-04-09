@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "HOME-CELL",
   description:
     "HOME-CELL — a modern Next.js app scaffolded to match WETH-TAX conventions.",
-  icons: [{ rel: "icon", url: "/logo.svg" }],
+  icons: [{ rel: "icon", url: "/logo.png" }],
 };
 
 export default function RootLayout({
@@ -20,4 +20,3 @@ export default function RootLayout({
     </html>
   );
 }
-

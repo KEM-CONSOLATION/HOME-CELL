@@ -44,7 +44,11 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   const endpoint = search.get("endpoint") || "";
   const responseType = search.get("responseType") || "";
 
-  if (!service || !(service in SERVICE_URLS) || !SERVICE_URLS[service as keyof typeof SERVICE_URLS]) {
+  if (
+    !service ||
+    !(service in SERVICE_URLS) ||
+    !SERVICE_URLS[service as keyof typeof SERVICE_URLS]
+  ) {
     return NextResponse.json(
       {
         error: "Invalid service",
@@ -65,7 +69,8 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   forwardedParams.delete("service");
   forwardedParams.delete("endpoint");
   forwardedParams.delete("responseType");
-  if (!forwardedParams.has("_t")) forwardedParams.set("_t", Date.now().toString());
+  if (!forwardedParams.has("_t"))
+    forwardedParams.set("_t", Date.now().toString());
 
   const finalURL =
     forwardedParams.toString().length > 0
@@ -125,14 +130,18 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     });
 
     const resHeaders = new Headers();
-    resHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    resHeaders.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, private",
+    );
     resHeaders.set("Pragma", "no-cache");
     resHeaders.set("Expires", "0");
     resHeaders.set("Surrogate-Control", "no-store");
 
     if (isBlobRequest) {
       const ab = await upstream.arrayBuffer();
-      const ct = upstream.headers.get("content-type") || "application/octet-stream";
+      const ct =
+        upstream.headers.get("content-type") || "application/octet-stream";
       resHeaders.set("Content-Type", ct);
 
       const cd = upstream.headers.get("content-disposition");
@@ -141,17 +150,29 @@ async function handler(req: NextRequest): Promise<NextResponse> {
       const cl = upstream.headers.get("content-length");
       if (cl) resHeaders.set("Content-Length", cl);
 
-      return new NextResponse(ab, { status: upstream.status, headers: resHeaders });
+      return new NextResponse(ab, {
+        status: upstream.status,
+        headers: resHeaders,
+      });
     }
 
     const text = await upstream.text();
     try {
       const json = text ? JSON.parse(text) : null;
-      return NextResponse.json(json, { status: upstream.status, headers: resHeaders });
+      return NextResponse.json(json, {
+        status: upstream.status,
+        headers: resHeaders,
+      });
     } catch {
       // Non-JSON upstream responses still come back as text.
-      resHeaders.set("Content-Type", upstream.headers.get("content-type") || "text/plain");
-      return new NextResponse(text, { status: upstream.status, headers: resHeaders });
+      resHeaders.set(
+        "Content-Type",
+        upstream.headers.get("content-type") || "text/plain",
+      );
+      return new NextResponse(text, {
+        status: upstream.status,
+        headers: resHeaders,
+      });
     }
   } catch (err) {
     const errorMessage = extractErrorMessage(err);
@@ -172,4 +193,3 @@ export const POST = handler;
 export const PUT = handler;
 export const PATCH = handler;
 export const DELETE = handler;
-

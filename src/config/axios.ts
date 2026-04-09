@@ -106,7 +106,9 @@ axios.interceptors.response.use(
       isRefreshing = false;
 
       if (typeof window !== "undefined") {
-        toast.error("Session expired", { description: "Please sign in again." });
+        toast.error("Session expired", {
+          description: "Please sign in again.",
+        });
         window.location.href = getLoginRedirectUrl();
       }
       return Promise.reject(error);
@@ -132,7 +134,9 @@ axios.interceptors.response.use(
       isRefreshing = false;
 
       if (typeof window !== "undefined") {
-        toast.error("Session expired", { description: "Please sign in again." });
+        toast.error("Session expired", {
+          description: "Please sign in again.",
+        });
         window.location.href = getLoginRedirectUrl();
       }
       return Promise.reject(refreshError);
@@ -141,4 +145,3 @@ axios.interceptors.response.use(
 );
 
 export default axios;
-

@@ -66,4 +66,3 @@ src/
 ├── styles/               Global styles (Tailwind v4 + CSS variables)
 └── types/                Shared TypeScript types (scaffold)
 ```
-

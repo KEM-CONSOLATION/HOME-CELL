@@ -1,0 +1,318 @@
+"use client";
+
+import { useStore } from "@/store";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  Badge,
+} from "@/components/ui/dashboard-cards";
+import {
+  ArrowLeft,
+  MapPin,
+  Users,
+  Calendar,
+  ShieldCheck,
+  History,
+  TrendingUp,
+  UserPlus,
+  ArrowUpRight,
+  MoreVertical,
+  ChevronRight,
+  UserCheck,
+  Edit3,
+  Map as MapIcon,
+  MessageCircle,
+  Activity,
+} from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { MOCK_CELLS, MOCK_MEMBERS } from "@/data/mock-data";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export default function CellDetailsPage() {
+  const params = useParams();
+  const idParam = (params as { id?: string | string[] } | null)?.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  const cell = MOCK_CELLS.find((c) => c.id === id);
+
+  if (!cell) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <p className="text-muted-foreground font-bold">Cell center not found</p>
+        <Link
+          href="/app/cells"
+          className="text-primary font-bold hover:underline"
+        >
+          Back to Cells Directory
+        </Link>
+      </div>
+    );
+  }
+
+  const cellMembers = MOCK_MEMBERS.filter((m) => m.cellId === cell.id);
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+      {/* Header */}
+      <div className="flex flex-col gap-6">
+        <Link
+          href="/app/cells"
+          className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Fellowship Directory
+        </Link>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="h-20 w-20 rounded-3xl bg-primary text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-xl shadow-primary/10">
+              {cell.name.charAt(0)}
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {cell.name}
+                </h1>
+                <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase">
+                  Active Fellowship
+                </Badge>
+              </div>
+              <p className="text-muted-foreground mt-1 flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5" />
+                12 Main St, Calabar Metropolis • Zone A
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-11 w-11 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center justify-center">
+                  <MoreVertical className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.info("Edit coming soon", {
+                      description: `Edit settings for ${cell.name}`,
+                    })
+                  }
+                >
+                  <Edit3 className="mr-2 size-4" />
+                  Edit Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.success("Reassign flow coming soon", {
+                      description: `Reassign leader for ${cell.name}`,
+                    })
+                  }
+                >
+                  <UserCheck className="mr-2 size-4" />
+                  Reassign Leader
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() =>
+                    toast.error("Delete not enabled yet", {
+                      description: "This is a mock screen for now.",
+                    })
+                  }
+                >
+                  Delete Cell
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-12 gap-8 items-start">
+        {/* Core Metrics */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Member Count",
+                value: cellMembers.length,
+                icon: Users,
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+              },
+              {
+                title: "Weekly Growth",
+                value: "+2",
+                icon: TrendingUp,
+                color: "text-emerald-600",
+                bg: "bg-emerald-50",
+              },
+              {
+                title: "Soul Wins",
+                value: "8",
+                icon: UserPlus,
+                color: "text-purple-600",
+                bg: "bg-purple-50",
+              },
+            ].map((stat, i) => (
+              <Card key={i} className="border-none bg-white">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-3">
+                    <div
+                      className={cn(
+                        "h-10 w-10 rounded-xl flex items-center justify-center",
+                        stat.bg,
+                        stat.color,
+                      )}
+                    >
+                      <stat.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                        {stat.title}
+                      </p>
+                      <h3 className="text-2xl font-bold">{stat.value}</h3>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Members Listing */}
+          <Card className="border-none bg-white">
+            <CardHeader className="border-b border-slate-50 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Affiliated Members</CardTitle>
+                  <CardDescription>
+                    Believers currently assigned to this fellowship center.
+                  </CardDescription>
+                </div>
+                <Link
+                  href="/app/members/new"
+                  className="h-9 px-4 rounded-xl border font-bold text-xs flex items-center gap-2 hover:bg-slate-50"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add Member
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="divide-y divide-slate-50">
+                {cellMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="py-4 flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-500">
+                        {member.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm group-hover:text-primary transition-colors">
+                          {member.name}
+                        </p>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          {member.status}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/app/members/${member.id}`}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar Context */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* assigned Leader */}
+          <Card className="border-none bg-slate-900 text-white relative overflow-hidden">
+            <div className="absolute left-[-20%] bottom-[-20%] h-40 w-40 bg-primary/20 rounded-full blur-[60px]" />
+            <CardHeader className="border-b border-white/5 pb-4">
+              <CardTitle className="text-lg">Cell Leadership</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 relative z-10 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-white text-slate-900 flex items-center justify-center text-xl font-bold">
+                  AJ
+                </div>
+                <div>
+                  <h4 className="font-bold">Alice Johnson</h4>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">
+                    Primary Leader
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <button className="w-full h-11 rounded-xl bg-white/10 border border-white/10 text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-all">
+                  <MessageCircle className="h-4 w-4" />
+                  Contact via WhatsApp
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Geographical Context */}
+          <Card className="border-none bg-white h-64 flex flex-col items-center justify-center text-center p-6 gap-3 group overflow-hidden relative">
+            <div className="absolute inset-0 bg-slate-100 transition-transform group-hover:scale-110" />
+            <div className="relative z-10">
+              <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-lg text-primary mx-auto mb-2">
+                <MapIcon className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-bold">Interactive Map View</p>
+              <p className="text-xs text-muted-foreground">
+                Calabar Metropolis, Zone A Sub-sector
+              </p>
+            </div>
+            <button className="relative z-10 mt-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
+              View Full Area
+            </button>
+          </Card>
+
+          {/* Performance index */}
+          <Card className="border-none bg-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Compliance Audit</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground">
+                  Report Submission
+                </span>
+                <span className="text-xs font-black text-emerald-600">
+                  100%
+                </span>
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full w-full bg-emerald-500 rounded-full" />
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                <Activity className="h-3 w-3" />
+                Next Report Due: 3 Days
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
