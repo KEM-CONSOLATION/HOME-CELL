@@ -9,6 +9,8 @@ import {
   CardDescription,
   Badge,
 } from "@/components/ui/dashboard-cards";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -52,13 +54,12 @@ export default function CellsDirectoryPage() {
             {user?.unitName}.
           </p>
         </div>
-        <Link
-          href="/app/cells/new"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 text-sm font-bold transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          Create New Cell
-        </Link>
+        <Button asChild size="lg">
+          <Link href="/app/cells/new">
+            <Plus />
+            Create New Cell
+          </Link>
+        </Button>
       </div>
 
       {/* Metrics Overview */}

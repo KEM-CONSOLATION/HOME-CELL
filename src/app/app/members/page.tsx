@@ -2,13 +2,10 @@
 
 import { useStore } from "@/store";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-} from "@/components/ui/dashboard-cards";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -23,11 +20,11 @@ import {
   MoreHorizontal,
   Phone,
   MapPin,
-  Mail,
   UserCircle2,
 } from "lucide-react";
 import { MOCK_MEMBERS } from "@/data/mock-data";
-import { useState } from "react";
+import type { Member } from "@/data/mock-data";
+import { useSyncExternalStore, useState } from "react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -36,16 +33,61 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import {
+  getDeletedMemberIds,
+  recordDeletedMemberId,
+  subscribeToMemberDeletions,
+} from "@/lib/member-deletions";
+
+// Cache the snapshot so useSyncExternalStore gets a stable reference
+// between renders. The cache is invalidated whenever the subscription
+// fires (i.e. when a deletion is recorded).
+let _cachedSnapshot: Member[] | null = null;
+
+function getMembersSnapshot(): Member[] {
+  if (_cachedSnapshot !== null) return _cachedSnapshot;
+  const deleted = getDeletedMemberIds();
+  _cachedSnapshot = MOCK_MEMBERS.filter((m) => !deleted.includes(m.id));
+  return _cachedSnapshot;
+}
+
+function subscribeAndInvalidate(onStoreChange: () => void) {
+  return subscribeToMemberDeletions(() => {
+    _cachedSnapshot = null; // invalidate so next render recomputes
+    onStoreChange();
+  });
+}
 
 export default function MembersPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const members = useSyncExternalStore(
+    subscribeAndInvalidate,
+    getMembersSnapshot,
+    () => MOCK_MEMBERS,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const filteredMembers = MOCK_MEMBERS.filter(
+  const filteredMembers = members.filter(
     (m) =>
       m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.phone.includes(searchTerm),
   );
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    window.setTimeout(() => {
+      recordDeletedMemberId(deleteTarget.id);
+      toast.success("Member removed", {
+        description: `${deleteTarget.name} was deleted from the directory.`,
+      });
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }, 400);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -56,34 +98,31 @@ export default function MembersPage() {
             Manage and track members in {user?.unitName}.
           </p>
         </div>
-        <Link
-          href="/app/members/new"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition-all hover:scale-105 active:scale-95"
-        >
-          <UserCircle2 className="h-4 w-4" />
-          Add New Member
-        </Link>
+        <Button asChild size="lg">
+          <Link href="/app/members/new">
+            <UserCircle2 />
+            Add New Member
+          </Link>
+        </Button>
       </div>
 
-      <Card className="border-none bg-white">
+      <Card className="border-none bg-white rounded-3xl">
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search by name or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 w-full rounded-xl border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                className="pl-10 rounded-xl"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <button className="flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium hover:bg-accent">
-                <Filter className="h-4 w-4" />
-                Filter
-              </button>
-            </div>
+            <Button variant="outline" size="default">
+              <Filter />
+              Filter
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -153,31 +192,26 @@ export default function MembersPage() {
                     <div className="flex items-center justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="h-9 w-9 rounded-xl flex items-center justify-center border hover:bg-accent transition-colors">
+                          <Button variant="outline" size="icon">
                             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                          </button>
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuItem asChild>
                             <Link href={`/app/members/${member.id}`}>View</Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              toast.info("Edit coming soon", {
-                                description: `Edit ${member.name}`,
-                              })
-                            }
-                          >
-                            Edit
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/members/${member.id}/edit`}>
+                              Edit
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() =>
-                              toast.error("Delete not enabled yet", {
-                                description: "This is a mock screen for now.",
-                              })
-                            }
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setDeleteTarget(member);
+                            }}
                           >
                             Delete
                           </DropdownMenuItem>
@@ -200,6 +234,17 @@ export default function MembersPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onClose={() => !deleteLoading && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete this member?"
+        description="They will be removed from your cell directory and activity history may be affected. This cannot be undone."
+        itemName={deleteTarget?.name}
+        confirmLabel="Yes, delete member"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

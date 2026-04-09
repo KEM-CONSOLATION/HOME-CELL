@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-6">
-        {/* Growth Visualizer (CSS Chart) */}
+        {/* Soul Winning Trends — SVG line chart matching dashboard style */}
         <Card className="lg:col-span-8 border-none bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -125,40 +125,123 @@ export default function AnalyticsPage() {
                   Monthly new convert registration volume.
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Current Year
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-primary" />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">
+                  Current Year
+                </span>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-10">
-            <div className="h-[240px] w-full flex items-end justify-between gap-4 px-2">
-              {growthData.map((d, i) => (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center gap-3 group"
-                >
-                  <div className="w-full relative flex flex-col items-center justify-end h-full">
-                    {/* Value Tag */}
-                    <div className="absolute -top-8 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                      {d.value} Souls
-                    </div>
-                    {/* Bar */}
-                    <div
-                      style={{ height: `${(d.value / 80) * 100}%` }}
-                      className="w-full max-w-[40px] bg-slate-100 rounded-t-xl group-hover:bg-primary transition-all duration-500 cursor-pointer"
+          <CardContent className="pt-6">
+            {(() => {
+              const w = 900,
+                h = 240;
+              const padding = { top: 16, right: 16, bottom: 28, left: 36 };
+              const innerW = w - padding.left - padding.right;
+              const innerH = h - padding.top - padding.bottom;
+              const maxY = Math.max(...growthData.map((d) => d.value), 1);
+              const minY = 0;
+
+              const points = growthData.map((d, i) => {
+                const x =
+                  padding.left +
+                  (growthData.length === 1
+                    ? innerW / 2
+                    : (i / (growthData.length - 1)) * innerW);
+                const y =
+                  padding.top +
+                  (1 - (d.value - minY) / (maxY - minY || 1)) * innerH;
+                return { x, y, d };
+              });
+
+              const lineD = points
+                .map(
+                  (p, i) =>
+                    `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`,
+                )
+                .join(" ");
+
+              return (
+                <div className="w-full">
+                  <svg
+                    viewBox={`0 0 ${w} ${h}`}
+                    className="h-[260px] w-full"
+                    role="img"
+                    aria-label="Soul winning line chart"
+                    preserveAspectRatio="none"
+                  >
+                    {/* grid lines */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+                      const y = padding.top + t * innerH;
+                      const v = Math.round(maxY * (1 - t));
+                      return (
+                        <g key={t}>
+                          <line
+                            x1={padding.left}
+                            y1={y}
+                            x2={w - padding.right}
+                            y2={y}
+                            stroke="rgba(15,23,42,0.08)"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x={padding.left - 10}
+                            y={y + 4}
+                            textAnchor="end"
+                            fontSize="12"
+                            fill="rgba(15,23,42,0.55)"
+                          >
+                            {v}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* line */}
+                    <path
+                      d={lineD}
+                      fill="none"
+                      stroke="var(--brand-blue)"
+                      strokeWidth="3"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
-                  </div>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase">
-                    {d.label}
-                  </span>
+
+                    {/* data points */}
+                    {points.map((p, i) => (
+                      <g key={i}>
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={5}
+                          fill="#ffffff"
+                          stroke="var(--brand-blue)"
+                          strokeWidth="3"
+                        />
+                        <title>
+                          {p.d.label} • {p.d.value} souls
+                        </title>
+                      </g>
+                    ))}
+
+                    {/* x-axis labels */}
+                    {points.map((p, i) => (
+                      <text
+                        key={i}
+                        x={p.x}
+                        y={h - 8}
+                        textAnchor="middle"
+                        fontSize="12"
+                        fill="rgba(15,23,42,0.55)"
+                      >
+                        {p.d.label.toUpperCase()}
+                      </text>
+                    ))}
+                  </svg>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </CardContent>
         </Card>
 

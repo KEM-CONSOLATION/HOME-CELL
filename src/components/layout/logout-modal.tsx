@@ -20,7 +20,7 @@ export function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalProps) {
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-[400px] bg-card border rounded-[32px] p-8 animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-[400px] bg-card border rounded-lg p-8 animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
           className="absolute right-6 top-6 h-10 w-10 flex items-center justify-center rounded-2xl border bg-background hover:bg-accent transition-colors"
@@ -29,7 +29,7 @@ export function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalProps) {
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="h-20 w-20 bg-rose-500/10 rounded-[28px] flex items-center justify-center mb-6 ring-8 ring-rose-500/5">
+          <div className="h-20 w-20 bg-rose-500/10 rounded-lg flex items-center justify-center mb-6 ring-8 ring-rose-500/5">
             <AlertTriangle className="h-10 w-10 text-rose-500" />
           </div>
 

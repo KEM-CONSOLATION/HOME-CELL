@@ -8,6 +8,8 @@ import {
   CardHeader,
   Badge,
 } from "@/components/ui/dashboard-cards";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,21 +24,78 @@ import {
   Clock,
   MessageCircle,
   CheckCircle,
-  ExternalLink,
+  MoreHorizontal,
 } from "lucide-react";
-import { MOCK_NEW_CONVERTS } from "@/data/mock-data";
-import { useState } from "react";
+import { MOCK_NEW_CONVERTS, MOCK_CELLS } from "@/data/mock-data";
+import type { NewConvert } from "@/data/mock-data";
+import { useSyncExternalStore, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import {
+  getDeletedConvertIds,
+  recordDeletedConvertId,
+  subscribeToConvertDeletions,
+} from "@/lib/convert-deletions";
+
+let _cachedConvertsSnapshot: NewConvert[] | null = null;
+
+function getConvertsSnapshot(): NewConvert[] {
+  if (_cachedConvertsSnapshot !== null) return _cachedConvertsSnapshot;
+  const deleted = getDeletedConvertIds();
+  _cachedConvertsSnapshot = MOCK_NEW_CONVERTS.filter(
+    (c) => !deleted.includes(c.id),
+  );
+  return _cachedConvertsSnapshot;
+}
+
+function subscribeAndInvalidateConverts(onStoreChange: () => void) {
+  return subscribeToConvertDeletions(() => {
+    _cachedConvertsSnapshot = null;
+    onStoreChange();
+  });
+}
+
+function cellLabel(assignedCellId?: string) {
+  return MOCK_CELLS.find((c) => c.id === assignedCellId)?.name ?? "Grace Cell";
+}
 
 export default function ConvertsPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const converts = useSyncExternalStore(
+    subscribeAndInvalidateConverts,
+    getConvertsSnapshot,
+    () => MOCK_NEW_CONVERTS,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<NewConvert | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const filteredConverts = MOCK_NEW_CONVERTS.filter(
+  const filteredConverts = converts.filter(
     (nc) =>
       nc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       nc.phone.includes(searchTerm),
   );
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    window.setTimeout(() => {
+      recordDeletedConvertId(deleteTarget.id);
+      toast.success("Convert removed", {
+        description: `${deleteTarget.name} was removed from the list.`,
+      });
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }, 400);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -47,13 +106,12 @@ export default function ConvertsPage() {
             Track and follow up with recent converts in {user?.unitName}.
           </p>
         </div>
-        <Link
-          href="/app/converts/new"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-5 text-sm font-bold transition-all hover:scale-105 active:scale-95"
-        >
-          <UserPlus className="h-4 w-4" />
-          Register New Convert
-        </Link>
+        <Button asChild size="lg">
+          <Link href="/app/converts/new">
+            <UserPlus />
+            Register New Convert
+          </Link>
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -115,12 +173,12 @@ export default function ConvertsPage() {
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search converts by name or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 w-full rounded-xl border bg-slate-50 pl-10 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 focus:bg-white transition-all"
+                className="pl-10 rounded-xl"
               />
             </div>
           </div>
@@ -166,7 +224,7 @@ export default function ConvertsPage() {
                       variant="outline"
                       className="bg-slate-100 text-slate-700 rounded-lg py-1"
                     >
-                      Grace Cell
+                      {cellLabel(nc.assignedCellId)}
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-[320px]">
@@ -176,17 +234,44 @@ export default function ConvertsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="h-10 px-4 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors">
-                        <MessageCircle className="h-4 w-4" />
+                      <Button type="button" variant="secondary" size="sm">
+                        <MessageCircle />
                         WhatsApp
-                      </button>
-                      <Link
-                        href={`/app/converts/${nc.id}`}
-                        className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-bold inline-flex items-center justify-center gap-2 hover:-translate-y-px transition-all"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Details
-                      </Link>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            aria-label={`Actions for ${nc.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/converts/${nc.id}`}>
+                              View profile
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/converts/${nc.id}/edit`}>
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setDeleteTarget(nc);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -195,6 +280,17 @@ export default function ConvertsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onClose={() => !deleteLoading && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete this convert?"
+        description="They will be removed from the new converts list. This cannot be undone."
+        itemName={deleteTarget?.name}
+        confirmLabel="Yes, delete convert"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

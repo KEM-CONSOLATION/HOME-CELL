@@ -7,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  Badge,
-} from "@/components/ui/dashboard-cards";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Plus,
   Users,
@@ -23,11 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import {
-  MOCK_MEMBERS,
-  MOCK_ATTENDANCE,
-  MOCK_NEW_CONVERTS,
-} from "@/data/mock-data";
+import { BibleQuoteRotator } from "@/components/dashboard/bible-quote-rotator";
 
 export default function DashboardPage() {
   const { user } = useStore();
@@ -116,18 +112,19 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/app/attendance/new"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            Submit Attendance
-          </Link>
+          <Button asChild size="lg">
+            <Link href="/app/attendance/new">
+              <Plus />
+              Submit Attendance
+            </Link>
+          </Button>
         </div>
       </div>
 
+      <BibleQuoteRotator />
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
+        {stats.map((stat) => (
           <Card
             key={stat.title}
             className={cn(

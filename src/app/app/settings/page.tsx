@@ -106,7 +106,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6">
                   <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-50">
                     <div className="relative group">
-                      <div className="h-24 w-24 rounded-[32px] bg-slate-100 flex items-center justify-center border-2 border-slate-200 overflow-hidden">
+                      <div className="h-24 w-24 rounded-lg bg-slate-100 flex items-center justify-center border-2 border-slate-200 overflow-hidden">
                         {user?.avatar ? (
                           <img
                             src={user.avatar}

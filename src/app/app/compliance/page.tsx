@@ -310,7 +310,7 @@ export default function CompliancePage() {
             ))}
           </div>
 
-          <div className="mt-8 p-6 rounded-[32px] bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="mt-8 p-6 rounded-lg bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div className="absolute left-[10%] top-[-20%] h-40 w-40 bg-primary/20 rounded-full blur-[60px]" />
             <div className="relative z-10">
               <h4 className="text-xl font-bold">

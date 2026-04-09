@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "@/store";
 import {
   Card,
   CardContent,
@@ -14,20 +13,20 @@ import {
   UserPlus,
   Phone,
   MapPin,
-  Calendar,
   MessageCircle,
   FileText,
   UserCheck,
   History,
   CheckCircle2,
   Clock,
-  MoreVertical,
-  ExternalLink,
+  MoreHorizontal,
   Edit3,
+  SquarePen,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { MOCK_NEW_CONVERTS } from "@/data/mock-data";
+import { useEffect, useState } from "react";
+import { MOCK_NEW_CONVERTS, MOCK_CELLS } from "@/data/mock-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -37,6 +36,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import {
+  getDeletedConvertIds,
+  recordDeletedConvertId,
+} from "@/lib/convert-deletions";
 
 export default function ConvertDetailsPage() {
   const params = useParams();
@@ -44,6 +48,15 @@ export default function ConvertDetailsPage() {
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const router = useRouter();
   const convert = MOCK_NEW_CONVERTS.find((nc) => nc.id === id);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    if (getDeletedConvertIds().includes(id)) {
+      router.replace("/app/converts");
+    }
+  }, [id, router]);
 
   if (!convert) {
     return (
@@ -60,6 +73,10 @@ export default function ConvertDetailsPage() {
       </div>
     );
   }
+
+  const cellName =
+    MOCK_CELLS.find((c) => c.id === convert.assignedCellId)?.name ??
+    "Grace Cell";
 
   const followUpLogs = [
     {
@@ -90,7 +107,7 @@ export default function ConvertDetailsPage() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="h-24 w-24 rounded-[32px] bg-purple-600 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-xl shadow-purple-600/10">
+            <div className="h-24 w-24 rounded-lg bg-purple-600 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-xl shadow-purple-600/10">
               {convert.name.charAt(0)}
             </div>
             <div>
@@ -118,50 +135,69 @@ export default function ConvertDetailsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="h-11 w-11 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center justify-center">
-                  <MoreVertical className="h-5 w-5 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem
-                  onClick={() =>
-                    toast.info("Update status", {
-                      description: "Status update UI will be wired next.",
-                    })
-                  }
-                >
-                  <Edit3 className="mr-2 size-4" />
-                  Update Status
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    toast.success("Marked as integrated", {
-                      description: `${convert.name} moved to integrated.`,
-                    })
-                  }
-                >
-                  <UserCheck className="mr-2 size-4" />
-                  Mark as Integrated
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() =>
-                    toast.error("Delete not enabled yet", {
-                      description: "This is a mock screen for now.",
-                    })
-                  }
-                >
-                  Delete Convert
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
       </div>
+
+      {/* Actions — primary operations live here, not in the profile header */}
+      <Card className="border-none bg-white shadow-sm">
+        <CardHeader className="flex flex-col gap-4 border-b border-slate-50 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div>
+            <CardTitle className="text-lg">Actions</CardTitle>
+            <CardDescription>
+              Update status, mark as integrated, edit the record, or remove it.
+            </CardDescription>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl border bg-white px-4 text-sm font-bold hover:bg-slate-50 transition-colors sm:self-auto"
+              >
+                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">More</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href={`/app/converts/${convert.id}/edit`}>
+                  <SquarePen className="mr-2 size-4" />
+                  Edit record
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toast.info("Update status", {
+                    description: "Status update UI will be wired next.",
+                  })
+                }
+              >
+                <Edit3 className="mr-2 size-4" />
+                Update status
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toast.success("Marked as integrated", {
+                    description: `${convert.name} moved to integrated.`,
+                  })
+                }
+              >
+                <UserCheck className="mr-2 size-4" />
+                Mark as integrated
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete convert
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+      </Card>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
         {/* Contact & Assignment */}
@@ -205,7 +241,7 @@ export default function ConvertDetailsPage() {
                       Assigned Cell
                     </p>
                     <p className="text-sm font-bold mt-0.5 text-primary">
-                      Grace Cell
+                      {cellName}
                     </p>
                   </div>
                 </div>
@@ -296,6 +332,28 @@ export default function ConvertDetailsPage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteOpen}
+        onClose={() => !deleteLoading && setDeleteOpen(false)}
+        onConfirm={() => {
+          setDeleteLoading(true);
+          window.setTimeout(() => {
+            recordDeletedConvertId(convert.id);
+            toast.success("Convert removed", {
+              description: `${convert.name} was removed from the list.`,
+            });
+            setDeleteLoading(false);
+            setDeleteOpen(false);
+            router.push("/app/converts");
+          }, 400);
+        }}
+        title="Delete this convert?"
+        description="They will be removed from the new converts list. This cannot be undone."
+        itemName={convert.name}
+        confirmLabel="Yes, delete convert"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

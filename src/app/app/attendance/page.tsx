@@ -8,6 +8,8 @@ import {
   CardTitle,
   Badge,
 } from "@/components/ui/dashboard-cards";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,13 +36,12 @@ export default function AttendanceListPage() {
             Review weekly attendance reports for {user?.unitName}.
           </p>
         </div>
-        <Link
-          href="/app/attendance/new"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          Submit Report
-        </Link>
+        <Button asChild size="lg">
+          <Link href="/app/attendance/new">
+            <Plus />
+            Submit Report
+          </Link>
+        </Button>
       </div>
 
       <Card className="border-none bg-white">
@@ -48,16 +49,16 @@ export default function AttendanceListPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search by date or cell..."
-                className="h-12 w-full rounded-xl border bg-slate-50 pl-10 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all"
+                className="pl-10 rounded-xl"
               />
             </div>
-            <button className="h-12 px-5 rounded-xl border text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
-              <Filter className="h-4 w-4" />
+            <Button variant="outline">
+              <Filter />
               Filter
-            </button>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -127,12 +128,16 @@ export default function AttendanceListPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link
-                      href={`/app/attendance/${record.id}`}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white hover:scale-105 active:scale-95 transition-all"
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="icon"
+                      className="bg-slate-900 text-white hover:bg-slate-800 hover:text-white hover:scale-105"
                     >
-                      <ChevronRight className="h-5 w-5" />
-                    </Link>
+                      <Link href={`/app/attendance/${record.id}`}>
+                        <ChevronRight />
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

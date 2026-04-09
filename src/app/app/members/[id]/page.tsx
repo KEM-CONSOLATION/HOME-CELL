@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "@/store";
 import {
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/dashboard-cards";
 import {
   ArrowLeft,
-  User,
   Phone,
   MapPin,
   Calendar,
@@ -26,8 +24,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { MOCK_MEMBERS } from "@/data/mock-data";
 import { cn } from "@/lib/utils";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import {
+  getDeletedMemberIds,
+  recordDeletedMemberId,
+} from "@/lib/member-deletions";
 
 export default function MemberDetailsPage() {
   const params = useParams();
@@ -35,6 +40,15 @@ export default function MemberDetailsPage() {
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const router = useRouter();
   const member = MOCK_MEMBERS.find((m) => m.id === id);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    if (getDeletedMemberIds().includes(id)) {
+      router.replace("/app/members");
+    }
+  }, [id, router]);
 
   if (!member) {
     return (
@@ -83,7 +97,7 @@ export default function MemberDetailsPage() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="h-24 w-24 rounded-[32px] bg-primary text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-xl shadow-primary/10">
+            <div className="h-24 w-24 rounded-lg bg-primary text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-xl shadow-primary/10">
               {member.name.charAt(0)}
             </div>
             <div>
@@ -103,11 +117,18 @@ export default function MemberDetailsPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="h-11 px-6 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <Link
+              href={`/app/members/${member.id}/edit`}
+              className="h-11 px-6 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+            >
               <Edit3 className="h-4 w-4 text-muted-foreground" />
               Edit Profile
-            </button>
-            <button className="h-11 px-6 rounded-xl bg-rose-500 text-white font-bold text-sm hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2">
+            </Link>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="h-11 px-6 rounded-xl bg-rose-500 text-white font-bold text-sm hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2"
+            >
               <Trash2 className="h-4 w-4" />
               Delete
             </button>
@@ -285,6 +306,28 @@ export default function MemberDetailsPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteOpen}
+        onClose={() => !deleteLoading && setDeleteOpen(false)}
+        onConfirm={() => {
+          setDeleteLoading(true);
+          window.setTimeout(() => {
+            recordDeletedMemberId(member.id);
+            toast.success("Member removed", {
+              description: `${member.name} was deleted from the directory.`,
+            });
+            setDeleteLoading(false);
+            setDeleteOpen(false);
+            router.push("/app/members");
+          }, 400);
+        }}
+        title="Delete this member?"
+        description="They will be removed from your cell directory and related records may be affected. This cannot be undone."
+        itemName={member.name}
+        confirmLabel="Yes, delete member"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

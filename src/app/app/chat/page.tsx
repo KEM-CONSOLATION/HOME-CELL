@@ -192,7 +192,7 @@ export default function CommunicationHub() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type your broadcast message here... Members will receive this via their preferred contact method."
-                  className="w-full min-h-[180px] p-6 rounded-[32px] border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-medium resize-none"
+                  className="w-full min-h-[180px] p-6 rounded-lg border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-medium resize-none"
                 />
                 <div className="absolute right-6 bottom-6 flex items-center gap-4">
                   <p className="text-xs text-muted-foreground font-medium">

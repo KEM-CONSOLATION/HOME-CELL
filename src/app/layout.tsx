@@ -1,6 +1,18 @@
 import "@/styles/globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Providers } from "@/app/providers";
+import { RegisterServiceWorker } from "@/components/pwa/register-sw";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0b6fb3" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  colorScheme: "light dark",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -36,6 +48,14 @@ export const metadata: Metadata = {
       "Home Fellowship attendance and communication management for Salvation Ministries.",
     images: ["/opengraph-image"],
   },
+  appleWebApp: {
+    capable: true,
+    title: "HOME-CELL",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -45,6 +65,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <Providers>{children}</Providers>
+        <RegisterServiceWorker />
       </body>
     </html>
   );

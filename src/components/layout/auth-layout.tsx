@@ -22,7 +22,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-100 p-10 rounded-[40px]">
+        <div className="bg-white border border-slate-100 p-10 rounded-lg">
           {children}
         </div>
 

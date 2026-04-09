@@ -8,8 +8,10 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  Badge,
-} from "@/components/ui/dashboard-cards";
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form-field";
 import {
   ChevronLeft,
   Save,
@@ -49,12 +51,11 @@ export default function NewAttendancePage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
-        <Link
-          href="/app"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border hover:bg-accent transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
+        <Button asChild variant="outline" size="icon">
+          <Link href="/app">
+            <ChevronLeft />
+          </Link>
+        </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             Submit Weekly Attendance
@@ -67,7 +68,7 @@ export default function NewAttendancePage() {
 
       <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <Card className="border-none bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50">
+          <Card className="border-none bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 rounded-3xl">
             <CardHeader>
               <CardTitle>Member Attendance</CardTitle>
               <CardDescription>
@@ -133,61 +134,40 @@ export default function NewAttendancePage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-none bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50">
+          <Card className="border-none bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 rounded-3xl">
             <CardHeader>
               <CardTitle>Meeting Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Meeting Date
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="h-10 w-full rounded-xl border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
+              <FormField
+                label="Meeting Date"
+                type="date"
+                icon={<Calendar className="h-4 w-4" />}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    First Timers
-                  </label>
-                  <div className="relative">
-                    <Star className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min="0"
-                      value={firstTimers}
-                      onChange={(e) =>
-                        setFirstTimers(parseInt(e.target.value) || 0)
-                      }
-                      className="h-10 w-full rounded-xl border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    New Converts
-                  </label>
-                  <div className="relative">
-                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min="0"
-                      value={newConverts}
-                      onChange={(e) =>
-                        setNewConverts(parseInt(e.target.value) || 0)
-                      }
-                      className="h-10 w-full rounded-xl border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  label="First Timers"
+                  type="number"
+                  min="0"
+                  icon={<Star className="h-4 w-4" />}
+                  value={firstTimers}
+                  onChange={(e) =>
+                    setFirstTimers(parseInt(e.target.value) || 0)
+                  }
+                />
+                <FormField
+                  label="New Converts"
+                  type="number"
+                  min="0"
+                  icon={<UserPlus className="h-4 w-4" />}
+                  value={newConverts}
+                  onChange={(e) =>
+                    setNewConverts(parseInt(e.target.value) || 0)
+                  }
+                />
               </div>
 
               <div className="pt-4 border-t mt-4">
@@ -197,13 +177,10 @@ export default function NewAttendancePage() {
                     {presentIds.length + firstTimers}
                   </span>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full h-11 bg-primary text-primary-foreground rounded-xl font-semibold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <Save className="h-4 w-4" />
+                <Button type="submit" className="w-full" size="lg">
+                  <Save />
                   Save Report
-                </button>
+                </Button>
               </div>
             </CardContent>
           </Card>

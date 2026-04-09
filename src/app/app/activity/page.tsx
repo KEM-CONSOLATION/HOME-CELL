@@ -215,7 +215,7 @@ export default function ActivityAuditPage() {
                 {filteredLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="p-6 rounded-[28px] border border-slate-50 hover:bg-slate-50/50 transition-all group flex items-start justify-between gap-6"
+                    className="p-6 rounded-lg border border-slate-50 hover:bg-slate-50/50 transition-all group flex items-start justify-between gap-6"
                   >
                     <div className="flex items-start gap-5">
                       <div
