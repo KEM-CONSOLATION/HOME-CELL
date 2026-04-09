@@ -4,7 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Brand */
   --brand-blue: #0b6fb3;
   --brand-red: #b21f2d;
 
@@ -42,7 +41,6 @@
   --sidebar-ring: oklch(0.708 0 0);
   --font-figtree: "Figtree", sans-serif;
 
-  /* Onboarding colors */
   --color-dark: #121212;
   --color-dark-hover: #1a1a1a;
   --color-gray-text: #717171;
@@ -102,7 +100,6 @@
   --radius-4xl: 8px;
   --font-figtree: var(--font-figtree);
 
-  /* Onboarding colors */
   --color-dark: var(--color-dark);
   --color-dark-hover: var(--color-dark-hover);
   --color-gray-text: var(--color-gray-text);

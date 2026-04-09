@@ -18,7 +18,6 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // Semantic status variants
         success: "border-emerald-500/20 bg-emerald-500/15 text-emerald-600",
         warning: "border-amber-500/20 bg-amber-500/15 text-amber-600",
         error: "border-rose-500/20 bg-rose-500/15 text-rose-600",

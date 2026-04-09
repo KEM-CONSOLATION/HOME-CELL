@@ -40,9 +40,6 @@ import {
   subscribeToMemberDeletions,
 } from "@/lib/member-deletions";
 
-// Cache the snapshot so useSyncExternalStore gets a stable reference
-// between renders. The cache is invalidated whenever the subscription
-// fires (i.e. when a deletion is recorded).
 let _cachedSnapshot: Member[] | null = null;
 
 function getMembersSnapshot(): Member[] {
@@ -54,7 +51,7 @@ function getMembersSnapshot(): Member[] {
 
 function subscribeAndInvalidate(onStoreChange: () => void) {
   return subscribeToMemberDeletions(() => {
-    _cachedSnapshot = null; // invalidate so next render recomputes
+    _cachedSnapshot = null;
     onStoreChange();
   });
 }

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 
 export interface FormFieldProps extends React.ComponentProps<"input"> {
   label: string;
-  /** Optional icon rendered on the left inside the input */
   icon?: React.ReactNode;
   /** Error message displayed below the input */
   error?: string;

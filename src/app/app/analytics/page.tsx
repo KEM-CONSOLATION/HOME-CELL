@@ -10,17 +10,12 @@ import {
 } from "@/components/ui/dashboard-cards";
 import {
   BarChart3,
-  TrendingUp,
-  Users,
-  Target,
   ArrowUpRight,
   ArrowDownRight,
-  Map,
-  Activity,
   Award,
   Calendar,
 } from "lucide-react";
-import { useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 export default function AnalyticsPage() {
@@ -78,7 +73,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Hero Stats */}
       <div className="grid md:grid-cols-3 gap-6">
         {highlights.map((item, i) => (
           <Card key={i} className="border-none bg-white">
@@ -115,7 +109,6 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-6">
-        {/* Soul Winning Trends — SVG line chart matching dashboard style */}
         <Card className="lg:col-span-8 border-none bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -171,7 +164,6 @@ export default function AnalyticsPage() {
                     aria-label="Soul winning line chart"
                     preserveAspectRatio="none"
                   >
-                    {/* grid lines */}
                     {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                       const y = padding.top + t * innerH;
                       const v = Math.round(maxY * (1 - t));
@@ -198,7 +190,6 @@ export default function AnalyticsPage() {
                       );
                     })}
 
-                    {/* line */}
                     <path
                       d={lineD}
                       fill="none"
@@ -208,7 +199,6 @@ export default function AnalyticsPage() {
                       strokeLinecap="round"
                     />
 
-                    {/* data points */}
                     {points.map((p, i) => (
                       <g key={i}>
                         <circle
@@ -225,7 +215,6 @@ export default function AnalyticsPage() {
                       </g>
                     ))}
 
-                    {/* x-axis labels */}
                     {points.map((p, i) => (
                       <text
                         key={i}
@@ -245,7 +234,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Sector Distribution */}
         <Card className="lg:col-span-4 border-none bg-white">
           <CardHeader>
             <CardTitle>Demographics</CardTitle>
@@ -277,7 +265,6 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Top Performing Cells */}
         <Card className="lg:col-span-12 border-none bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">

@@ -62,7 +62,6 @@ export default function CellsDirectoryPage() {
         </Button>
       </div>
 
-      {/* Metrics Overview */}
       <div className="grid md:grid-cols-3 gap-6">
         {[
           {
@@ -116,12 +115,12 @@ export default function CellsDirectoryPage() {
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search by cell name or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 w-full rounded-xl border bg-slate-50 pl-10 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all"
+                className="pl-10 rounded-lg"
               />
             </div>
           </div>

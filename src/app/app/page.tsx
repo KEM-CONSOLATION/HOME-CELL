@@ -173,7 +173,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        {/* Main Chart */}
         <Card className="lg:col-span-8 border-none bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -202,7 +201,6 @@ export default function DashboardPage() {
                 aria-label="Attendance line chart"
                 preserveAspectRatio="none"
               >
-                {/* grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                   const y = padding.top + t * innerH;
                   const v = Math.round(maxY * (1 - t));
@@ -229,7 +227,6 @@ export default function DashboardPage() {
                   );
                 })}
 
-                {/* line */}
                 <path
                   d={lineD}
                   fill="none"
@@ -239,7 +236,6 @@ export default function DashboardPage() {
                   strokeLinecap="round"
                 />
 
-                {/* points */}
                 {points.map((p, i) => (
                   <g key={i}>
                     <circle
@@ -260,7 +256,6 @@ export default function DashboardPage() {
                   </g>
                 ))}
 
-                {/* x labels */}
                 {points.map((p, i) => (
                   <text
                     key={i}
@@ -281,7 +276,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Action Center */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-none bg-slate-900 text-white relative overflow-hidden h-full">
             <div className="absolute right-[-20%] top-[-20%] h-64 w-64 bg-primary/20 rounded-full blur-[80px]" />
@@ -298,7 +292,6 @@ export default function DashboardPage() {
                   icon: UserPlus,
                   href: "/app/members/new",
                 },
-                // Submit Attendance is already the primary CTA above.
                 { label: "Send Broadcast", icon: Target, href: "/app/chat" },
                 {
                   label: "View Compliance",
@@ -322,7 +315,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Recent Activity */}
         <Card className="lg:col-span-12 border-none bg-white">
           <CardHeader className="border-b border-slate-50 pb-6 mb-2">
             <div className="flex items-center justify-between">
