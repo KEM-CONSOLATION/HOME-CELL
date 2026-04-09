@@ -127,7 +127,13 @@ const navItems = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  mobile,
+  onCloseMobile,
+}: {
+  mobile?: boolean;
+  onCloseMobile?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, resetAuth } = useStore();
@@ -143,13 +149,25 @@ export function Sidebar() {
     (item) => user && item.roles.includes(user.role),
   );
 
+  const isCollapsed = mobile ? false : collapsed;
+
   return (
     <div
       className={cn(
         "relative flex h-dvh flex-col border-r bg-card transition-all duration-300 ease-in-out",
-        collapsed ? "w-20" : "w-64",
+        isCollapsed ? "w-20" : "w-64",
       )}
     >
+      {mobile && (
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          className="absolute right-3 top-3 h-10 w-10 rounded-xl border bg-background hover:bg-accent transition-colors flex items-center justify-center"
+          aria-label="Close sidebar"
+        >
+          <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
       <LogoutModal
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
@@ -158,21 +176,21 @@ export function Sidebar() {
       <div
         className={cn(
           "flex items-center h-40 px-6",
-          collapsed && "justify-center px-0",
+          isCollapsed && "justify-center px-0",
         )}
       >
         <Link href="/app" className="w-full">
           <div
             className={cn(
               "relative transition-all duration-300",
-              collapsed ? "h-14 w-14" : "h-40 w-full",
+              isCollapsed ? "h-14 w-14" : "h-40 w-full",
             )}
           >
             <Image
               src="/logo.png"
               alt="Salvation Ministries Logo"
               fill
-              sizes={collapsed ? "56px" : "256px"}
+              sizes={isCollapsed ? "56px" : "256px"}
               className="object-contain"
               priority
             />
@@ -180,7 +198,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <StateSwitcher collapsed={collapsed} />
+      <StateSwitcher collapsed={isCollapsed} />
 
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         {filteredNavItems.map((item) => {
@@ -194,7 +212,7 @@ export function Sidebar() {
                 isActive
                   ? "bg-primary text-primary-foreground hover:bg-primary/95"
                   : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
-                collapsed && "justify-center px-0",
+                isCollapsed && "justify-center px-0",
               )}
             >
               <item.icon
@@ -204,7 +222,7 @@ export function Sidebar() {
                   isActive && "scale-105",
                 )}
               />
-              {!collapsed && (
+              {!isCollapsed && (
                 <span className="animate-in fade-in slide-in-from-left-2 duration-300">
                   {item.title}
                 </span>
@@ -215,7 +233,7 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 py-4 border-t space-y-2">
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="px-3 py-2 mb-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Settings
@@ -226,34 +244,36 @@ export function Sidebar() {
           href="/app/settings"
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
-            collapsed && "justify-center px-0",
+            isCollapsed && "justify-center px-0",
           )}
         >
           <Settings className="h-5 w-5" />
-          {!collapsed && <span>Settings</span>}
+          {!isCollapsed && <span>Settings</span>}
         </Link>
         <button
           onClick={() => setShowLogoutConfirm(true)}
           className={cn(
             "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive transition-all hover:bg-destructive/10",
-            collapsed && "justify-center px-0",
+            isCollapsed && "justify-center px-0",
           )}
         >
           <LogOut className="h-5 w-5" />
-          {!collapsed && <span>Logout</span>}
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </div>
 
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border bg-background hover:bg-accent transition-colors"
-      >
-        {collapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </button>
+      {!mobile && (
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border bg-background hover:bg-accent transition-colors"
+        >
+          {collapsed ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronLeft className="h-3 w-3" />
+          )}
+        </button>
+      )}
     </div>
   );
 }

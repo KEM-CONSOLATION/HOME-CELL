@@ -5,6 +5,7 @@ import {
   Bell,
   Search,
   ChevronDown,
+  Menu,
   LogOut,
   Settings,
   User,
@@ -20,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function TopNav() {
+export function TopNav({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const { user } = useStore();
   const { resetAuth } = useStore();
   const router = useRouter();
@@ -34,6 +35,14 @@ export function TopNav() {
   return (
     <header className="flex h-16 items-center border-b bg-card/50 backdrop-blur-md px-6 sticky top-0 z-10">
       <div className="flex flex-1 items-center gap-4">
+        <button
+          type="button"
+          onClick={onOpenSidebar}
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border hover:bg-accent transition-colors"
+          aria-label="Open sidebar"
+        >
+          <Menu className="h-5 w-5 text-muted-foreground" />
+        </button>
         <div className="relative w-full max-w-md hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
