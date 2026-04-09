@@ -3,10 +3,39 @@ import type { Metadata } from "next";
 import { Providers } from "@/app/providers";
 
 export const metadata: Metadata = {
-  title: "HOME-CELL",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
+  applicationName: "HOME-CELL",
+  title: {
+    default: "HOME-CELL",
+    template: "%s | HOME-CELL",
+  },
   description:
-    "HOME-CELL — a modern Next.js app scaffolded to match WETH-TAX conventions.",
-  icons: [{ rel: "icon", url: "/logo.png" }],
+    "Home Fellowship attendance and communication management for Salvation Ministries.",
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: [{ url: "/logo.png" }],
+    apple: [{ url: "/logo.png" }],
+  },
+  openGraph: {
+    type: "website",
+    siteName: "HOME-CELL",
+    title: "HOME-CELL",
+    description:
+      "Home Fellowship attendance and communication management for Salvation Ministries.",
+    url: "/",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HOME-CELL",
+    description:
+      "Home Fellowship attendance and communication management for Salvation Ministries.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function RootLayout({
