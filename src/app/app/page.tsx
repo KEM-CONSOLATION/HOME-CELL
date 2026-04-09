@@ -92,10 +92,11 @@ export default function DashboardPage() {
   const points = chartData.map((d, i) => {
     const x =
       padding.left +
-      (chartData.length === 1 ? innerW / 2 : (i / (chartData.length - 1)) * innerW);
+      (chartData.length === 1
+        ? innerW / 2
+        : (i / (chartData.length - 1)) * innerW);
     const y =
-      padding.top +
-      (1 - (d.value - minY) / (maxY - minY || 1)) * innerH;
+      padding.top + (1 - (d.value - minY) / (maxY - minY || 1)) * innerH;
     return { x, y, d };
   });
 
