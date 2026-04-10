@@ -138,67 +138,6 @@ export default function ConvertDetailsPage() {
         </div>
       </div>
 
-      {/* Actions — primary operations live here, not in the profile header */}
-      <Card className="border-none bg-white shadow-sm">
-        <CardHeader className="flex flex-col gap-4 border-b border-slate-50 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div>
-            <CardTitle className="text-lg">Actions</CardTitle>
-            <CardDescription>
-              Update status, mark as integrated, edit the record, or remove it.
-            </CardDescription>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl border bg-white px-4 text-sm font-bold hover:bg-slate-50 transition-colors sm:self-auto"
-              >
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">More</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem asChild>
-                <Link href={`/app/converts/${convert.id}/edit`}>
-                  <SquarePen className="mr-2 size-4" />
-                  Edit record
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  toast.info("Update status", {
-                    description: "Status update UI will be wired next.",
-                  })
-                }
-              >
-                <Edit3 className="mr-2 size-4" />
-                Update status
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  toast.success("Marked as integrated", {
-                    description: `${convert.name} moved to integrated.`,
-                  })
-                }
-              >
-                <UserCheck className="mr-2 size-4" />
-                Mark as integrated
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  setDeleteOpen(true);
-                }}
-              >
-                Delete convert
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </CardHeader>
-      </Card>
-
       <div className="grid lg:grid-cols-12 gap-8 items-start">
         {/* Contact & Assignment */}
         <div className="lg:col-span-4 space-y-6">
@@ -247,7 +186,7 @@ export default function ConvertDetailsPage() {
                 </div>
               </div>
 
-              <button className="w-full h-11 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors mt-4">
+              <button className="cursor-pointer w-full h-11 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors mt-4">
                 <MessageCircle className="h-4 w-4" />
                 Initiate WhatsApp Follow-up
               </button>
@@ -323,7 +262,7 @@ export default function ConvertDetailsPage() {
                 <p className="text-sm font-bold text-muted-foreground">
                   Add a new follow-up interaction
                 </p>
-                <button className="h-10 px-6 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform">
+                <button className="cursor-pointer h-10 px-6 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform">
                   <FileText className="h-3.5 w-3.5" />
                   Log New Interaction
                 </button>

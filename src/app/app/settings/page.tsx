@@ -61,7 +61,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group"
+          className="cursor-pointer inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group"
         >
           {isSaving ? (
             <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
@@ -80,7 +80,7 @@ export default function SettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
+                "cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-slate-100 hover:text-foreground",
@@ -117,7 +117,7 @@ export default function SettingsPage() {
                           <User className="h-10 w-10 text-slate-300" />
                         )}
                       </div>
-                      <button className="absolute -bottom-1 -right-1 h-8 w-8 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95">
+                      <button className="cursor-pointer absolute -bottom-1 -right-1 h-8 w-8 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95">
                         <Upload className="h-4 w-4" />
                       </button>
                     </div>
@@ -127,11 +127,11 @@ export default function SettingsPage() {
                         {user?.role.replace("_", " ")} • {user?.unitName}
                       </p>
                       <div className="mt-3 flex gap-2">
-                        <button className="text-xs font-bold text-primary hover:underline">
+                        <button className="cursor-pointer text-xs font-bold text-primary hover:underline">
                           Change Photo
                         </button>
                         <span className="text-slate-200">|</span>
-                        <button className="text-xs font-bold text-rose-500 hover:underline">
+                        <button className="cursor-pointer text-xs font-bold text-rose-500 hover:underline">
                           Remove
                         </button>
                       </div>
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <button className="text-xs font-bold text-primary hover:underline">
+                  <button className="cursor-pointer text-xs font-bold text-primary hover:underline">
                     Enable 2FA
                   </button>
                 </div>
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                       until re-enabled.
                     </p>
                   </div>
-                  <button className="h-10 px-4 rounded-xl bg-white border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-100 transition-colors">
+                  <button className="cursor-pointer h-10 px-4 rounded-xl bg-white border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-100 transition-colors">
                     Deactivate
                   </button>
                 </div>
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                       wiped.
                     </p>
                   </div>
-                  <button className="h-10 px-4 rounded-xl bg-white text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors flex items-center gap-2">
+                  <button className="cursor-pointer h-10 px-4 rounded-xl bg-white text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors flex items-center gap-2">
                     <Trash2 className="h-4 w-4" />
                     Delete Permanently
                   </button>

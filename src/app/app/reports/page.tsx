@@ -98,7 +98,7 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="h-11 px-6 rounded-xl border font-bold text-sm bg-white hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <button className="cursor-pointer h-11 px-6 rounded-xl border font-bold text-sm bg-white hover:bg-slate-50 transition-colors flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Advanced Filters
           </button>
@@ -189,7 +189,7 @@ export default function ReportsPage() {
                   </select>
                 </div>
                 <div className="flex items-end">
-                  <button className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all">
+                  <button className="cursor-pointer w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all">
                     Process Request
                   </button>
                 </div>
@@ -230,7 +230,7 @@ export default function ReportsPage() {
                     <button
                       onClick={() => handleExport(report.type)}
                       className={cn(
-                        "h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-white transition-colors",
+                        "cursor-pointer h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-white transition-colors",
                         isExporting && "opacity-50 cursor-not-allowed",
                       )}
                     >
@@ -239,7 +239,7 @@ export default function ReportsPage() {
                   </div>
                 ))}
               </div>
-              <button className="w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline">
+              <button className="cursor-pointer w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline">
                 View Complete History
               </button>
             </CardContent>
@@ -258,7 +258,7 @@ export default function ReportsPage() {
                   Sunday night.
                 </p>
               </div>
-              <button className="w-full h-11 bg-white text-slate-900 font-bold rounded-xl text-sm transition-transform active:scale-95 mt-2">
+              <button className="cursor-pointer w-full h-11 bg-white text-slate-900 font-bold rounded-xl text-sm transition-transform active:scale-95 mt-2">
                 Enable Auto-Scheduler
               </button>
             </CardContent>

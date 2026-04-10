@@ -404,7 +404,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <button className="h-9 w-9 rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="cursor-pointer h-9 w-9 rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <ChevronRight className="h-4 w-4 text-slate-400" />
                   </button>
                 </div>

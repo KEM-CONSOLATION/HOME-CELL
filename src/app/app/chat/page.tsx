@@ -92,7 +92,7 @@ export default function CommunicationHub() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="h-11 px-6 rounded-xl border font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <button className="cursor-pointer h-11 px-6 rounded-xl border font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
             <History className="h-4 w-4" />
             Broadcast Archive
           </button>
@@ -115,7 +115,7 @@ export default function CommunicationHub() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all group",
+                    "cursor-pointer w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all group",
                     activeTab === tab.id
                       ? "bg-primary/5 border border-primary/20"
                       : "hover:bg-slate-50",
@@ -168,11 +168,11 @@ export default function CommunicationHub() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button className="h-10 rounded-lg border bg-white flex items-center justify-center gap-2 text-xs font-bold hover:bg-slate-50">
+                <button className="cursor-pointer h-10 rounded-lg border bg-white flex items-center justify-center gap-2 text-xs font-bold hover:bg-slate-50">
                   <Radio className="h-3.5 w-3.5 text-blue-500" />
                   SMS Channel
                 </button>
-                <button className="h-10 rounded-lg border border-primary/20 bg-primary/5 flex items-center justify-center gap-2 text-xs font-bold text-primary">
+                <button className="cursor-pointer h-10 rounded-lg border border-primary/20 bg-primary/5 flex items-center justify-center gap-2 text-xs font-bold text-primary">
                   <Mail className="h-3.5 w-3.5" />
                   Email Channel
                 </button>
@@ -200,7 +200,7 @@ export default function CommunicationHub() {
                   </p>
                   <button
                     onClick={handleSendBroadcast}
-                    className="h-12 px-8 rounded-2xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 transition-all"
+                    className="cursor-pointer h-12 px-8 rounded-2xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 transition-all"
                   >
                     <Send className="h-4 w-4" />
                     Launch Broadcast
@@ -274,7 +274,7 @@ export default function CommunicationHub() {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="h-8 w-8 flex items-center justify-center hover:bg-slate-200 rounded-lg">
+                          <button className="cursor-pointer h-8 w-8 flex items-center justify-center hover:bg-slate-200 rounded-lg">
                             <MoreVertical className="h-4 w-4 text-muted-foreground" />
                           </button>
                         </DropdownMenuTrigger>

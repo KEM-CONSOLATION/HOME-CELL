@@ -5,8 +5,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
   Badge,
 } from "@/components/ui/dashboard-cards";
 import { Button } from "@/components/ui/button";
@@ -22,25 +20,77 @@ import {
 import {
   Plus,
   Search,
-  Users,
   Calendar,
-  ChevronRight,
+  MoreHorizontal,
   Shield,
   Activity,
   UserCheck,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSyncExternalStore, useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MOCK_CELLS, MOCK_MEMBERS } from "@/data/mock-data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import {
+  getDeletedCellIds,
+  recordDeletedCellId,
+  subscribeToCellDeletions,
+} from "@/lib/cell-deletions";
+
+type CellRow = (typeof MOCK_CELLS)[number];
+
+let _cachedCellsSnapshot: CellRow[] | null = null;
+
+function getCellsSnapshot(): CellRow[] {
+  if (_cachedCellsSnapshot !== null) return _cachedCellsSnapshot;
+  const deleted = getDeletedCellIds();
+  _cachedCellsSnapshot = MOCK_CELLS.filter((c) => !deleted.includes(c.id));
+  return _cachedCellsSnapshot;
+}
+
+function subscribeAndInvalidateCells(onStoreChange: () => void) {
+  return subscribeToCellDeletions(() => {
+    _cachedCellsSnapshot = null;
+    onStoreChange();
+  });
+}
 
 export default function CellsDirectoryPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const cells = useSyncExternalStore(
+    subscribeAndInvalidateCells,
+    getCellsSnapshot,
+    () => MOCK_CELLS,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<CellRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const filteredCells = MOCK_CELLS.filter((cell) =>
+  const filteredCells = cells.filter((cell) =>
     cell.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    window.setTimeout(() => {
+      recordDeletedCellId(deleteTarget.id);
+      toast.success("Cell removed", {
+        description: `${deleteTarget.name} was removed from the directory.`,
+      });
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }, 400);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -66,7 +116,7 @@ export default function CellsDirectoryPage() {
         {[
           {
             label: "Total Active Cells",
-            value: MOCK_CELLS.length,
+            value: cells.length,
             icon: Shield,
             color: "text-blue-600",
             bg: "bg-blue-50",
@@ -178,13 +228,50 @@ export default function CellsDirectoryPage() {
                       <Badge variant="success">ACTIVE</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link
-                        href={`/app/cells/${cell.id}`}
-                        className="inline-flex h-10 px-4 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest items-center gap-2 hover:-translate-y-px transition-all"
-                      >
-                        Manage
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
+                      <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="cursor-pointer inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-background hover:bg-accent transition-colors"
+                              aria-label={`Actions for ${cell.name}`}
+                            >
+                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/app/cells/${cell.id}`}>
+                                View cell
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/app/members/new?cellId=${cell.id}`}>
+                                Add Member
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                toast.info("Edit settings", {
+                                  description: `Editing ${cell.name} will be available soon.`,
+                                })
+                              }
+                            >
+                              Edit settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setDeleteTarget(cell);
+                              }}
+                            >
+                              Delete cell
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -193,6 +280,17 @@ export default function CellsDirectoryPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onClose={() => !deleteLoading && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete this cell?"
+        description="Members and records tied to this fellowship may be affected. This cannot be undone."
+        itemName={deleteTarget?.name}
+        confirmLabel="Yes, delete cell"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

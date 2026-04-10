@@ -23,7 +23,7 @@ export function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalProps) {
       <div className="relative w-full max-w-[400px] bg-card border rounded-lg p-8 animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 h-10 w-10 flex items-center justify-center rounded-2xl border bg-background hover:bg-accent transition-colors"
+          className="cursor-pointer absolute right-6 top-6 h-10 w-10 flex items-center justify-center rounded-2xl border bg-background hover:bg-accent transition-colors"
         >
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
@@ -43,7 +43,7 @@ export function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalProps) {
         <div className="grid grid-cols-2 gap-3 mt-10">
           <button
             onClick={onClose}
-            className="h-14 rounded-2xl border font-bold text-sm hover:bg-accent transition-all active:scale-95"
+            className="cursor-pointer h-14 rounded-2xl border font-bold text-sm hover:bg-accent transition-all active:scale-95"
           >
             Stay Signed In
           </button>

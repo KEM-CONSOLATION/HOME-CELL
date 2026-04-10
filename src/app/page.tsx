@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const isValid = email.trim().length > 0 && password.length >= 6;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +98,8 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 disabled:hover:translate-y-0 group mt-4"
+          disabled={isLoading || !isValid}
+          className="cursor-pointer relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 disabled:hover:translate-y-0 group mt-4"
         >
           <div className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
@@ -112,15 +113,6 @@ export default function LoginPage() {
           </div>
         </button>
       </form>
-
-      <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-        <p className="text-xs text-muted-foreground font-medium">
-          Not assigned to a cell yet?{" "}
-          <Link href="#" className="text-primary font-bold hover:underline">
-            Request access
-          </Link>
-        </p>
-      </div>
     </AuthLayout>
   );
 }

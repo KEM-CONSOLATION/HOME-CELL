@@ -14,10 +14,8 @@ import {
   Phone,
   MapPin,
   Save,
-  Users,
   Calendar,
   Heart,
-  ChevronRight,
   UserCheck,
 } from "lucide-react";
 import Link from "next/link";
@@ -30,10 +28,19 @@ export default function NewMemberPage() {
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
 
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+
+  const isValid =
+    name.trim().length > 0 &&
+    phone.trim().length >= 7 &&
+    address.trim().length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid) return;
     setIsSaving(true);
-
     setTimeout(() => {
       toast.success("Member added successfully!", {
         description: "They are now visible in your cell directory.",
@@ -64,7 +71,6 @@ export default function NewMemberPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8 pb-10">
         <div className="grid gap-8">
-          {/* Basic Information */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -83,40 +89,44 @@ export default function NewMemberPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Full Name
+                    Full Name <span className="text-destructive">*</span>
                   </label>
                   <input
-                    required
                     type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Enter full name"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Phone Number
+                    Phone Number <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      required
                       type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       placeholder="080..."
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Residential Address
+                    Residential Address{" "}
+                    <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      required
                       type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                       placeholder="Enter full house address"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -124,7 +134,6 @@ export default function NewMemberPage() {
             </CardContent>
           </Card>
 
-          {/* Membership Details */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -145,7 +154,7 @@ export default function NewMemberPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Member Role
                   </label>
-                  <select className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
+                  <select className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
                     <option value="MEMBER">Regular Member</option>
                     <option value="WORKER">Worker</option>
                     <option value="LEADER">Leader</option>
@@ -160,7 +169,7 @@ export default function NewMemberPage() {
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="date"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -168,7 +177,6 @@ export default function NewMemberPage() {
             </CardContent>
           </Card>
 
-          {/* Next of Kin / Emergency */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -192,7 +200,7 @@ export default function NewMemberPage() {
                   <input
                     type="text"
                     placeholder="Contact person name"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2">
@@ -202,7 +210,7 @@ export default function NewMemberPage() {
                   <input
                     type="tel"
                     placeholder="Contact person phone"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
               </div>
@@ -213,14 +221,14 @@ export default function NewMemberPage() {
         <div className="flex items-center justify-end gap-4 pt-6">
           <Link
             href="/app/members"
-            className="px-6 py-3 rounded-xl border font-bold text-sm hover:bg-slate-50 transition-colors"
+            className="px-6 py-3 rounded-lg border font-bold text-sm hover:bg-slate-50 transition-colors"
           >
             Cancel
           </Link>
           <button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 transition-all"
+            disabled={isSaving || !isValid}
+            className="cursor-pointer px-8 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
               <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

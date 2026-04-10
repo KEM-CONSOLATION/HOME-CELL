@@ -39,7 +39,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between p-3 rounded-2xl border bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 transition-all hover:border-primary/50 group",
+          "cursor-pointer w-full flex items-center justify-between p-3 rounded-2xl border bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 transition-all hover:border-primary/50 group",
           isOpen && "ring-2 ring-primary/20 border-primary",
         )}
       >
@@ -80,7 +80,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
                   key={state.id}
                   onClick={() => handleSelect(state)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-accent",
+                    "cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-accent",
                     state.id === currentState.id
                       ? "bg-primary/5 text-primary font-semibold"
                       : "text-muted-foreground",
@@ -106,7 +106,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
               ))}
             </div>
             <div className="mt-2 pt-2 border-t px-2">
-              <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
+              <button className="cursor-pointer w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
                 <Globe className="h-4 w-4" />
                 Global View (All States)
               </button>

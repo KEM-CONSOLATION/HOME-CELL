@@ -162,7 +162,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onCloseMobile}
-          className="absolute right-3 top-3 h-10 w-10 rounded-xl border bg-background hover:bg-accent transition-colors flex items-center justify-center"
+          className="cursor-pointer absolute right-3 top-3 h-10 w-10 rounded-xl border bg-background hover:bg-accent transition-colors flex items-center justify-center"
           aria-label="Close sidebar"
         >
           <ChevronLeft className="h-5 w-5 text-muted-foreground" />
@@ -253,7 +253,7 @@ export function Sidebar({
         <button
           onClick={() => setShowLogoutConfirm(true)}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive transition-all hover:bg-destructive/10",
+            "cursor-pointer w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive transition-all hover:bg-destructive/10",
             isCollapsed && "justify-center px-0",
           )}
         >

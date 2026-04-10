@@ -8,6 +8,20 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
   reactCompiler: true,
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "github.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+        pathname: "/**",
+      },
+    ],
+  },
   turbopack: {
     // Ensure Turbopack resolves from this project (not a parent lockfile).
     root: __dirname,

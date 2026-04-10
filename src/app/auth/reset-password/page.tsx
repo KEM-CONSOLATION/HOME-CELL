@@ -12,6 +12,7 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const isValid = password.length >= 6 && password === confirmPassword;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,8 +91,8 @@ export default function ResetPasswordPage() {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group mt-4 px-3"
+          disabled={isLoading || !isValid}
+          className="cursor-pointer relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group mt-4 px-3"
         >
           <div className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (

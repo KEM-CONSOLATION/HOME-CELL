@@ -29,10 +29,19 @@ export default function NewConvertPage() {
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
 
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+
+  const isValid =
+    name.trim().length > 0 &&
+    phone.trim().length >= 7 &&
+    address.trim().length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid) return;
     setIsSaving(true);
-
     setTimeout(() => {
       toast.success("Convert registered!", {
         description: "They have been added to the follow-up list.",
@@ -66,7 +75,6 @@ export default function NewConvertPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8 pb-10">
         <div className="grid gap-8">
-          {/* Personality & Contact */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -85,40 +93,43 @@ export default function NewConvertPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Full Name
+                    Full Name <span className="text-destructive">*</span>
                   </label>
                   <input
-                    required
                     type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Enter full name"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Phone Number
+                    Phone Number <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      required
                       type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       placeholder="080..."
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Current Address
+                    Current Address <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      required
                       type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                       placeholder="Where they currently reside"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -126,7 +137,6 @@ export default function NewConvertPage() {
             </CardContent>
           </Card>
 
-          {/* Spiritual Milestones */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -151,7 +161,7 @@ export default function NewConvertPage() {
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="date"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -159,7 +169,7 @@ export default function NewConvertPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     How were they won?
                   </label>
-                  <select className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
+                  <select className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
                     <option value="OUTREACH">Global Outreach</option>
                     <option value="FRIEND">Invitation by Friend</option>
                     <option value="RADIO">Radio/TV Broadcast</option>
@@ -170,7 +180,6 @@ export default function NewConvertPage() {
             </CardContent>
           </Card>
 
-          {/* Follow-up Assignment */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -194,7 +203,7 @@ export default function NewConvertPage() {
                   <input
                     type="text"
                     defaultValue="Grace Cell"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground font-medium cursor-not-allowed"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-100 text-muted-foreground font-medium cursor-not-allowed"
                     readOnly
                   />
                 </div>
@@ -205,7 +214,7 @@ export default function NewConvertPage() {
                   <input
                     type="text"
                     placeholder="Leader responsible"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
@@ -216,7 +225,7 @@ export default function NewConvertPage() {
                     <FileText className="absolute left-4 top-4 h-4 w-4 text-muted-foreground" />
                     <textarea
                       placeholder="Any specific needs or prayer points?"
-                      className="w-full min-h-[120px] pl-12 pr-4 py-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium resize-none"
+                      className="w-full min-h-[120px] pl-12 pr-4 py-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium resize-none"
                     />
                   </div>
                 </div>
@@ -228,14 +237,14 @@ export default function NewConvertPage() {
         <div className="flex items-center justify-end gap-4 pt-6">
           <Link
             href="/app/converts"
-            className="px-6 py-3 rounded-xl border font-bold text-sm hover:bg-slate-50 transition-colors"
+            className="px-6 py-3 rounded-lg border font-bold text-sm hover:bg-slate-50 transition-colors"
           >
             Cancel
           </Link>
           <button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 transition-all"
+            disabled={isSaving || !isValid}
+            className="cursor-pointer px-8 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
               <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

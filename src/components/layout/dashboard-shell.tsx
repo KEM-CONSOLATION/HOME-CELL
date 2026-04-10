@@ -19,7 +19,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             aria-label="Close sidebar"
-            className="absolute inset-0 bg-black/40"
+            className="cursor-pointer absolute inset-0 bg-black/40"
             onClick={() => setMobileSidebarOpen(false)}
           />
           <div className="absolute left-0 top-0 h-dvh">

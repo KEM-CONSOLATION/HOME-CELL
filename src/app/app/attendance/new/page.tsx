@@ -40,8 +40,11 @@ export default function NewAttendancePage() {
     );
   };
 
+  const isValid = date.trim().length > 0 && presentIds.length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid) return;
     toast.success("Attendance submitted successfully!", {
       description: `Report for ${date} has been sent to leadership.`,
     });
@@ -177,7 +180,12 @@ export default function NewAttendancePage() {
                     {presentIds.length + firstTimers}
                   </span>
                 </div>
-                <Button type="submit" className="w-full" size="lg">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={!isValid}
+                >
                   <Save />
                   Save Report
                 </Button>

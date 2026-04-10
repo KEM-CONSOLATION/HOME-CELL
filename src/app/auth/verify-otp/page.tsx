@@ -103,7 +103,7 @@ export default function VerifyOTPPage() {
       <div className="mt-8 text-center">
         <p className="text-sm text-muted-foreground">
           Haven&apos;t received the code?{" "}
-          <button className="ml-1 text-primary font-bold hover:underline">
+          <button className="cursor-pointer ml-1 text-primary font-bold hover:underline">
             Resend Code
           </button>
         </p>

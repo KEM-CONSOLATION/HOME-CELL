@@ -104,7 +104,7 @@ export default function CompliancePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRemindAll}
-            className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2"
+            className="cursor-pointer h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2"
           >
             <Bell className="h-4 w-4" />
             Remind Non-Compliant
@@ -183,7 +183,7 @@ export default function CompliancePage() {
                   className="h-10 w-64 pl-10 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all text-xs font-bold"
                 />
               </div>
-              <button className="h-10 px-4 rounded-xl border flex items-center gap-2 text-xs font-bold hover:bg-slate-50 transition-colors">
+              <button className="cursor-pointer h-10 px-4 rounded-xl border flex items-center gap-2 text-xs font-bold hover:bg-slate-50 transition-colors">
                 <Filter className="h-4 w-4" />
                 Filter
               </button>
@@ -269,7 +269,7 @@ export default function CompliancePage() {
                 <div className="flex items-center gap-3">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="h-9 w-9 flex items-center justify-center rounded-lg border bg-white hover:bg-slate-100 transition-colors">
+                      <button className="cursor-pointer h-9 w-9 flex items-center justify-center rounded-lg border bg-white hover:bg-slate-100 transition-colors">
                         <MoreVertical className="h-4 w-4 text-muted-foreground" />
                       </button>
                     </DropdownMenuTrigger>
@@ -321,7 +321,7 @@ export default function CompliancePage() {
                 weekly reports. Send a global nudge to resolve this.
               </p>
             </div>
-            <button className="relative z-10 px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform shrink-0">
+            <button className="cursor-pointer relative z-10 px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform shrink-0">
               Broadcast Nudge
               <ArrowRight className="h-4 w-4" />
             </button>

@@ -1,15 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useStore } from "@/store";
-import {
-  Bell,
-  Search,
-  ChevronDown,
-  Menu,
-  LogOut,
-  Settings,
-  User,
-} from "lucide-react";
+import { Bell, ChevronDown, Menu, LogOut, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -20,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { GlobalSearch } from "@/components/layout/global-search";
 
 export function TopNav({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const { user } = useStore();
@@ -33,30 +27,25 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   };
 
   return (
-    <header className="flex h-16 items-center border-b bg-card/50 backdrop-blur-md px-6 sticky top-0 z-10">
-      <div className="flex flex-1 items-center gap-4">
+    <header className="flex h-16 items-center border-b border-border/60 bg-card/50 backdrop-blur-md px-4 sm:px-6 sticky top-0 z-30">
+      <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
         <button
           type="button"
           onClick={onOpenSidebar}
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border hover:bg-accent transition-colors"
+          className="cursor-pointer md:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border hover:bg-accent transition-colors"
           aria-label="Open sidebar"
         >
           <Menu className="h-5 w-5 text-muted-foreground" />
         </button>
-        <div className="relative w-full max-w-md hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search for members, cells, or reports..."
-            className="h-10 w-full rounded-xl border bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-          />
+        <div className="min-w-0 flex-1 md:flex md:max-w-none md:justify-start">
+          <GlobalSearch />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border hover:bg-accent transition-colors">
+            <button className="cursor-pointer relative flex h-10 w-10 items-center justify-center rounded-xl border hover:bg-accent transition-colors">
               <Bell className="h-5 w-5 text-muted-foreground" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary border-2 border-card" />
             </button>
@@ -72,7 +61,7 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 pl-2 border-l ml-2 rounded-xl pr-2 py-1 hover:bg-accent/60 transition-colors">
+            <button className="cursor-pointer flex items-center gap-3 pl-2 border-l ml-2 rounded-xl pr-2 py-1 hover:bg-accent/60 transition-colors">
               <div className="flex flex-col items-end hidden sm:flex">
                 <span className="text-sm font-semibold leading-none">
                   {user?.name}
@@ -83,9 +72,11 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-medium overflow-hidden border-2 border-background">
                 {user?.avatar ? (
-                  <img
+                  <Image
                     src={user.avatar}
-                    alt={user.name}
+                    alt={user?.name ?? "Account"}
+                    width={40}
+                    height={40}
                     className="h-full w-full object-cover"
                   />
                 ) : (

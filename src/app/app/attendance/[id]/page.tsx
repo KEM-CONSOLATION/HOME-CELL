@@ -60,7 +60,7 @@ export default function AttendanceDetailsPage() {
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
           Back to Reports
         </Link>
-        <button className="h-10 px-4 rounded-xl border bg-white font-bold text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors">
+        <button className="cursor-pointer h-10 px-4 rounded-xl border bg-white font-bold text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors">
           <Printer className="h-4 w-4 text-muted-foreground" />
           Print Report
         </button>

@@ -76,7 +76,7 @@ export function BibleQuoteRotator() {
               <button
                 type="button"
                 onClick={prev}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className="cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 aria-label="Previous verse"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -84,7 +84,7 @@ export function BibleQuoteRotator() {
               <button
                 type="button"
                 onClick={next}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className="cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 aria-label="Next verse"
               >
                 <ChevronRight className="h-4 w-4" />

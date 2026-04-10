@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "@/store";
 import {
   Card,
   CardContent,
@@ -13,13 +12,9 @@ import {
   ArrowLeft,
   MapPin,
   Users,
-  Calendar,
-  ShieldCheck,
-  History,
   TrendingUp,
   UserPlus,
-  ArrowUpRight,
-  MoreVertical,
+  MoreHorizontal,
   ChevronRight,
   UserCheck,
   Edit3,
@@ -28,7 +23,8 @@ import {
   Activity,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MOCK_CELLS, MOCK_MEMBERS } from "@/data/mock-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -39,12 +35,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { getDeletedCellIds, recordDeletedCellId } from "@/lib/cell-deletions";
 
 export default function CellDetailsPage() {
   const params = useParams();
   const idParam = (params as { id?: string | string[] } | null)?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  const router = useRouter();
   const cell = MOCK_CELLS.find((c) => c.id === id);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    if (getDeletedCellIds().includes(id)) {
+      router.replace("/app/cells");
+    }
+  }, [id, router]);
 
   if (!cell) {
     return (
@@ -93,48 +101,6 @@ export default function CellDetailsPage() {
                 12 Main St, Calabar Metropolis • Zone A
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="h-11 w-11 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center justify-center">
-                  <MoreVertical className="h-5 w-5 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem
-                  onClick={() =>
-                    toast.info("Edit coming soon", {
-                      description: `Edit settings for ${cell.name}`,
-                    })
-                  }
-                >
-                  <Edit3 className="mr-2 size-4" />
-                  Edit Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    toast.success("Reassign flow coming soon", {
-                      description: `Reassign leader for ${cell.name}`,
-                    })
-                  }
-                >
-                  <UserCheck className="mr-2 size-4" />
-                  Reassign Leader
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() =>
-                    toast.error("Delete not enabled yet", {
-                      description: "This is a mock screen for now.",
-                    })
-                  }
-                >
-                  Delete Cell
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -263,7 +229,7 @@ export default function CellDetailsPage() {
                 </div>
               </div>
               <div className="space-y-3">
-                <button className="w-full h-11 rounded-xl bg-white/10 border border-white/10 text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-all">
+                <button className="cursor-pointer w-full h-11 rounded-xl bg-white/10 border border-white/10 text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-all">
                   <MessageCircle className="h-4 w-4" />
                   Contact via WhatsApp
                 </button>
@@ -283,7 +249,7 @@ export default function CellDetailsPage() {
                 Calabar Metropolis, Zone A Sub-sector
               </p>
             </div>
-            <button className="relative z-10 mt-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
+            <button className="cursor-pointer relative z-10 mt-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
               View Full Area
             </button>
           </Card>
@@ -313,6 +279,29 @@ export default function CellDetailsPage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deleteOpen}
+        onClose={() => !deleteLoading && setDeleteOpen(false)}
+        onConfirm={() => {
+          if (!cell) return;
+          setDeleteLoading(true);
+          window.setTimeout(() => {
+            recordDeletedCellId(cell.id);
+            toast.success("Cell removed", {
+              description: `${cell.name} was removed from the directory.`,
+            });
+            setDeleteLoading(false);
+            setDeleteOpen(false);
+            router.push("/app/cells");
+          }, 400);
+        }}
+        title="Delete this cell?"
+        description="Members and history tied to this fellowship may be affected. This cannot be undone."
+        itemName={cell.name}
+        confirmLabel="Yes, delete cell"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }

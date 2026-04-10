@@ -31,10 +31,15 @@ export default function NewCellPage() {
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
 
+  const [cellName, setCellName] = useState("");
+  const [cellAddress, setCellAddress] = useState("");
+
+  const isValid = cellName.trim().length > 0 && cellAddress.trim().length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValid) return;
     setIsSaving(true);
-
     setTimeout(() => {
       toast.success("New Cell Created!", {
         description: "Fellowship center registered and leader assigned.",
@@ -91,13 +96,14 @@ export default function NewCellPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Cell Name
+                    Cell Name <span className="text-destructive">*</span>
                   </label>
                   <input
-                    required
                     type="text"
+                    value={cellName}
+                    onChange={(e) => setCellName(e.target.value)}
                     placeholder="e.g. Grace Fellowship"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2">
@@ -117,10 +123,11 @@ export default function NewCellPage() {
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      required
                       type="text"
+                      value={cellAddress}
+                      onChange={(e) => setCellAddress(e.target.value)}
                       placeholder="Full street address in your area"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -211,8 +218,8 @@ export default function NewCellPage() {
           </Link>
           <button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 transition-all"
+            disabled={isSaving || !isValid}
+            className="cursor-pointer px-8 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
               <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

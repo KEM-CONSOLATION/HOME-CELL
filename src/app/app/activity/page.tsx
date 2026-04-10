@@ -125,7 +125,7 @@ export default function ActivityAuditPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="h-11 px-6 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <button className="cursor-pointer h-11 px-6 rounded-xl border bg-white font-bold text-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export Audit Trial
           </button>
@@ -258,7 +258,7 @@ export default function ActivityAuditPage() {
                     </div>
 
                     <div className="flex flex-col items-end gap-3">
-                      <button className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:border-primary/20 transition-all">
+                      <button className="cursor-pointer h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:border-primary/20 transition-all">
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </button>
                       <div className="text-[9px] font-black text-slate-300 uppercase select-none">
@@ -273,7 +273,7 @@ export default function ActivityAuditPage() {
                 <p className="text-xs font-bold text-muted-foreground">
                   End of current trail. Load more historical data.
                 </p>
-                <button className="mt-4 px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:scale-105 transition-transform">
+                <button className="cursor-pointer mt-4 px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:scale-105 transition-transform">
                   Load archive for March 2024
                 </button>
               </div>

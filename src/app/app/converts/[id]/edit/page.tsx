@@ -61,6 +61,8 @@ export default function EditConvertPage() {
 
   const registeredDate = convert.registeredAt.slice(0, 10);
 
+  const isValid = !!(convert.name?.trim() && convert.phone?.trim());
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
@@ -237,8 +239,8 @@ export default function EditConvertPage() {
           </Link>
           <button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 transition-all"
+            disabled={isSaving || !isValid}
+            className="cursor-pointer px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
               <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

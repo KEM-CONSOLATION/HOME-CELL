@@ -185,11 +185,11 @@ export default function MemberDetailsPage() {
               </div>
 
               <div className="pt-6 border-t border-slate-50 flex gap-2">
-                <button className="flex-1 h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors">
+                <button className="cursor-pointer flex-1 h-10 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors">
                   <MessageCircle className="h-3.5 w-3.5" />
                   WhatsApp
                 </button>
-                <button className="flex-1 h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+                <button className="cursor-pointer flex-1 h-10 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
                   <Mail className="h-3.5 w-3.5" />
                   Email
                 </button>
@@ -270,7 +270,7 @@ export default function MemberDetailsPage() {
                   </div>
                 ))}
               </div>
-              <button className="w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline flex items-center justify-center gap-2">
+              <button className="cursor-pointer w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline flex items-center justify-center gap-2">
                 View Full Attendance Record
                 <ChevronRight className="h-4 w-4" />
               </button>

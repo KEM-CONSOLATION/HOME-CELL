@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -65,8 +66,8 @@ export default function ForgotPasswordPage() {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group mt-4 px-3"
+          disabled={isLoading || !isValid}
+          className="cursor-pointer relative w-full h-14 bg-primary text-primary-foreground rounded-2xl font-bold overflow-hidden transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group mt-4 px-3"
         >
           <div className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
