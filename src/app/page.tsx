@@ -6,8 +6,8 @@ import { useState } from "react";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { MOCK_USER } from "@/data/mock-data";
 import { AuthLayout } from "@/components/layout/auth-layout";
+import api from "@/config/axios";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,15 +22,36 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      setToken("dummy-access", "dummy-refresh");
-      setUser(MOCK_USER);
+    try {
+      const response = await api.post("/token/", {
+        email,
+        password,
+      });
+
+      const { access, refresh, user } = response.data;
+
+      setToken(access, refresh);
+      setUser(user ?? null);
+
       toast.success("Welcome back!", {
         description: "You have signed in successfully.",
       });
       router.push("/app");
+    } catch (error: unknown) {
+      console.error("Login Error:", error);
+      const err = error as {
+        response?: { data?: { detail?: string; message?: string } };
+      };
+      const message =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        "Invalid credentials. Please try again.";
+      toast.error("Authentication failed", {
+        description: message,
+      });
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
   return (

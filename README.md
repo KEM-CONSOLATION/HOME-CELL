@@ -33,7 +33,6 @@ Create a `.env.local` file in the project root and define (optional):
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=
-NEXT_PUBLIC_INVOICE_API_BASE_URL=
 ```
 
 If set, these values are used by `src/pages/api/proxy.ts` to forward requests.

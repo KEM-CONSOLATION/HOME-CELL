@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "@/store";
 import {
   Card,
   CardContent,
@@ -10,10 +9,9 @@ import {
 } from "@/components/ui/dashboard-cards";
 import {
   ArrowLeft,
-  Plus,
   MapPin,
-  Clock,
   ShieldCheck,
+  Save,
   Users,
   Building2,
   Calendar,
@@ -21,16 +19,19 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { createCell } from "@/lib/cells-api";
+import { useRouter, useParams } from "next/navigation";
+import { getCell, updateCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
 
 type ZoneFieldMode = "loading" | "select" | "manual";
 
-export default function NewCellPage() {
+export default function EditCellPage() {
   const router = useRouter();
-  const { user } = useStore();
+  const params = useParams();
+  const idParam = params?.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const [cellName, setCellName] = useState("");
@@ -40,24 +41,6 @@ export default function NewCellPage() {
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
   const [zoneFieldMode, setZoneFieldMode] = useState<ZoneFieldMode>("loading");
 
-  useEffect(() => {
-    void listZones()
-      .then((rows) => {
-        if (rows.length > 0) {
-          setZoneOptions(
-            [...rows].sort((a, b) => a.name.localeCompare(b.name)),
-          );
-          setZoneFieldMode("select");
-        } else {
-          setZoneFieldMode("manual");
-        }
-      })
-      .catch(() => {
-        setZoneFieldMode("manual");
-        toast.error("Could not load zones. Enter zone ID manually.");
-      });
-  }, []);
-
   const zoneNum = Number.parseInt(zoneId, 10);
   const zoneOk =
     zoneFieldMode !== "loading" &&
@@ -66,13 +49,60 @@ export default function NewCellPage() {
   const isValid =
     cellName.trim().length > 0 && cellAddress.trim().length > 0 && zoneOk;
 
+  useEffect(() => {
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    void (async () => {
+      try {
+        const [cell, zonesList] = await Promise.all([
+          getCell(id),
+          listZones().catch(() => [] as Zone[]),
+        ]);
+        if (cancelled) return;
+        setCellName(cell.name);
+        setCellAddress(cell.address ?? "");
+        setZoneId(String(cell.zone ?? ""));
+        setCellLeaderId(
+          cell.cell_leader != null ? String(cell.cell_leader) : "",
+        );
+        if (zonesList.length > 0) {
+          const sorted = [...zonesList].sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
+          setZoneOptions(sorted);
+          const z = cell.zone;
+          const hasCurrent = z != null && sorted.some((row) => row.id === z);
+          setZoneFieldMode(hasCurrent ? "select" : "manual");
+        } else {
+          setZoneFieldMode("manual");
+        }
+      } catch (error) {
+        console.error("Failed to fetch cell:", error);
+        if (!cancelled) {
+          toast.error("Failed to load cell data");
+          router.push("/app/cells");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || !id) return;
     setIsSaving(true);
 
     try {
-      await createCell({
+      await updateCell(id, {
         name: cellName,
         address: cellAddress,
         latitude: "0",
@@ -83,17 +113,18 @@ export default function NewCellPage() {
           : null,
       });
 
-      toast.success("New Cell Created!", {
-        description: "Fellowship center registered and leader assigned.",
+      toast.success("Cell Updated", {
+        description:
+          "Fellowship center details have been updated successfully.",
       });
-      router.push("/app/cells");
+      router.push(`/app/cells/${id}`);
     } catch (error: unknown) {
       console.error("Save error:", error);
       const err = error as { response?: { data?: { detail?: string } } };
       const message =
         err.response?.data?.detail ||
-        "Failed to create cell. Please check the details and try again.";
-      toast.error("Creation failed", {
+        "Failed to update cell. Please try again.";
+      toast.error("Update failed", {
         description: String(message),
       });
     } finally {
@@ -101,25 +132,35 @@ export default function NewCellPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse">
+          Loading cell data...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="flex items-center justify-between">
         <Link
-          href="/app/cells"
+          href={`/app/cells/${id}`}
           className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Fellowship Cells
+          Back to Cell Details
         </Link>
       </div>
 
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">
-          Establish New Cell
+          Edit Fellowship Cell
         </h1>
         <p className="text-muted-foreground">
-          Register a new fellowship center and assign a primary leader for{" "}
-          {user?.unitName}.
+          Update the location and leadership for {cellName}.
         </p>
       </div>
 
@@ -181,7 +222,6 @@ export default function NewCellPage() {
                       min={0}
                       value={zoneId}
                       onChange={(e) => setZoneId(e.target.value)}
-                      placeholder="Zone ID"
                       className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   )}
@@ -233,7 +273,7 @@ export default function NewCellPage() {
                       min={0}
                       value={cellLeaderId}
                       onChange={(e) => setCellLeaderId(e.target.value)}
-                      placeholder="Optional — numeric user ID"
+                      placeholder="Optional"
                       className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
@@ -251,29 +291,6 @@ export default function NewCellPage() {
                     </select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Meeting Time
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="time"
-                      defaultValue="17:00"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Host Name (If different)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Papa John's Residence"
-                    className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -281,7 +298,7 @@ export default function NewCellPage() {
 
         <div className="flex items-center justify-end gap-4 pt-6">
           <Link
-            href="/app/cells"
+            href={`/app/cells/${id}`}
             className="px-6 py-3 rounded-xl border font-bold text-sm hover:bg-slate-50 transition-colors"
           >
             Cancel
@@ -292,11 +309,11 @@ export default function NewCellPage() {
             className="cursor-pointer px-8 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
-              <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary rounded-full animate-spin" />
             ) : (
-              <Plus className="h-4 w-4" />
+              <Save className="h-4 w-4" />
             )}
-            Create Cell Center
+            Save Changes
           </button>
         </div>
       </form>

@@ -26,9 +26,8 @@ import {
   CheckCircle,
   MoreHorizontal,
 } from "lucide-react";
-import { MOCK_NEW_CONVERTS, MOCK_CELLS } from "@/data/mock-data";
-import type { NewConvert } from "@/data/mock-data";
-import { useSyncExternalStore, useState } from "react";
+import type { NewConvert } from "@/types/models";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -39,44 +38,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import {
-  getDeletedConvertIds,
-  recordDeletedConvertId,
-  subscribeToConvertDeletions,
-} from "@/lib/convert-deletions";
-
-let _cachedConvertsSnapshot: NewConvert[] | null = null;
-
-function getConvertsSnapshot(): NewConvert[] {
-  if (_cachedConvertsSnapshot !== null) return _cachedConvertsSnapshot;
-  const deleted = getDeletedConvertIds();
-  _cachedConvertsSnapshot = MOCK_NEW_CONVERTS.filter(
-    (c) => !deleted.includes(c.id),
-  );
-  return _cachedConvertsSnapshot;
-}
-
-function subscribeAndInvalidateConverts(onStoreChange: () => void) {
-  return subscribeToConvertDeletions(() => {
-    _cachedConvertsSnapshot = null;
-    onStoreChange();
-  });
-}
-
-function cellLabel(assignedCellId?: string) {
-  return MOCK_CELLS.find((c) => c.id === assignedCellId)?.name ?? "Grace Cell";
-}
+import { listCells } from "@/lib/cells-api";
 
 export default function ConvertsPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const converts = useSyncExternalStore(
-    subscribeAndInvalidateConverts,
-    getConvertsSnapshot,
-    () => MOCK_NEW_CONVERTS,
-  );
+  const [converts] = useState<NewConvert[]>([]);
+  const [cellNames, setCellNames] = useState<Map<number, string>>(new Map());
   const [deleteTarget, setDeleteTarget] = useState<NewConvert | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    void listCells()
+      .then((cells) => {
+        const m = new Map<number, string>();
+        cells.forEach((c) => m.set(c.id, c.name));
+        setCellNames(m);
+      })
+      .catch(() => setCellNames(new Map()));
+  }, []);
+
+  const cellLabel = useMemo(() => {
+    return (assignedCellId?: string) => {
+      if (!assignedCellId) return "—";
+      const n = Number(assignedCellId);
+      if (!Number.isFinite(n)) return assignedCellId;
+      return cellNames.get(n) ?? `Cell #${n}`;
+    };
+  }, [cellNames]);
 
   const filteredConverts = converts.filter(
     (nc) =>
@@ -88,7 +77,6 @@ export default function ConvertsPage() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     window.setTimeout(() => {
-      recordDeletedConvertId(deleteTarget.id);
       toast.success("Convert removed", {
         description: `${deleteTarget.name} was removed from the list.`,
       });
@@ -118,19 +106,19 @@ export default function ConvertsPage() {
         {[
           {
             label: "Pending Assignment",
-            value: "12",
+            value: "0",
             icon: Clock,
             accent: "bg-blue-500",
           },
           {
             label: "In Progress",
-            value: "24",
+            value: "0",
             icon: MessageCircle,
             accent: "bg-amber-500",
           },
           {
             label: "Fully Integrated",
-            value: "156",
+            value: "0",
             icon: CheckCircle,
             accent: "bg-emerald-500",
           },
@@ -279,6 +267,13 @@ export default function ConvertsPage() {
               ))}
             </TableBody>
           </Table>
+          {filteredConverts.length === 0 && (
+            <p className="text-center text-muted-foreground py-12 text-sm px-4">
+              No converts listed yet. Wire a converts API to populate this
+              table; cell names use live data from your cells API when
+              available.
+            </p>
+          )}
         </CardContent>
       </Card>
 

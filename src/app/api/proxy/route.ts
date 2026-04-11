@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 const SERVICE_URLS = {
   base: process.env.NEXT_PUBLIC_API_BASE_URL,
-  invoice: process.env.NEXT_PUBLIC_INVOICE_API_BASE_URL,
 };
 
 function isFormDataContentType(contentType: string): boolean {

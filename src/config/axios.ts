@@ -33,7 +33,7 @@ const TOKEN_EXPIRED_STATUSES = [401, 403, 419, 498];
 async function callRefresh(refreshTokenValue: string): Promise<string | null> {
   const url = `/api/proxy?${new URLSearchParams({
     service: "base",
-    endpoint: "/auth/refresh/",
+    endpoint: "/token/refresh/",
   }).toString()}`;
   const res = await fetch(url, {
     method: "POST",
@@ -45,9 +45,33 @@ async function callRefresh(refreshTokenValue: string): Promise<string | null> {
   return data.access ?? null;
 }
 
+axios.defaults.baseURL = "/api/proxy";
+
 axios.interceptors.request.use(
   async (config) => {
     const accessToken = useStore.getState().access ?? null;
+
+    // If it's a relative URL and not already hitting the proxy,
+    // we need to make sure it's formatted as a proxy request.
+    // However, if we set baseURL to /api/proxy, axios will prepend it.
+    // We just need to ensure the query params are set correctly.
+
+    if (
+      config.url &&
+      !config.url.startsWith("http") &&
+      !config.url.includes("service=")
+    ) {
+      const endpoint = config.url.startsWith("/")
+        ? config.url
+        : `/${config.url}`;
+      config.url = ""; // We'll put everything in params
+      config.params = {
+        ...config.params,
+        service: "base",
+        endpoint: endpoint,
+      };
+    }
+
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }

@@ -22,9 +22,8 @@ import {
   MapPin,
   UserCircle2,
 } from "lucide-react";
-import { MOCK_MEMBERS } from "@/data/mock-data";
-import type { Member } from "@/data/mock-data";
-import { useSyncExternalStore, useState } from "react";
+import type { Member } from "@/types/models";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -34,36 +33,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import {
-  getDeletedMemberIds,
-  recordDeletedMemberId,
-  subscribeToMemberDeletions,
-} from "@/lib/member-deletions";
-
-let _cachedSnapshot: Member[] | null = null;
-
-function getMembersSnapshot(): Member[] {
-  if (_cachedSnapshot !== null) return _cachedSnapshot;
-  const deleted = getDeletedMemberIds();
-  _cachedSnapshot = MOCK_MEMBERS.filter((m) => !deleted.includes(m.id));
-  return _cachedSnapshot;
-}
-
-function subscribeAndInvalidate(onStoreChange: () => void) {
-  return subscribeToMemberDeletions(() => {
-    _cachedSnapshot = null;
-    onStoreChange();
-  });
-}
 
 export default function MembersPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const members = useSyncExternalStore(
-    subscribeAndInvalidate,
-    getMembersSnapshot,
-    () => MOCK_MEMBERS,
-  );
+  const [members] = useState<Member[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -77,7 +51,6 @@ export default function MembersPage() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     window.setTimeout(() => {
-      recordDeletedMemberId(deleteTarget.id);
       toast.success("Member removed", {
         description: `${deleteTarget.name} was deleted from the directory.`,
       });
@@ -223,9 +196,10 @@ export default function MembersPage() {
           {filteredMembers.length === 0 && (
             <div className="py-12 text-center">
               <UserCircle2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No members found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filters.
+              <h3 className="mt-4 text-lg font-semibold">No members yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                This directory will fill when your backend exposes a members API
+                and the app is wired to it.
               </p>
             </div>
           )}

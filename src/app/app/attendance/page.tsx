@@ -1,26 +1,18 @@
 "use client";
 
 import { useStore } from "@/store";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-} from "@/components/ui/dashboard-cards";
+import { Card, CardContent, CardHeader } from "@/components/ui/dashboard-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, ChevronRight, Filter } from "lucide-react";
+import { Search, Plus, Filter } from "lucide-react";
 import Link from "next/link";
-import { MOCK_ATTENDANCE } from "@/data/mock-data";
 
 export default function AttendanceListPage() {
   const { user } = useStore();
@@ -73,76 +65,12 @@ export default function AttendanceListPage() {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {MOCK_ATTENDANCE.map((record) => (
-                <TableRow key={record.id} className="hover:bg-slate-50/50">
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-2xl bg-primary/10 flex flex-col items-center justify-center text-primary border border-primary/20">
-                        <span className="text-[10px] font-black uppercase leading-none">
-                          {new Date(record.date).toLocaleString("default", {
-                            month: "short",
-                          })}
-                        </span>
-                        <span className="text-lg font-bold leading-tight mt-0.5">
-                          {new Date(record.date).getDate()}
-                        </span>
-                      </div>
-                      <div className="text-sm">
-                        <p className="font-bold">
-                          {new Date(record.date).toLocaleDateString(undefined, {
-                            dateStyle: "medium",
-                          })}
-                        </p>
-                        <p className="text-xs text-muted-foreground font-medium">
-                          Week meeting report
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-bold">
-                        {record.cellId === "cell-1"
-                          ? "Grace Cell"
-                          : "Mercy Cell"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {record.cellId}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="text-lg font-bold">
-                      {record.totalAttendance}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="text-lg font-bold text-purple-600">
-                      {record.newConverts}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-emerald-50 text-emerald-600 border-none">
-                      SUBMITTED
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="icon"
-                      className="bg-slate-900 text-white hover:bg-slate-800 hover:text-white hover:scale-105"
-                    >
-                      <Link href={`/app/attendance/${record.id}`}>
-                        <ChevronRight />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+            <TableBody />
           </Table>
+          <p className="text-center text-muted-foreground py-12 text-sm px-4">
+            No attendance records yet. This list will populate when an
+            attendance API is connected.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -26,10 +26,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MOCK_MEMBERS, MOCK_CELLS, MOCK_NEW_CONVERTS } from "@/data/mock-data";
-import { getDeletedMemberIds } from "@/lib/member-deletions";
+import { listCells } from "@/lib/cells-api";
+import type { Cell } from "@/types/cell";
 import { getDeletedCellIds } from "@/lib/cell-deletions";
-import { getDeletedConvertIds } from "@/lib/convert-deletions";
 import { cn } from "@/lib/utils";
 
 type SearchHit = {
@@ -121,50 +120,18 @@ const NAV_HITS: Omit<SearchHit, "id">[] = [
   },
 ];
 
-function buildIndex(): SearchHit[] {
-  const dm = new Set(getDeletedMemberIds());
+function cellsToSearchHits(cells: Cell[]): SearchHit[] {
   const dc = new Set(getDeletedCellIds());
-  const dcv = new Set(getDeletedConvertIds());
-
-  const nav: SearchHit[] = NAV_HITS.map((n, i) => ({
-    ...n,
-    id: `nav-${i}`,
-  }));
-
-  const members: SearchHit[] = MOCK_MEMBERS.filter((m) => !dm.has(m.id)).map(
-    (m) => ({
-      id: `member-${m.id}`,
-      title: m.name,
-      subtitle: `${m.phone} · ${m.status.replace("_", " ")}`,
-      href: `/app/members/${m.id}`,
-      group: "Members",
-      icon: Users,
-    }),
-  );
-
-  const cells: SearchHit[] = MOCK_CELLS.filter((c) => !dc.has(c.id)).map(
-    (c) => ({
+  return cells
+    .filter((c) => !dc.has(String(c.id)))
+    .map((c) => ({
       id: `cell-${c.id}`,
       title: c.name,
-      subtitle: c.id,
+      subtitle: `Cell #${c.id}`,
       href: `/app/cells/${c.id}`,
       group: "Cells",
       icon: LayoutGrid,
-    }),
-  );
-
-  const converts: SearchHit[] = MOCK_NEW_CONVERTS.filter(
-    (c) => !dcv.has(c.id),
-  ).map((c) => ({
-    id: `convert-${c.id}`,
-    title: c.name,
-    subtitle: `${c.phone} · ${c.followUpStatus.replace("_", " ")}`,
-    href: `/app/converts/${c.id}`,
-    group: "Converts",
-    icon: UserPlus,
-  }));
-
-  return [...nav, ...members, ...cells, ...converts];
+    }));
 }
 
 function matchesQuery(hit: SearchHit, q: string): boolean {
@@ -181,13 +148,24 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [cells, setCells] = useState<Cell[]>([]);
+
+  useEffect(() => {
+    void listCells()
+      .then(setCells)
+      .catch(() => setCells([]));
+  }, []);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const index = buildIndex();
+    const nav: SearchHit[] = NAV_HITS.map((n, i) => ({
+      ...n,
+      id: `nav-${i}`,
+    }));
+    const index = [...nav, ...cellsToSearchHits(cells)];
     return index.filter((h) => matchesQuery(h, q)).slice(0, 12);
-  }, [query]);
+  }, [query, cells]);
 
   const showPanel = open && query.trim().length > 0;
 

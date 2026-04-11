@@ -25,13 +25,11 @@ import {
   Shield,
   Activity,
   UserCheck,
-  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { MOCK_CELLS, MOCK_MEMBERS } from "@/data/mock-data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,56 +38,54 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import {
-  getDeletedCellIds,
-  recordDeletedCellId,
-  subscribeToCellDeletions,
-} from "@/lib/cell-deletions";
-
-type CellRow = (typeof MOCK_CELLS)[number];
-
-let _cachedCellsSnapshot: CellRow[] | null = null;
-
-function getCellsSnapshot(): CellRow[] {
-  if (_cachedCellsSnapshot !== null) return _cachedCellsSnapshot;
-  const deleted = getDeletedCellIds();
-  _cachedCellsSnapshot = MOCK_CELLS.filter((c) => !deleted.includes(c.id));
-  return _cachedCellsSnapshot;
-}
-
-function subscribeAndInvalidateCells(onStoreChange: () => void) {
-  return subscribeToCellDeletions(() => {
-    _cachedCellsSnapshot = null;
-    onStoreChange();
-  });
-}
+import { listCells, deleteCell } from "@/lib/cells-api";
+import type { Cell } from "@/types/cell";
 
 export default function CellsDirectoryPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const cells = useSyncExternalStore(
-    subscribeAndInvalidateCells,
-    getCellsSnapshot,
-    () => MOCK_CELLS,
-  );
-  const [deleteTarget, setDeleteTarget] = useState<CellRow | null>(null);
+  const [cells, setCells] = useState<Cell[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Cell | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    fetchCells();
+  }, []);
+
+  const fetchCells = async () => {
+    setIsLoading(true);
+    try {
+      const data = await listCells();
+      setCells(data);
+    } catch (error) {
+      console.error("Failed to fetch cells:", error);
+      toast.error("Failed to load cells");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredCells = cells.filter((cell) =>
     cell.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
-    window.setTimeout(() => {
-      recordDeletedCellId(deleteTarget.id);
+    try {
+      await deleteCell(deleteTarget.id);
       toast.success("Cell removed", {
         description: `${deleteTarget.name} was removed from the directory.`,
       });
-      setDeleteLoading(false);
+      setCells((prev) => prev.filter((c) => c.id !== deleteTarget.id));
       setDeleteTarget(null);
-    }, 400);
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete cell");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -176,108 +172,111 @@ export default function CellsDirectoryPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                <TableHead>Cell</TableHead>
-                <TableHead>Leader</TableHead>
-                <TableHead>Meeting Day</TableHead>
-                <TableHead className="text-center">Members</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCells.map((cell) => {
-                const memberCount = MOCK_MEMBERS.filter(
-                  (m) => m.cellId === cell.id,
-                ).length;
-
-                return (
-                  <TableRow key={cell.id} className="hover:bg-slate-50/50">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {cell.name.charAt(0)}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading cells…</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  <TableHead>Cell</TableHead>
+                  <TableHead>Leader</TableHead>
+                  <TableHead>Meeting Day</TableHead>
+                  <TableHead className="text-center">Members</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCells.map((cell) => {
+                  return (
+                    <TableRow key={cell.id} className="hover:bg-slate-50/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {cell.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold">{cell.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {cell.id}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold">{cell.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {cell.id}
-                          </p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-primary">
+                          {cell.cell_leader != null
+                            ? `ID ${cell.cell_leader}`
+                            : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          Saturdays, 5:00 PM
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-primary">
-                        Alice Johnson
-                      </span>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        Saturdays, 5:00 PM
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
-                        {memberCount}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="success">ACTIVE</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="cursor-pointer inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-background hover:bg-accent transition-colors"
-                              aria-label={`Actions for ${cell.name}`}
-                            >
-                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/cells/${cell.id}`}>
-                                View cell
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/members/new?cellId=${cell.id}`}>
-                                Add Member
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toast.info("Edit settings", {
-                                  description: `Editing ${cell.name} will be available soon.`,
-                                })
-                              }
-                            >
-                              Edit settings
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                setDeleteTarget(cell);
-                              }}
-                            >
-                              Delete cell
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
+                          —
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="success">ACTIVE</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="cursor-pointer inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-background hover:bg-accent transition-colors"
+                                aria-label={`Actions for ${cell.name}`}
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/app/cells/${cell.id}`}>
+                                  View cell
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/app/members/new?cellId=${cell.id}`}
+                                >
+                                  Add Member
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/app/cells/${cell.id}/edit`}>
+                                  Edit settings
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  setDeleteTarget(cell);
+                                }}
+                              >
+                                Delete cell
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

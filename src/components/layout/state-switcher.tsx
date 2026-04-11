@@ -1,34 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, Check, Globe, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_STATES } from "@/data/mock-data";
 import { useStore } from "@/store";
+import { listStates } from "@/lib/states-api";
+import type { State } from "@/types/state";
+
+function stateInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase() || "—";
+}
 
 export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
   const { user, setUser } = useStore();
+  const [states, setStates] = useState<State[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  const currentState =
-    MOCK_STATES.find((s) => s.id === user?.unitId) || MOCK_STATES[0];
+  useEffect(() => {
+    void listStates()
+      .then((rows) =>
+        setStates([...rows].sort((a, b) => a.name.localeCompare(b.name))),
+      )
+      .catch(() => setStates([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleSelect = (state: (typeof MOCK_STATES)[0]) => {
+  const currentState =
+    states.find((s) => String(s.id) === user?.unitId) ?? states[0];
+
+  const handleSelect = (state: State) => {
     if (user) {
       setUser({
         ...user,
-        unitId: state.id,
+        unitId: String(state.id),
         unitName: state.name,
       });
     }
     setIsOpen(false);
   };
 
+  const badge = currentState
+    ? stateInitials(currentState.name)
+    : user?.unitName
+      ? stateInitials(user.unitName)
+      : "—";
+
+  const label = currentState?.name ?? user?.unitName ?? "Select region";
+
   if (collapsed) {
     return (
       <div className="flex justify-center py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold border-2 border-primary/20">
-          {currentState.code}
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold border-2 border-primary/20 text-xs">
+          {loading ? "…" : badge}
         </div>
       </div>
     );
@@ -37,22 +67,25 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="px-4 py-4 relative">
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        disabled={loading || states.length === 0}
         className={cn(
           "cursor-pointer w-full flex items-center justify-between p-3 rounded-2xl border bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 transition-all hover:border-primary/50 group",
+          (loading || states.length === 0) && "opacity-80 cursor-default",
           isOpen && "ring-2 ring-primary/20 border-primary",
         )}
       >
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shrink-0">
-            {currentState.code}
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shrink-0 text-xs">
+            {loading ? "…" : badge}
           </div>
           <div className="flex flex-col items-start min-w-0">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none">
               Selected Region
             </span>
             <span className="text-sm font-bold truncate mt-1">
-              {currentState.name}
+              {loading ? "Loading…" : label}
             </span>
           </div>
         </div>
@@ -64,24 +97,26 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
         />
       </button>
 
-      {isOpen && (
+      {isOpen && states.length > 0 && (
         <>
           <div
             className="fixed inset-0 z-20"
             onClick={() => setIsOpen(false)}
+            aria-hidden
           />
           <div className="absolute left-4 right-4 top-full mt-2 z-30 bg-card border rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b mb-1">
               Switch States
             </div>
             <div className="max-h-[250px] overflow-y-auto space-y-1">
-              {MOCK_STATES.map((state) => (
+              {states.map((state) => (
                 <button
+                  type="button"
                   key={state.id}
                   onClick={() => handleSelect(state)}
                   className={cn(
                     "cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-accent",
-                    state.id === currentState.id
+                    String(state.id) === user?.unitId
                       ? "bg-primary/5 text-primary font-semibold"
                       : "text-muted-foreground",
                   )}
@@ -90,23 +125,26 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
                     <div
                       className={cn(
                         "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
-                        state.id === currentState.id
+                        String(state.id) === user?.unitId
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted",
                       )}
                     >
-                      {state.code}
+                      {stateInitials(state.name)}
                     </div>
                     {state.name}
                   </div>
-                  {state.id === currentState.id && (
+                  {String(state.id) === user?.unitId && (
                     <Check className="h-4 w-4" />
                   )}
                 </button>
               ))}
             </div>
             <div className="mt-2 pt-2 border-t px-2">
-              <button className="cursor-pointer w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
+              <button
+                type="button"
+                className="cursor-pointer w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+              >
                 <Globe className="h-4 w-4" />
                 Global View (All States)
               </button>

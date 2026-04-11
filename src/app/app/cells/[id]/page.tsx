@@ -15,8 +15,6 @@ import {
   TrendingUp,
   UserPlus,
   MoreHorizontal,
-  ChevronRight,
-  UserCheck,
   Edit3,
   Map as MapIcon,
   MessageCircle,
@@ -25,7 +23,6 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MOCK_CELLS, MOCK_MEMBERS } from "@/data/mock-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -35,24 +32,71 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getCell, deleteCell } from "@/lib/cells-api";
+import type { Cell } from "@/types/cell";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { getDeletedCellIds, recordDeletedCellId } from "@/lib/cell-deletions";
 
 export default function CellDetailsPage() {
   const params = useParams();
   const idParam = (params as { id?: string | string[] } | null)?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const router = useRouter();
-  const cell = MOCK_CELLS.find((c) => c.id === id);
+  const [cell, setCell] = useState<Cell | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    if (getDeletedCellIds().includes(id)) {
-      router.replace("/app/cells");
+    if (!id) {
+      setIsLoading(false);
+      return;
     }
-  }, [id, router]);
+    let cancelled = false;
+    setIsLoading(true);
+    void (async () => {
+      try {
+        const data = await getCell(id);
+        if (!cancelled) setCell(data);
+      } catch (error) {
+        console.error("Failed to fetch cell:", error);
+        if (!cancelled) toast.error("Failed to load cell details");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const handleConfirmDelete = async () => {
+    if (!cell) return;
+    setDeleteLoading(true);
+    try {
+      await deleteCell(cell.id);
+      toast.success("Cell removed", {
+        description: `${cell.name} was removed from the directory.`,
+      });
+      router.push("/app/cells");
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete cell");
+    } finally {
+      setDeleteLoading(false);
+      setDeleteOpen(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse">
+          Loading cell details...
+        </p>
+      </div>
+    );
+  }
 
   if (!cell) {
     return (
@@ -67,8 +111,6 @@ export default function CellDetailsPage() {
       </div>
     );
   }
-
-  const cellMembers = MOCK_MEMBERS.filter((m) => m.cellId === cell.id);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -98,9 +140,38 @@ export default function CellDetailsPage() {
               </div>
               <p className="text-muted-foreground mt-1 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5" />
-                12 Main St, Calabar Metropolis • Zone A
+                {cell.address || "No address recorded"} •{" "}
+                {cell.zone_name || `Zone ${cell.zone}`}
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="cursor-pointer h-11 w-11 rounded-2xl border bg-white flex items-center justify-center hover:bg-slate-50 transition-colors">
+                  <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/app/cells/${cell.id}/edit`}
+                    className="flex items-center"
+                  >
+                    <Edit3 className="mr-2 h-4 w-4" />
+                    Edit Details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => setDeleteOpen(true)}
+                >
+                  Delete fellowship
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -112,7 +183,7 @@ export default function CellDetailsPage() {
             {[
               {
                 title: "Member Count",
-                value: cellMembers.length,
+                value: "—",
                 icon: Users,
                 color: "text-blue-600",
                 bg: "bg-blue-50",
@@ -176,34 +247,10 @@ export default function CellDetailsPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="divide-y divide-slate-50">
-                {cellMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="py-4 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-500">
-                        {member.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm group-hover:text-primary transition-colors">
-                          {member.name}
-                        </p>
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                          {member.status}
-                        </p>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/app/members/${member.id}`}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Member listings will appear here when a members API is
+                connected.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -219,10 +266,14 @@ export default function CellDetailsPage() {
             <CardContent className="pt-6 relative z-10 space-y-6">
               <div className="flex items-center gap-4">
                 <div className="h-14 w-14 rounded-2xl bg-white text-slate-900 flex items-center justify-center text-xl font-bold">
-                  AJ
+                  {cell.cell_leader != null ? "L" : "—"}
                 </div>
                 <div>
-                  <h4 className="font-bold">Alice Johnson</h4>
+                  <h4 className="font-bold">
+                    {cell.cell_leader != null
+                      ? `Leader ID ${cell.cell_leader}`
+                      : "No leader assigned"}
+                  </h4>
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest">
                     Primary Leader
                   </p>
@@ -283,19 +334,7 @@ export default function CellDetailsPage() {
       <ConfirmDeleteModal
         isOpen={deleteOpen}
         onClose={() => !deleteLoading && setDeleteOpen(false)}
-        onConfirm={() => {
-          if (!cell) return;
-          setDeleteLoading(true);
-          window.setTimeout(() => {
-            recordDeletedCellId(cell.id);
-            toast.success("Cell removed", {
-              description: `${cell.name} was removed from the directory.`,
-            });
-            setDeleteLoading(false);
-            setDeleteOpen(false);
-            router.push("/app/cells");
-          }, 400);
-        }}
+        onConfirm={handleConfirmDelete}
         title="Delete this cell?"
         description="Members and history tied to this fellowship may be affected. This cannot be undone."
         itemName={cell.name}

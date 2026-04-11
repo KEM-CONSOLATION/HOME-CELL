@@ -17,6 +17,9 @@ import {
   ShieldCheck,
   FileText,
   LayoutGrid,
+  MapPinned,
+  Landmark,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
@@ -70,6 +73,36 @@ const navItems = [
     icon: UserPlus,
     roles: [
       "CELL_LEADER",
+      "ZONAL_LEADER",
+      "AREA_LEADER",
+      "STATE_LEADER",
+      "STATE_PASTOR",
+      "ADMIN",
+    ],
+  },
+  {
+    title: "States",
+    href: "/app/states",
+    icon: Landmark,
+    roles: ["STATE_LEADER", "STATE_PASTOR", "ADMIN"],
+  },
+  {
+    title: "Areas",
+    href: "/app/areas",
+    icon: MapPinned,
+    roles: [
+      "ZONAL_LEADER",
+      "AREA_LEADER",
+      "STATE_LEADER",
+      "STATE_PASTOR",
+      "ADMIN",
+    ],
+  },
+  {
+    title: "Zones",
+    href: "/app/zones",
+    icon: Layers,
+    roles: [
       "ZONAL_LEADER",
       "AREA_LEADER",
       "STATE_LEADER",

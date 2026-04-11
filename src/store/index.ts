@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { MOCK_USER, User } from "@/data/mock-data";
+import type { User } from "@/types/models";
 
 type AuthState = {
   access: string | null;
@@ -14,9 +14,9 @@ type AuthState = {
 export const useStore = create<AuthState>()(
   persist(
     (set) => ({
-      access: "dummy-access-token",
-      refresh: "dummy-refresh-token",
-      user: MOCK_USER,
+      access: null,
+      refresh: null,
+      user: null,
       setToken: (access, refresh) => set({ access, refresh }),
       setUser: (user) => set({ user }),
       resetAuth: () => set({ access: null, refresh: null, user: null }),
