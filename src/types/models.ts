@@ -1,4 +1,5 @@
 export type Role =
+  | "MEMBER"
   | "CELL_LEADER"
   | "ZONAL_LEADER"
   | "AREA_LEADER"

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import api from "@/config/axios";
+import { userFromLoginResponse } from "@/lib/auth-user";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,22 +17,32 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const isValid = email.trim().length > 0 && password.length >= 6;
+  const isValid = email.trim().length > 0 && password.length > 0;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await api.post("/token/", {
+      const response = await api.post("/auth/login/", {
         email,
         password,
       });
 
-      const { access, refresh, user } = response.data;
+      const data = response.data as {
+        access?: string;
+        refresh?: string;
+      };
 
-      setToken(access, refresh);
-      setUser(user ?? null);
+      if (!data.access || !data.refresh) {
+        toast.error("Authentication failed", {
+          description: "Server did not return tokens.",
+        });
+        return;
+      }
+
+      setToken(data.access, data.refresh);
+      setUser(userFromLoginResponse(response.data));
 
       toast.success("Welcome back!", {
         description: "You have signed in successfully.",

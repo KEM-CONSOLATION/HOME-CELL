@@ -33,6 +33,7 @@ const navItems = [
     href: "/app",
     icon: LayoutDashboard,
     roles: [
+      "MEMBER",
       "CELL_LEADER",
       "ZONAL_LEADER",
       "AREA_LEADER",
@@ -46,6 +47,7 @@ const navItems = [
     href: "/app/attendance",
     icon: CalendarCheck,
     roles: [
+      "MEMBER",
       "CELL_LEADER",
       "ZONAL_LEADER",
       "AREA_LEADER",
@@ -59,6 +61,7 @@ const navItems = [
     href: "/app/members",
     icon: Users,
     roles: [
+      "MEMBER",
       "CELL_LEADER",
       "ZONAL_LEADER",
       "AREA_LEADER",
@@ -72,6 +75,7 @@ const navItems = [
     href: "/app/converts",
     icon: UserPlus,
     roles: [
+      "MEMBER",
       "CELL_LEADER",
       "ZONAL_LEADER",
       "AREA_LEADER",

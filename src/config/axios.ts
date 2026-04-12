@@ -72,7 +72,16 @@ axios.interceptors.request.use(
       };
     }
 
-    if (accessToken && config.headers) {
+    const endpointParam =
+      (config.params as { endpoint?: string } | undefined)?.endpoint ?? "";
+    const skipBearer =
+      endpointParam.includes("/auth/login/") ||
+      endpointParam.endsWith("/auth/login");
+
+    // Never send a stale access token on login — some APIs reject it.
+    if (skipBearer && config.headers) {
+      delete config.headers.Authorization;
+    } else if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
