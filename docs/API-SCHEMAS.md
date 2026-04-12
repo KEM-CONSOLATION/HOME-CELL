@@ -17,11 +17,11 @@ This document lists **request/response shapes** the web app expects. Paths are w
 
 ### 1.1 Login
 
-| | |
-|---|---|
-| **Method / path** | `POST /auth/login/` |
-| **Body** | `{ "email": string, "password": string }` |
-| **Success 200** | See **TokenResponse** below |
+|                   |                                           |
+| ----------------- | ----------------------------------------- |
+| **Method / path** | `POST /auth/login/`                       |
+| **Body**          | `{ "email": string, "password": string }` |
+| **Success 200**   | See **TokenResponse** below               |
 
 **TokenResponse**
 
@@ -37,11 +37,11 @@ The UI stores `access` / `refresh` and persists `user` when present. If `user` i
 
 ### 1.2 Refresh access token
 
-| | |
-|---|---|
-| **Method / path** | `POST /token/refresh/` |
-| **Body** | `{ "refresh": "string" }` |
-| **Success 200** | `{ "access": "string" }` |
+|                   |                           |
+| ----------------- | ------------------------- |
+| **Method / path** | `POST /token/refresh/`    |
+| **Body**          | `{ "refresh": "string" }` |
+| **Success 200**   | `{ "access": "string" }`  |
 
 ---
 
@@ -51,10 +51,10 @@ Base collection path: `/auth/states/` (full URL on your server may be `/api/auth
 
 ### 2.1 List states
 
-| | |
-|---|---|
-| **GET** | `/auth/states/` |
-| **Response 200** | `State[]` |
+|                  |                 |
+| ---------------- | --------------- |
+| **GET**          | `/auth/states/` |
+| **Response 200** | `State[]`       |
 
 **State (read)**
 
@@ -69,10 +69,10 @@ Base collection path: `/auth/states/` (full URL on your server may be `/api/auth
 
 ### 2.2 Create state
 
-| | |
-|---|---|
+|          |                 |
+| -------- | --------------- |
 | **POST** | `/auth/states/` |
-| **Body** | **StateWrite** |
+| **Body** | **StateWrite**  |
 
 **StateWrite**
 
@@ -87,13 +87,13 @@ Base collection path: `/auth/states/` (full URL on your server may be `/api/auth
 
 ### 2.3 Retrieve / update / delete state
 
-| | |
-|---|---|
-| **GET** | `/auth/states/{id}/` |
-| **PUT** | `/auth/states/{id}/` — body: **StateWrite** (full replace) |
-| **PATCH** | `/auth/states/{id}/` — body: partial **StateWrite** (optional fields) |
-| **DELETE** | `/auth/states/{id}/` |
-| **GET response** | `State` |
+|                  |                                                                       |
+| ---------------- | --------------------------------------------------------------------- |
+| **GET**          | `/auth/states/{id}/`                                                  |
+| **PUT**          | `/auth/states/{id}/` — body: **StateWrite** (full replace)            |
+| **PATCH**        | `/auth/states/{id}/` — body: partial **StateWrite** (optional fields) |
+| **DELETE**       | `/auth/states/{id}/`                                                  |
+| **GET response** | `State`                                                               |
 
 ---
 
@@ -103,10 +103,10 @@ Base: `/auth/areas/`.
 
 ### 3.1 List areas
 
-| | |
-|---|---|
-| **GET** | `/auth/areas/` |
-| **Response 200** | `Area[]` |
+|                  |                |
+| ---------------- | -------------- |
+| **GET**          | `/auth/areas/` |
+| **Response 200** | `Area[]`       |
 
 **Area (read)**
 
@@ -123,10 +123,10 @@ Base: `/auth/areas/`.
 
 ### 3.2 Create area
 
-| | |
-|---|---|
+|          |                |
+| -------- | -------------- |
 | **POST** | `/auth/areas/` |
-| **Body** | **AreaWrite** |
+| **Body** | **AreaWrite**  |
 
 **AreaWrite**
 
@@ -142,12 +142,12 @@ Base: `/auth/areas/`.
 
 ### 3.3 Single area CRUD
 
-| | |
-|---|---|
-| **GET** | `/auth/areas/{id}/` → `Area` |
-| **PUT** | `/auth/areas/{id}/` — body: **AreaWrite** |
-| **PATCH** | `/auth/areas/{id}/` — partial **AreaWrite** |
-| **DELETE** | `/auth/areas/{id}/` |
+|            |                                             |
+| ---------- | ------------------------------------------- |
+| **GET**    | `/auth/areas/{id}/` → `Area`                |
+| **PUT**    | `/auth/areas/{id}/` — body: **AreaWrite**   |
+| **PATCH**  | `/auth/areas/{id}/` — partial **AreaWrite** |
+| **DELETE** | `/auth/areas/{id}/`                         |
 
 ---
 
@@ -157,10 +157,10 @@ Base: `/auth/zones/`.
 
 ### 4.1 List zones
 
-| | |
-|---|---|
-| **GET** | `/auth/zones/` |
-| **Response 200** | `Zone[]` |
+|                  |                |
+| ---------------- | -------------- |
+| **GET**          | `/auth/zones/` |
+| **Response 200** | `Zone[]`       |
 
 **Zone (read)**
 
@@ -178,10 +178,10 @@ Base: `/auth/zones/`.
 
 ### 4.2 Create zone
 
-| | |
-|---|---|
+|          |                |
+| -------- | -------------- |
 | **POST** | `/auth/zones/` |
-| **Body** | **ZoneWrite** |
+| **Body** | **ZoneWrite**  |
 
 **ZoneWrite**
 
@@ -195,12 +195,12 @@ Base: `/auth/zones/`.
 
 ### 4.3 Single zone CRUD
 
-| | |
-|---|---|
-| **GET** | `/auth/zones/{id}/` → `Zone` |
-| **PUT** | `/auth/zones/{id}/` — body: **ZoneWrite** |
-| **PATCH** | `/auth/zones/{id}/` — partial **ZoneWrite** |
-| **DELETE** | `/auth/zones/{id}/` |
+|            |                                             |
+| ---------- | ------------------------------------------- |
+| **GET**    | `/auth/zones/{id}/` → `Zone`                |
+| **PUT**    | `/auth/zones/{id}/` — body: **ZoneWrite**   |
+| **PATCH**  | `/auth/zones/{id}/` — partial **ZoneWrite** |
+| **DELETE** | `/auth/zones/{id}/`                         |
 
 ---
 
@@ -210,10 +210,10 @@ Base: `/auth/cells/`.
 
 ### 5.1 List cells
 
-| | |
-|---|---|
-| **GET** | `/auth/cells/` |
-| **Response 200** | `Cell[]` |
+|                  |                |
+| ---------------- | -------------- |
+| **GET**          | `/auth/cells/` |
+| **Response 200** | `Cell[]`       |
 
 **Cell (read)** — app accepts extra fields; these are required/used in UI:
 
@@ -237,10 +237,10 @@ Notes:
 
 ### 5.2 Create cell
 
-| | |
-|---|---|
+|          |                |
+| -------- | -------------- |
 | **POST** | `/auth/cells/` |
-| **Body** | **CellWrite** |
+| **Body** | **CellWrite**  |
 
 **CellWrite**
 
@@ -259,12 +259,12 @@ Notes:
 
 ### 5.3 Single cell CRUD
 
-| | |
-|---|---|
-| **GET** | `/auth/cells/{id}/` → `Cell` |
-| **PUT** | `/auth/cells/{id}/` — body: **CellWrite** |
-| **PATCH** | `/auth/cells/{id}/` — partial **CellWrite** (if you support it) |
-| **DELETE** | `/auth/cells/{id}/` |
+|            |                                                                 |
+| ---------- | --------------------------------------------------------------- |
+| **GET**    | `/auth/cells/{id}/` → `Cell`                                    |
+| **PUT**    | `/auth/cells/{id}/` — body: **CellWrite**                       |
+| **PATCH**  | `/auth/cells/{id}/` — partial **CellWrite** (if you support it) |
+| **DELETE** | `/auth/cells/{id}/`                                             |
 
 ---
 
@@ -364,11 +364,11 @@ Foreign keys in write payloads: `state`, `area`, `zone`, `area_leader`, `zonal_l
 
 ## 9. Source of truth in the repo
 
-| Domain | TypeScript types |
-|--------|------------------|
-| States | `src/types/state.ts` |
-| Areas | `src/types/area.ts` |
-| Zones | `src/types/zone.ts` |
-| Cells | `src/types/cell.ts` |
-| User / Member / Attendance / Convert | `src/types/models.ts` |
-| HTTP helpers | `src/lib/*-api.ts`, `src/lib/cells-api.ts` |
+| Domain                               | TypeScript types                           |
+| ------------------------------------ | ------------------------------------------ |
+| States                               | `src/types/state.ts`                       |
+| Areas                                | `src/types/area.ts`                        |
+| Zones                                | `src/types/zone.ts`                        |
+| Cells                                | `src/types/cell.ts`                        |
+| User / Member / Attendance / Convert | `src/types/models.ts`                      |
+| HTTP helpers                         | `src/lib/*-api.ts`, `src/lib/cells-api.ts` |

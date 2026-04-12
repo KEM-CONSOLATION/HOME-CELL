@@ -20,8 +20,7 @@ export function userFromLoginResponse(data: LoginResponse): User | null {
   const first = String(u.first_name ?? "").trim();
   const last = String(u.last_name ?? "").trim();
   const email = String(u.email ?? "");
-  const name =
-    [first, last].filter(Boolean).join(" ") || email || "User";
+  const name = [first, last].filter(Boolean).join(" ") || email || "User";
 
   return {
     id: String(u.id ?? ""),

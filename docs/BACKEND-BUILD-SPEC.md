@@ -29,12 +29,12 @@ Use your own table names; below is the **logical model** the app expects in API 
 
 ### 2.1 `State`
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `id` | integer PK | |
-| `name` | string | Required; displayed everywhere |
+| Field          | Type              | Notes                           |
+| -------------- | ----------------- | ------------------------------- |
+| `id`           | integer PK        |                                 |
+| `name`         | string            | Required; displayed everywhere  |
 | `state_pastor` | integer FK → User | Who pastors the state (user id) |
-| `created_at` | datetime | Auto |
+| `created_at`   | datetime          | Auto                            |
 
 **Writes:** create/update need at least `name`, `state_pastor`.
 
@@ -44,13 +44,13 @@ Use your own table names; below is the **logical model** the app expects in API 
 
 Belongs to one **State**.
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `id` | integer PK | |
-| `name` | string | Required |
-| `state` | integer FK → State.id | Required |
-| `area_leader` | integer FK → User | Required for the product rules |
-| `created_at` | datetime | Auto |
+| Field         | Type                  | Notes                          |
+| ------------- | --------------------- | ------------------------------ |
+| `id`          | integer PK            |                                |
+| `name`        | string                | Required                       |
+| `state`       | integer FK → State.id | Required                       |
+| `area_leader` | integer FK → User     | Required for the product rules |
+| `created_at`  | datetime              | Auto                           |
 
 **API read model:** the app shows `state_name` (string). Either **join in the serializer** or expose a nested state—**the list/detail responses must allow the UI to show the state name without extra round-trips.**
 
@@ -62,13 +62,13 @@ Belongs to one **State**.
 
 Belongs to one **Area** (and therefore indirectly to a **State**).
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `id` | integer PK | |
-| `name` | string | Required |
-| `area` | integer FK → Area.id | Required |
-| `zonal_leader` | integer FK → User | |
-| `created_at` | datetime | Auto |
+| Field          | Type                 | Notes    |
+| -------------- | -------------------- | -------- |
+| `id`           | integer PK           |          |
+| `name`         | string               | Required |
+| `area`         | integer FK → Area.id | Required |
+| `zonal_leader` | integer FK → User    |          |
+| `created_at`   | datetime             | Auto     |
 
 **API read model:** include **`area_name`** and **`state_name`** (strings) on list/detail so the UI can label rows without N+1 queries.
 
@@ -80,16 +80,16 @@ Belongs to one **Area** (and therefore indirectly to a **State**).
 
 Belongs to one **Zone**.
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `id` | integer PK | |
-| `name` | string | Required |
-| `address` | string | Physical location |
-| `latitude` | string or decimal | App sends strings today |
-| `longitude` | string or decimal | App sends strings today |
-| `zone` | integer FK → Zone.id | Required |
-| `cell_leader` | integer FK → User, nullable | Primary leader |
-| `created_at` | optional | If you add it |
+| Field         | Type                        | Notes                   |
+| ------------- | --------------------------- | ----------------------- |
+| `id`          | integer PK                  |                         |
+| `name`        | string                      | Required                |
+| `address`     | string                      | Physical location       |
+| `latitude`    | string or decimal           | App sends strings today |
+| `longitude`   | string or decimal           | App sends strings today |
+| `zone`        | integer FK → Zone.id        | Required                |
+| `cell_leader` | integer FK → User, nullable | Primary leader          |
+| `created_at`  | optional                    | If you add it           |
 
 **API read model:** include **`zone_name`** (string) on detail/list if you can—**the UI uses it when present.**
 
@@ -101,15 +101,15 @@ Belongs to one **Zone**.
 
 You likely already have a user model. The **web app** needs a **profile payload after login** (and for authorization) with at least:
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `id` | string (or int as string) | Stable id for client |
-| `name` | string | Display name |
-| `email` | string | |
-| `role` | enum | See §4 |
-| `unitId` | string | **Scope** the user operates in (e.g. current state id as string, or cell/zone id—**define one convention** and document it) |
-| `unitName` | string | Human label (e.g. state name) for headers |
-| `avatar` | string URL | Optional |
+| Field      | Type                      | Notes                                                                                                                       |
+| ---------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | string (or int as string) | Stable id for client                                                                                                        |
+| `name`     | string                    | Display name                                                                                                                |
+| `email`    | string                    |                                                                                                                             |
+| `role`     | enum                      | See §4                                                                                                                      |
+| `unitId`   | string                    | **Scope** the user operates in (e.g. current state id as string, or cell/zone id—**define one convention** and document it) |
+| `unitName` | string                    | Human label (e.g. state name) for headers                                                                                   |
+| `avatar`   | string URL                | Optional                                                                                                                    |
 
 If login today only returns tokens, **extend** the login (or add `GET /me/`) so the SPA can render the dashboard and sidebar.
 
@@ -145,14 +145,14 @@ The app filters navigation by **role**. Align your auth system with these **stri
 
 Not a duplicate of Swagger—this is the **minimum behavior** the product needs:
 
-| Capability | Detail |
-|------------|--------|
-| **Login** | `POST /auth/login/` with JSON `{ "email", "password" }`. Issue `access` + `refresh` and return **user** in the same response when possible. |
-| **JWT auth** | Support refresh endpoint used by the client (`POST /token/refresh/` with `{ "refresh" }` in this app). |
-| **Login returns user** | Body should include **user profile** (§2.5), not only tokens. |
-| **CRUD** | Full CRUD (or read + write where appropriate) for **State, Area, Zone, Cell** under `/auth/...` (or your chosen prefix), consistent with your existing API layout. |
-| **List endpoints** | Return arrays with **enough denormalized labels** (`*_name` fields) for lists/tables. |
-| **Integer IDs** | Prefer integer PKs for geographic entities; the app uses them in URLs and forms. |
+| Capability             | Detail                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Login**              | `POST /auth/login/` with JSON `{ "email", "password" }`. Issue `access` + `refresh` and return **user** in the same response when possible.                        |
+| **JWT auth**           | Support refresh endpoint used by the client (`POST /token/refresh/` with `{ "refresh" }` in this app).                                                             |
+| **Login returns user** | Body should include **user profile** (§2.5), not only tokens.                                                                                                      |
+| **CRUD**               | Full CRUD (or read + write where appropriate) for **State, Area, Zone, Cell** under `/auth/...` (or your chosen prefix), consistent with your existing API layout. |
+| **List endpoints**     | Return arrays with **enough denormalized labels** (`*_name` fields) for lists/tables.                                                                              |
+| **Integer IDs**        | Prefer integer PKs for geographic entities; the app uses them in URLs and forms.                                                                                   |
 
 ---
 
