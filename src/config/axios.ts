@@ -21,11 +21,11 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 function getLoginRedirectUrl(): string {
-  if (typeof window === "undefined") return "/login";
+  if (typeof window === "undefined") return "/";
   const returnUrl = encodeURIComponent(
     window.location.pathname + window.location.search,
   );
-  return `/login?returnUrl=${returnUrl}`;
+  return `/?returnUrl=${returnUrl}`;
 }
 
 const TOKEN_EXPIRED_STATUSES = [401, 403, 419, 498];
