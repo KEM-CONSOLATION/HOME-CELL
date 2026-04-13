@@ -15,40 +15,85 @@ import {
   MapPin,
   Save,
   Calendar,
-  MessageCircle,
   FileText,
-  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { createMember } from "@/lib/members-api";
+import { listCells } from "@/lib/cells-api";
+import { extractErrorMessage } from "@/lib/utils";
+import type { Cell } from "@/types/cell";
+import type { IntegrationStatus } from "@/types/models";
 
 export default function NewConvertPage() {
   const router = useRouter();
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
-
-  const [name, setName] = useState("");
+  const [cells, setCells] = useState<Cell[]>([]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [cellId, setCellId] = useState("");
+  const [zoneId, setZoneId] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [salvationDate, setSalvationDate] = useState("");
+  const [howWon, setHowWon] = useState("GLOBAL_OUTREACH");
+  const [followUpOfficer, setFollowUpOfficer] = useState("");
+  const [integrationStatus, setIntegrationStatus] =
+    useState<IntegrationStatus>("PENDING");
+  const [initialNotes, setInitialNotes] = useState("");
+  const [nokName, setNokName] = useState("");
+  const [nokPhone, setNokPhone] = useState("");
 
+  useEffect(() => {
+    void listCells()
+      .then(setCells)
+      .catch(() => toast.error("Could not load cells. Enter ID manually."));
+  }, []);
+
+  const cellNum = Number.parseInt(cellId, 10);
+  const zoneNum = Number.parseInt(zoneId, 10);
+  const followUpNum = Number.parseInt(followUpOfficer, 10);
   const isValid =
-    name.trim().length > 0 &&
-    phone.trim().length >= 7 &&
-    address.trim().length > 0;
+    firstName.trim().length > 0 &&
+    Number.isFinite(cellNum) &&
+    phone.trim().length >= 7;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      await createMember({
+        first_name: firstName.trim(),
+        last_name: lastName.trim() || undefined,
+        zone: Number.isFinite(zoneNum) ? zoneNum : undefined,
+        cell: cellNum,
+        status: "NEW_CONVERT",
+        phone_number: phone.trim(),
+        residential_address: address.trim() || undefined,
+        nok_name: nokName.trim() || undefined,
+        nok_phone: nokPhone.trim() || undefined,
+        date_joined: new Date().toISOString().slice(0, 10),
+        salvation_date: salvationDate || undefined,
+        how_won: howWon,
+        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
+        integration_status: integrationStatus,
+        initial_notes: initialNotes.trim() || undefined,
+      });
       toast.success("Convert registered!", {
         description: "They have been added to the follow-up list.",
       });
       router.push("/app/converts");
+    } catch (error) {
+      toast.error("Creation failed", {
+        description: extractErrorMessage(error, "Please check the details."),
+      });
+    } finally {
       setIsSaving(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -93,13 +138,25 @@ export default function NewConvertPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Full Name <span className="text-destructive">*</span>
+                    First Name <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter full name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Enter first name"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Enter last name"
                     className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
@@ -120,7 +177,7 @@ export default function NewConvertPage() {
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Current Address <span className="text-destructive">*</span>
+                    Current Address
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -129,7 +186,7 @@ export default function NewConvertPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Where they currently reside"
-                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -141,7 +198,7 @@ export default function NewConvertPage() {
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                  <UserCheck className="h-5 w-5" />
+                  <Calendar className="h-5 w-5" />
                 </div>
                 <div>
                   <CardTitle>Spiritual Milestones</CardTitle>
@@ -161,6 +218,8 @@ export default function NewConvertPage() {
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="date"
+                      value={salvationDate}
+                      onChange={(e) => setSalvationDate(e.target.value)}
                       className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
@@ -169,12 +228,45 @@ export default function NewConvertPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     How were they won?
                   </label>
-                  <select className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
-                    <option value="OUTREACH">Global Outreach</option>
-                    <option value="FRIEND">Invitation by Friend</option>
-                    <option value="RADIO">Radio/TV Broadcast</option>
+                  <select
+                    value={howWon}
+                    onChange={(e) => setHowWon(e.target.value)}
+                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
+                  >
+                    <option value="GLOBAL_OUTREACH">Global Outreach</option>
+                    <option value="PERSONAL_INVITATION">Personal Invitation</option>
+                    <option value="ONLINE">Online</option>
                     <option value="OTHER">Other</option>
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Cell ID <span className="text-destructive">*</span>
+                  </label>
+                  <select
+                    value={cellId}
+                    onChange={(e) => setCellId(e.target.value)}
+                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
+                  >
+                    <option value="">Select a cell</option>
+                    {cells.map((cell) => (
+                      <option key={cell.id} value={cell.id}>
+                        {cell.name} (#{cell.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Zone ID (optional)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={zoneId}
+                    onChange={(e) => setZoneId(e.target.value)}
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -184,7 +276,7 @@ export default function NewConvertPage() {
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                  <MessageCircle className="h-5 w-5" />
+                  <FileText className="h-5 w-5" />
                 </div>
                 <div>
                   <CardTitle>Follow-up Status</CardTitle>
@@ -202,9 +294,10 @@ export default function NewConvertPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Grace Cell"
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-100 text-muted-foreground font-medium cursor-not-allowed"
-                    readOnly
+                    value={cellId}
+                    onChange={(e) => setCellId(e.target.value)}
+                    placeholder="Cell ID"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-2">
@@ -212,8 +305,48 @@ export default function NewConvertPage() {
                     Follow-up Officer
                   </label>
                   <input
-                    type="text"
-                    placeholder="Leader responsible"
+                    type="number"
+                    min={0}
+                    value={followUpOfficer}
+                    onChange={(e) => setFollowUpOfficer(e.target.value)}
+                    placeholder="Leader user ID"
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Integration Status
+                  </label>
+                  <select
+                    value={integrationStatus}
+                    onChange={(e) =>
+                      setIntegrationStatus(e.target.value as IntegrationStatus)
+                    }
+                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="INTEGRATED">Integrated</option>
+                    <option value="COMPLETED">Completed</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    NOK Name
+                  </label>
+                  <input
+                    value={nokName}
+                    onChange={(e) => setNokName(e.target.value)}
+                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    NOK Phone
+                  </label>
+                  <input
+                    value={nokPhone}
+                    onChange={(e) => setNokPhone(e.target.value)}
                     className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
@@ -224,6 +357,8 @@ export default function NewConvertPage() {
                   <div className="relative">
                     <FileText className="absolute left-4 top-4 h-4 w-4 text-muted-foreground" />
                     <textarea
+                      value={initialNotes}
+                      onChange={(e) => setInitialNotes(e.target.value)}
                       placeholder="Any specific needs or prayer points?"
                       className="w-full min-h-[120px] pl-12 pr-4 py-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium resize-none"
                     />

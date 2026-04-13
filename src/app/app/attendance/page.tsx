@@ -7,15 +7,73 @@ import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Trash2, Eye } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import type { AttendanceRecord } from "@/types/models";
+import { deleteAttendance, listAttendance } from "@/lib/attendance-api";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 
 export default function AttendanceListPage() {
   const { user } = useStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [rows, setRows] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    void (async () => {
+      try {
+        const data = await listAttendance();
+        if (!cancelled) setRows(data);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error("Failed to load attendance", {
+            description: extractErrorMessage(error),
+          });
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      const target = `${row.date} ${row.cell_name}`.toLowerCase();
+      return target.includes(searchTerm.toLowerCase());
+    });
+  }, [rows, searchTerm]);
+
+  const onConfirmDelete = async () => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await deleteAttendance(deleteTarget.id);
+      setRows((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      toast.success("Attendance report deleted");
+    } catch (error) {
+      toast.error("Failed to delete attendance", {
+        description: extractErrorMessage(error),
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -44,13 +102,11 @@ export default function AttendanceListPage() {
               <Input
                 type="text"
                 placeholder="Search by date or cell..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 rounded-xl"
               />
             </div>
-            <Button variant="outline">
-              <Filter />
-              Filter
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -61,18 +117,65 @@ export default function AttendanceListPage() {
                 <TableHead>Cell</TableHead>
                 <TableHead className="text-center">Attendance</TableHead>
                 <TableHead className="text-center">New Souls</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody />
+            <TableBody>
+              {filteredRows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{row.cell_name}</TableCell>
+                  <TableCell className="text-center font-semibold">
+                    {row.total_present}
+                  </TableCell>
+                  <TableCell className="text-center">{row.new_converts}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <Button asChild size="icon" variant="outline">
+                        <Link href={`/app/attendance/${row.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setDeleteTarget(row)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
-          <p className="text-center text-muted-foreground py-12 text-sm px-4">
-            No attendance records yet. This list will populate when an
-            attendance API is connected.
-          </p>
+          {!isLoading && filteredRows.length === 0 && (
+            <p className="text-center text-muted-foreground py-12 text-sm px-4">
+              No attendance reports found.
+            </p>
+          )}
+          {isLoading && (
+            <p className="text-center text-muted-foreground py-12 text-sm px-4">
+              Loading attendance reports...
+            </p>
+          )}
         </CardContent>
       </Card>
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={onConfirmDelete}
+        title="Delete this attendance report?"
+        description="This attendance submission will be permanently removed."
+        itemName={
+          deleteTarget
+            ? `${deleteTarget.cell_name} (${new Date(deleteTarget.date).toLocaleDateString()})`
+            : undefined
+        }
+        confirmLabel="Yes, delete report"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

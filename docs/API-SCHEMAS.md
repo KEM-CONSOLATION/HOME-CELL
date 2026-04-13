@@ -290,62 +290,170 @@ Returned inside **TokenResponse** as `user`. The client expects:
 
 ---
 
-## 7. Planned APIs (UI ready; not wired yet)
-
-The app defines **target models** for future endpoints. Align naming/IDs with your DB.
+## 7. Member, Convert, and Attendance APIs
 
 ### 7.1 Members
 
-**Member**
+Base: `/auth/members/` (server may expose as `/api/auth/members/`).
+
+#### List / Create members
+
+|          |                                                             |
+| -------- | ----------------------------------------------------------- |
+| **GET**  | `/auth/members/` → `MemberRecord[]`                         |
+| **POST** | `/auth/members/` — body: **MemberWrite** → `MemberRecord`  |
+
+**MemberWrite**
 
 ```json
 {
-  "id": "string",
-  "name": "string",
-  "phone": "string",
-  "address": "string",
-  "status": "NEW_CONVERT | MEMBER | WORKER | LEADER",
-  "cellId": "string",
-  "joinedAt": "string (ISO date)"
+  "first_name": "string",
+  "last_name": "string",
+  "zone": 0,
+  "cell": 0,
+  "status": "MEMBER",
+  "phone_number": "+2347012575224",
+  "residential_address": "string",
+  "nok_name": "string",
+  "nok_phone": "+2348019305015",
+  "date_joined": "2026-04-13",
+  "salvation_date": "2026-04-13",
+  "how_won": "GLOBAL_OUTREACH",
+  "follow_up_officer": 0,
+  "integration_status": "PENDING",
+  "initial_notes": "string"
 }
 ```
 
-Suggested routes (example): `GET/POST /auth/members/`, `GET/PUT/PATCH/DELETE /auth/members/{id}/`.
-
-### 7.2 New converts
-
-**NewConvert**
+**MemberRecord (read)**
 
 ```json
 {
-  "id": "string",
-  "name": "string",
-  "phone": "string",
-  "address": "string",
-  "registeredAt": "string",
-  "assignedCellId": "string",
-  "followUpStatus": "PENDING | IN_PROGRESS | COMPLETED",
-  "followUpNotes": "string"
+  "id": 0,
+  "first_name": "string",
+  "last_name": "string",
+  "zone_name": "string",
+  "cell": 0,
+  "cell_name": "string",
+  "status": "MEMBER",
+  "status_display": "string",
+  "phone_number": "+2347014635304",
+  "residential_address": "string",
+  "nok_name": "string",
+  "nok_phone": "09060955695",
+  "date_joined": "2026-04-13",
+  "salvation_date": "2026-04-13",
+  "how_won": "GLOBAL_OUTREACH",
+  "how_won_display": "string",
+  "follow_up_officer": 0,
+  "follow_up_officer_name": "string",
+  "integration_status": "PENDING",
+  "integration_status_display": "string",
+  "initial_notes": "string"
 }
 ```
+
+#### Single member CRUD
+
+|            |                                                        |
+| ---------- | ------------------------------------------------------ |
+| **GET**    | `/auth/members/{id}/` → `MemberRecord`                |
+| **PUT**    | `/auth/members/{id}/` — body: **MemberWrite**         |
+| **PATCH**  | `/auth/members/{id}/` — partial **MemberWrite**       |
+| **DELETE** | `/auth/members/{id}/` — response `204 No Content`     |
+
+#### Promote endpoint
+
+|          |                                                                        |
+| -------- | ---------------------------------------------------------------------- |
+| **POST** | `/auth/members/{id}/promote/` — body: **MemberWrite** → `MemberRecord` |
+
+Promote flow updates a member from `NEW_CONVERT` to `MEMBER` and typically updates `integration_status` to `INTEGRATED`.
+
+### 7.2 Converts
+
+Base: `/auth/converts/` (server may expose as `/api/auth/converts/`).
+
+|         |                                              |
+| ------- | -------------------------------------------- |
+| **GET** | `/auth/converts/` → `MemberRecord[]`         |
+
+The converts dashboard response reuses the member serializer shape; records are generally scoped to `status = NEW_CONVERT`.
 
 ### 7.3 Attendance
 
-**AttendanceRecord**
+Base: `/auth/attendance/` (your server may expose this as `/api/auth/attendance/`).
+
+#### List / Create attendance reports
+
+|          |                                                                        |
+| -------- | ---------------------------------------------------------------------- |
+| **GET**  | `/auth/attendance/` → `AttendanceRecord[]`                             |
+| **POST** | `/auth/attendance/` — body: **AttendanceWrite** → response: `AttendanceRecord` |
+
+**AttendanceWrite**
 
 ```json
 {
-  "id": "string",
-  "cellId": "string",
-  "date": "string",
-  "presentMemberIds": ["string"],
-  "firstTimers": 0,
-  "newConverts": 0,
-  "totalAttendance": 0,
-  "submittedBy": "string",
-  "submittedAt": "string"
+  "cell": 0,
+  "date": "2026-04-13",
+  "members_present": [0],
+  "first_timers": 0,
+  "new_converts": 0
 }
 ```
+
+`total_present` is calculated on the backend from `members_present`.
+
+**AttendanceRecord (read)**
+
+```json
+{
+  "id": 0,
+  "cell": 0,
+  "cell_name": "string",
+  "date": "2026-04-13",
+  "total_present": 0,
+  "first_timers": 2147483647,
+  "new_converts": 2147483647,
+  "members_present": [0],
+  "member_details": [
+    {
+      "id": 0,
+      "first_name": "string",
+      "last_name": "string",
+      "zone_name": "string",
+      "cell": 0,
+      "cell_name": "string",
+      "status": "MEMBER",
+      "status_display": "string",
+      "phone_number": "+2349032102014",
+      "residential_address": "string",
+      "nok_name": "string",
+      "nok_phone": "09039931852",
+      "date_joined": "2026-04-13",
+      "salvation_date": "2026-04-13",
+      "how_won": "GLOBAL_OUTREACH",
+      "how_won_display": "string",
+      "follow_up_officer": 0,
+      "follow_up_officer_name": "string",
+      "integration_status": "PENDING",
+      "integration_status_display": "string",
+      "initial_notes": "string"
+    }
+  ],
+  "created_at": "2026-04-13T11:21:16.731Z"
+}
+```
+
+#### Single attendance report
+
+|            |                                                                 |
+| ---------- | --------------------------------------------------------------- |
+| **GET**    | `/auth/attendance/{id}/` → `AttendanceRecord`                  |
+| **PUT**    | `/auth/attendance/{id}/` — body: **AttendanceWrite**           |
+| **PATCH**  | `/auth/attendance/{id}/` — partial **AttendanceWrite**         |
+| **DELETE** | `/auth/attendance/{id}/`                                       |
 
 ---
 

@@ -22,8 +22,8 @@ import {
   MapPin,
   UserCircle2,
 } from "lucide-react";
-import type { Member } from "@/types/models";
-import { useState } from "react";
+import type { MemberRecord } from "@/types/models";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -33,30 +33,68 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { deleteMember, listMembers } from "@/lib/members-api";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function MembersPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const [members] = useState<Member[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [members, setMembers] = useState<MemberRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<MemberRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const filteredMembers = members.filter(
-    (m) =>
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.phone.includes(searchTerm),
-  );
+  const fullName = useMemo(() => {
+    return (member: MemberRecord) =>
+      [member.first_name, member.last_name].filter(Boolean).join(" ");
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    void (async () => {
+      try {
+        const data = await listMembers();
+        if (!cancelled) setMembers(data);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error("Failed to load members", {
+            description: extractErrorMessage(error, "Try again in a moment."),
+          });
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredMembers = members.filter((m) => {
+    const haystack = `${fullName(m)} ${m.phone_number} ${m.cell_name}`.toLowerCase();
+    return haystack.includes(searchTerm.toLowerCase());
+  });
 
   const handleConfirmDelete = () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleteLoading) return;
     setDeleteLoading(true);
-    window.setTimeout(() => {
-      toast.success("Member removed", {
-        description: `${deleteTarget.name} was deleted from the directory.`,
-      });
-      setDeleteLoading(false);
-      setDeleteTarget(null);
-    }, 400);
+    void (async () => {
+      try {
+        await deleteMember(deleteTarget.id);
+        setMembers((prev) => prev.filter((row) => row.id !== deleteTarget.id));
+        toast.success("Member removed", {
+          description: `${fullName(deleteTarget)} was deleted from the directory.`,
+        });
+      } catch (error) {
+        toast.error("Failed to delete member", {
+          description: extractErrorMessage(error, "Please try again."),
+        });
+      } finally {
+        setDeleteLoading(false);
+        setDeleteTarget(null);
+      }
+    })();
   };
 
   return (
@@ -115,15 +153,15 @@ export default function MembersPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                        {member.name
+                        {fullName(member)
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold">{member.name}</p>
+                        <p className="text-sm font-semibold">{fullName(member)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {member.cellId}
+                          {member.cell_name}
                         </p>
                       </div>
                     </div>
@@ -133,30 +171,32 @@ export default function MembersPage() {
                       variant={
                         member.status === "WORKER"
                           ? "success"
-                          : member.status === "LEADER"
+                          : member.status === "NEW_CONVERT"
+                            ? "warning"
+                            : member.status === "CELL_LEADER"
                             ? "default"
                             : "outline"
                       }
                     >
-                      {member.status.replace("_", " ")}
+                      {member.status_display}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Phone className="h-3 w-3" />
-                        {member.phone}
+                        {member.phone_number}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <MapPin className="h-3 w-3" />
                         <span className="truncate max-w-[150px]">
-                          {member.address}
+                          {member.residential_address}
                         </span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(member.joinedAt).toLocaleDateString()}
+                    {new Date(member.date_joined).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -193,7 +233,7 @@ export default function MembersPage() {
               ))}
             </TableBody>
           </Table>
-          {filteredMembers.length === 0 && (
+          {!isLoading && filteredMembers.length === 0 && (
             <div className="py-12 text-center">
               <UserCircle2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <h3 className="mt-4 text-lg font-semibold">No members yet</h3>
@@ -201,6 +241,11 @@ export default function MembersPage() {
                 This directory will fill when your backend exposes a members API
                 and the app is wired to it.
               </p>
+            </div>
+          )}
+          {isLoading && (
+            <div className="py-12 text-center text-muted-foreground">
+              Loading members...
             </div>
           )}
         </CardContent>
@@ -212,7 +257,7 @@ export default function MembersPage() {
         onConfirm={handleConfirmDelete}
         title="Delete this member?"
         description="They will be removed from your cell directory and activity history may be affected. This cannot be undone."
-        itemName={deleteTarget?.name}
+        itemName={deleteTarget ? fullName(deleteTarget) : undefined}
         confirmLabel="Yes, delete member"
         isLoading={deleteLoading}
       />

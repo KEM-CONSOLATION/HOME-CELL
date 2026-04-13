@@ -26,7 +26,7 @@ import {
   CheckCircle,
   MoreHorizontal,
 } from "lucide-react";
-import type { NewConvert } from "@/types/models";
+import type { ConvertRecord } from "@/types/models";
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -38,51 +38,96 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { listCells } from "@/lib/cells-api";
+import {
+  deleteMember,
+  memberRecordToWrite,
+  promoteMember,
+} from "@/lib/members-api";
+import { listConverts } from "@/lib/converts-api";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function ConvertsPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const [converts] = useState<NewConvert[]>([]);
-  const [cellNames, setCellNames] = useState<Map<number, string>>(new Map());
-  const [deleteTarget, setDeleteTarget] = useState<NewConvert | null>(null);
+  const [converts, setConverts] = useState<ConvertRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<ConvertRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [promoteLoadingId, setPromoteLoadingId] = useState<number | null>(null);
 
   useEffect(() => {
-    void listCells()
-      .then((cells) => {
-        const m = new Map<number, string>();
-        cells.forEach((c) => m.set(c.id, c.name));
-        setCellNames(m);
-      })
-      .catch(() => setCellNames(new Map()));
+    let cancelled = false;
+    setIsLoading(true);
+    void (async () => {
+      try {
+        const rows = await listConverts();
+        if (!cancelled) {
+          setConverts(rows);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error("Failed to load converts", {
+            description: extractErrorMessage(error),
+          });
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const cellLabel = useMemo(() => {
-    return (assignedCellId?: string) => {
-      if (!assignedCellId) return "—";
-      const n = Number(assignedCellId);
-      if (!Number.isFinite(n)) return assignedCellId;
-      return cellNames.get(n) ?? `Cell #${n}`;
-    };
-  }, [cellNames]);
+  const fullName = useMemo(() => {
+    return (row: ConvertRecord) =>
+      [row.first_name, row.last_name].filter(Boolean).join(" ");
+  }, []);
 
   const filteredConverts = converts.filter(
     (nc) =>
-      nc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nc.phone.includes(searchTerm),
+      fullName(nc).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      nc.phone_number.includes(searchTerm),
   );
 
-  const handleConfirmDelete = () => {
-    if (!deleteTarget) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || deleteLoading) return;
     setDeleteLoading(true);
-    window.setTimeout(() => {
+    try {
+      await deleteMember(deleteTarget.id);
+      setConverts((prev) => prev.filter((item) => item.id !== deleteTarget.id));
       toast.success("Convert removed", {
-        description: `${deleteTarget.name} was removed from the list.`,
+        description: `${fullName(deleteTarget)} was removed from the list.`,
       });
+    } catch (error) {
+      toast.error("Failed to delete convert", {
+        description: extractErrorMessage(error),
+      });
+    } finally {
       setDeleteLoading(false);
       setDeleteTarget(null);
-    }, 400);
+    }
+  };
+
+  const promoteConvert = async (row: ConvertRecord) => {
+    if (promoteLoadingId != null) return;
+    setPromoteLoadingId(row.id);
+    try {
+      const payload = memberRecordToWrite(row);
+      payload.status = "MEMBER";
+      payload.integration_status = "INTEGRATED";
+      const updated = await promoteMember(row.id, payload);
+      setConverts((prev) => prev.filter((item) => item.id !== updated.id));
+      toast.success("Convert promoted", {
+        description: `${fullName(row)} is now a full member.`,
+      });
+    } catch (error) {
+      toast.error("Promotion failed", {
+        description: extractErrorMessage(error),
+      });
+    } finally {
+      setPromoteLoadingId(null);
+    }
   };
 
   return (
@@ -106,19 +151,28 @@ export default function ConvertsPage() {
         {[
           {
             label: "Pending Assignment",
-            value: "0",
+            value: String(
+              converts.filter((c) => c.integration_status === "PENDING").length,
+            ),
             icon: Clock,
             accent: "bg-blue-500",
           },
           {
             label: "In Progress",
-            value: "0",
+            value: String(
+              converts.filter((c) => c.integration_status === "IN_PROGRESS")
+                .length,
+            ),
             icon: MessageCircle,
             accent: "bg-amber-500",
           },
           {
             label: "Fully Integrated",
-            value: "0",
+            value: String(
+              converts.filter((c) =>
+                ["INTEGRATED", "COMPLETED"].includes(c.integration_status),
+              ).length,
+            ),
             icon: CheckCircle,
             accent: "bg-emerald-500",
           },
@@ -189,22 +243,22 @@ export default function ConvertsPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {nc.name.charAt(0)}
+                        {fullName(nc).charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold truncate">{nc.name}</p>
+                        <p className="font-bold truncate">{fullName(nc)}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {nc.address}
+                          {nc.residential_address}
                         </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm">
-                    {nc.phone}
+                    {nc.phone_number}
                   </TableCell>
                   <TableCell>
                     <Badge className="rounded-lg py-1">
-                      {nc.followUpStatus.replace("_", " ")}
+                      {nc.integration_status_display}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -212,12 +266,12 @@ export default function ConvertsPage() {
                       variant="outline"
                       className="bg-slate-100 text-slate-700 rounded-lg py-1"
                     >
-                      {cellLabel(nc.assignedCellId)}
+                      {nc.cell_name}
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-[320px]">
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {nc.followUpNotes || "—"}
+                      {nc.initial_notes || "—"}
                     </p>
                   </TableCell>
                   <TableCell className="text-right">
@@ -227,7 +281,7 @@ export default function ConvertsPage() {
                           type="button"
                           variant="outline"
                           size="icon"
-                          aria-label={`Actions for ${nc.name}`}
+                          aria-label={`Actions for ${fullName(nc)}`}
                         >
                           <MoreHorizontal />
                         </Button>
@@ -242,9 +296,15 @@ export default function ConvertsPage() {
                           <Link href={`/app/converts/${nc.id}/edit`}>Edit</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          disabled={promoteLoadingId === nc.id}
+                          onSelect={() => void promoteConvert(nc)}
+                        >
+                          Promote to member
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onSelect={() =>
                             toast.info("WhatsApp", {
-                              description: `Opening WhatsApp for ${nc.name}.`,
+                              description: `Opening WhatsApp for ${fullName(nc)}.`,
                             })
                           }
                         >
@@ -269,9 +329,9 @@ export default function ConvertsPage() {
           </Table>
           {filteredConverts.length === 0 && (
             <p className="text-center text-muted-foreground py-12 text-sm px-4">
-              No converts listed yet. Wire a converts API to populate this
-              table; cell names use live data from your cells API when
-              available.
+              {isLoading
+                ? "Loading converts..."
+                : "No converts listed yet for your jurisdiction."}
             </p>
           )}
         </CardContent>
@@ -283,7 +343,7 @@ export default function ConvertsPage() {
         onConfirm={handleConfirmDelete}
         title="Delete this convert?"
         description="They will be removed from the new converts list. This cannot be undone."
-        itemName={deleteTarget?.name}
+        itemName={deleteTarget ? fullName(deleteTarget) : undefined}
         confirmLabel="Yes, delete convert"
         isLoading={deleteLoading}
       />
