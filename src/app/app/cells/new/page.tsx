@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { createCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ZoneFieldMode = "loading" | "select" | "manual";
 
@@ -159,9 +160,7 @@ export default function NewCellPage() {
                     Zone <span className="text-destructive">*</span>
                   </label>
                   {zoneFieldMode === "loading" ? (
-                    <p className="text-sm text-muted-foreground py-3">
-                      Loading zones…
-                    </p>
+                    <Skeleton className="h-10 w-full rounded-xl" />
                   ) : zoneFieldMode === "select" ? (
                     <select
                       value={zoneId}

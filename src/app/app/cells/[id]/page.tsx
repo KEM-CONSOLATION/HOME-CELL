@@ -35,6 +35,7 @@ import {
 import { getCell, deleteCell } from "@/lib/cells-api";
 import type { Cell } from "@/types/cell";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CellDetailsPage() {
   const params = useParams();
@@ -89,11 +90,41 @@ export default function CellDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground animate-pulse">
-          Loading cell details...
-        </p>
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-6">
+        <Skeleton className="h-5 w-52" />
+        <div className="grid lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-8 space-y-6">
+            <Card className="border-none bg-white">
+              <CardHeader className="space-y-3">
+                <Skeleton className="h-8 w-56" />
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+            </Card>
+            <Card className="border-none bg-white">
+              <CardContent className="space-y-3 pt-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton
+                    key={`cell-details-skeleton-${i}`}
+                    className="h-14 w-full"
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="border-none bg-white">
+              <CardContent className="space-y-3 pt-6">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+            <Card className="border-none bg-white">
+              <CardContent className="space-y-3 pt-6">
+                <Skeleton className="h-32 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

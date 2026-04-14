@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { createZone } from "@/lib/zones-api";
 import { listAreas } from "@/lib/areas-api";
 import type { Area } from "@/types/area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type AreaFieldMode = "loading" | "select" | "manual";
 
@@ -135,9 +136,7 @@ export default function NewZonePage() {
                   Area <span className="text-destructive">*</span>
                 </label>
                 {areaFieldMode === "loading" ? (
-                  <p className="text-sm text-muted-foreground py-3">
-                    Loading areas…
-                  </p>
+                  <Skeleton className="h-10 w-full rounded-xl" />
                 ) : areaFieldMode === "select" ? (
                   <select
                     value={areaId}

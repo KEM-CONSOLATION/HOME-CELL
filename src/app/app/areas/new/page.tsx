@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { createArea } from "@/lib/areas-api";
 import { listStates } from "@/lib/states-api";
 import type { State as StateRow } from "@/types/state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type StatesFieldMode = "loading" | "select" | "manual";
 
@@ -136,9 +137,7 @@ export default function NewAreaPage() {
                   State <span className="text-destructive">*</span>
                 </label>
                 {statesFieldMode === "loading" ? (
-                  <p className="text-sm text-muted-foreground py-3">
-                    Loading states…
-                  </p>
+                  <Skeleton className="h-10 w-full rounded-xl" />
                 ) : statesFieldMode === "select" ? (
                   <select
                     value={stateId}

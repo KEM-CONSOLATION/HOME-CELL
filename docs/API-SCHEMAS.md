@@ -298,10 +298,10 @@ Base: `/auth/members/` (server may expose as `/api/auth/members/`).
 
 #### List / Create members
 
-|          |                                                             |
-| -------- | ----------------------------------------------------------- |
-| **GET**  | `/auth/members/` → `MemberRecord[]`                         |
-| **POST** | `/auth/members/` — body: **MemberWrite** → `MemberRecord`  |
+|          |                                                           |
+| -------- | --------------------------------------------------------- |
+| **GET**  | `/auth/members/` → `MemberRecord[]`                       |
+| **POST** | `/auth/members/` — body: **MemberWrite** → `MemberRecord` |
 
 **MemberWrite**
 
@@ -355,12 +355,12 @@ Base: `/auth/members/` (server may expose as `/api/auth/members/`).
 
 #### Single member CRUD
 
-|            |                                                        |
-| ---------- | ------------------------------------------------------ |
-| **GET**    | `/auth/members/{id}/` → `MemberRecord`                |
-| **PUT**    | `/auth/members/{id}/` — body: **MemberWrite**         |
-| **PATCH**  | `/auth/members/{id}/` — partial **MemberWrite**       |
-| **DELETE** | `/auth/members/{id}/` — response `204 No Content`     |
+|            |                                                   |
+| ---------- | ------------------------------------------------- |
+| **GET**    | `/auth/members/{id}/` → `MemberRecord`            |
+| **PUT**    | `/auth/members/{id}/` — body: **MemberWrite**     |
+| **PATCH**  | `/auth/members/{id}/` — partial **MemberWrite**   |
+| **DELETE** | `/auth/members/{id}/` — response `204 No Content` |
 
 #### Promote endpoint
 
@@ -374,9 +374,9 @@ Promote flow updates a member from `NEW_CONVERT` to `MEMBER` and typically updat
 
 Base: `/auth/converts/` (server may expose as `/api/auth/converts/`).
 
-|         |                                              |
-| ------- | -------------------------------------------- |
-| **GET** | `/auth/converts/` → `MemberRecord[]`         |
+|         |                                      |
+| ------- | ------------------------------------ |
+| **GET** | `/auth/converts/` → `MemberRecord[]` |
 
 The converts dashboard response reuses the member serializer shape; records are generally scoped to `status = NEW_CONVERT`.
 
@@ -386,9 +386,9 @@ Base: `/auth/attendance/` (your server may expose this as `/api/auth/attendance/
 
 #### List / Create attendance reports
 
-|          |                                                                        |
-| -------- | ---------------------------------------------------------------------- |
-| **GET**  | `/auth/attendance/` → `AttendanceRecord[]`                             |
+|          |                                                                                |
+| -------- | ------------------------------------------------------------------------------ |
+| **GET**  | `/auth/attendance/` → `AttendanceRecord[]`                                     |
 | **POST** | `/auth/attendance/` — body: **AttendanceWrite** → response: `AttendanceRecord` |
 
 **AttendanceWrite**
@@ -448,12 +448,12 @@ Base: `/auth/attendance/` (your server may expose this as `/api/auth/attendance/
 
 #### Single attendance report
 
-|            |                                                                 |
-| ---------- | --------------------------------------------------------------- |
-| **GET**    | `/auth/attendance/{id}/` → `AttendanceRecord`                  |
-| **PUT**    | `/auth/attendance/{id}/` — body: **AttendanceWrite**           |
-| **PATCH**  | `/auth/attendance/{id}/` — partial **AttendanceWrite**         |
-| **DELETE** | `/auth/attendance/{id}/`                                       |
+|            |                                                        |
+| ---------- | ------------------------------------------------------ |
+| **GET**    | `/auth/attendance/{id}/` → `AttendanceRecord`          |
+| **PUT**    | `/auth/attendance/{id}/` — body: **AttendanceWrite**   |
+| **PATCH**  | `/auth/attendance/{id}/` — partial **AttendanceWrite** |
+| **DELETE** | `/auth/attendance/{id}/`                               |
 
 ---
 

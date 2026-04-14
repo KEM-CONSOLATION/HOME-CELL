@@ -1,17 +1,17 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { AttendanceRecord, AttendanceWrite } from "@/types/models";
 
 const BASE = "/auth/attendance/";
 
 export async function listAttendance(): Promise<AttendanceRecord[]> {
-  const { data } = await api.get<AttendanceRecord[]>(BASE);
+  const { data } = await dedupedGet<AttendanceRecord[]>(BASE);
   return data;
 }
 
 export async function getAttendance(
   id: number | string,
 ): Promise<AttendanceRecord> {
-  const { data } = await api.get<AttendanceRecord>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<AttendanceRecord>(`${BASE}${id}/`);
   return data;
 }
 

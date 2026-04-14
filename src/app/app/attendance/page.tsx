@@ -20,13 +20,16 @@ import { deleteAttendance, listAttendance } from "@/lib/attendance-api";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AttendanceListPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [rows, setRows] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -75,6 +78,8 @@ export default function AttendanceListPage() {
     }
   };
 
+  const loadingRowCount = 6;
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -121,43 +126,65 @@ export default function AttendanceListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{row.cell_name}</TableCell>
-                  <TableCell className="text-center font-semibold">
-                    {row.total_present}
-                  </TableCell>
-                  <TableCell className="text-center">{row.new_converts}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <Button asChild size="icon" variant="outline">
-                        <Link href={`/app/attendance/${row.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        onClick={() => setDeleteTarget(row)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {isLoading
+                ? Array.from({ length: loadingRowCount }).map((_, index) => (
+                    <TableRow key={`attendance-skeleton-${index}`}>
+                      <TableCell>
+                        <Skeleton className="h-2.5 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-2.5 w-28" />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Skeleton className="mx-auto h-2.5 w-10" />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Skeleton className="mx-auto h-2.5 w-10" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <Skeleton className="h-9 w-9 rounded-md" />
+                          <Skeleton className="h-9 w-9 rounded-md" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : filteredRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        {new Date(row.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{row.cell_name}</TableCell>
+                      <TableCell className="text-center font-semibold">
+                        {row.total_present}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {row.new_converts}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <Button asChild size="icon" variant="outline">
+                            <Link href={`/app/attendance/${row.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={() => setDeleteTarget(row)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
             </TableBody>
           </Table>
           {!isLoading && filteredRows.length === 0 && (
             <p className="text-center text-muted-foreground py-12 text-sm px-4">
               No attendance reports found.
-            </p>
-          )}
-          {isLoading && (
-            <p className="text-center text-muted-foreground py-12 text-sm px-4">
-              Loading attendance reports...
             </p>
           )}
         </CardContent>

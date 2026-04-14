@@ -27,11 +27,7 @@ export interface Member {
   joinedAt: string;
 }
 
-export type MemberStatus =
-  | "MEMBER"
-  | "NEW_CONVERT"
-  | "WORKER"
-  | "CELL_LEADER";
+export type MemberStatus = "MEMBER" | "NEW_CONVERT" | "WORKER" | "CELL_LEADER";
 
 export type MemberWriteStatus = "MEMBER" | "NEW_CONVERT" | "WORKER";
 
@@ -139,4 +135,36 @@ export interface NewConvert {
   assignedCellId?: string;
   followUpStatus: "PENDING" | "IN_PROGRESS" | "COMPLETED";
   followUpNotes?: string;
+}
+
+export interface DashboardStatsSnapshot {
+  totalMembers: number;
+  newConverts: number;
+  attendanceRate: string;
+  retention: string;
+}
+
+export interface DashboardConvertStatsSnapshot {
+  pending: number;
+  inProgress: number;
+  integrated: number;
+}
+
+export interface DashboardGraphPoint {
+  date: string;
+  value: number;
+}
+
+export interface DashboardActivityItem {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface DashboardSnapshot {
+  stats: DashboardStatsSnapshot;
+  convertStats: DashboardConvertStatsSnapshot;
+  graphData: DashboardGraphPoint[];
+  activityFeed: DashboardActivityItem[];
 }

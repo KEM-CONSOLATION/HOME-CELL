@@ -16,6 +16,7 @@ import type { AttendanceRecord } from "@/types/models";
 import { deleteAttendance, getAttendance } from "@/lib/attendance-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,9 +78,32 @@ export default function AttendanceDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground">Loading attendance report...</p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-40" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-white">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton
+                key={`attendance-details-skeleton-${i}`}
+                className="h-14 w-full"
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -140,7 +164,9 @@ export default function AttendanceDetailsPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">{row.cell_name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {row.cell_name}
+              </h1>
               <p className="text-muted-foreground">
                 {new Date(row.date).toLocaleDateString()}
               </p>

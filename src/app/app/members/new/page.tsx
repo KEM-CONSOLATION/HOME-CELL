@@ -124,7 +124,7 @@ export default function NewMemberPage() {
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <UserCircle2 className="h-5 w-5" />
+                  <UserCircle2 className="h-5 w-5" />
                 </div>
                 <div>
                   <CardTitle>Basic Information</CardTitle>

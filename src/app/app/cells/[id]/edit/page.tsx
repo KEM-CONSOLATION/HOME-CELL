@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import { getCell, updateCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Zone } from "@/types/zone";
 
 type ZoneFieldMode = "loading" | "select" | "manual";
@@ -134,11 +135,22 @@ export default function EditCellPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground animate-pulse">
-          Loading cell data...
-        </p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-40" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-4 w-52" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton
+                key={`cell-edit-skeleton-${i}`}
+                className="h-10 w-full"
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -200,9 +212,7 @@ export default function EditCellPage() {
                     Zone <span className="text-destructive">*</span>
                   </label>
                   {zoneFieldMode === "loading" ? (
-                    <p className="text-sm text-muted-foreground py-3">
-                      Loading zones…
-                    </p>
+                    <Skeleton className="h-10 w-full rounded-xl" />
                   ) : zoneFieldMode === "select" ? (
                     <select
                       value={zoneId}

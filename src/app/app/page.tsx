@@ -15,8 +15,6 @@ import {
   TrendingUp,
   UserPlus,
   CalendarCheck,
-  ArrowUpRight,
-  ArrowDownRight,
   Clock,
   ChevronRight,
   Target,
@@ -24,58 +22,86 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { BibleQuoteRotator } from "@/components/dashboard/bible-quote-rotator";
+import type { DashboardActivityItem } from "@/types/models";
+import {
+  dashboardFromLoginResponse,
+  type LoginResponse,
+} from "@/lib/auth-user";
+
+function formatRelativeTime(isoDate: string): string {
+  const timestamp = new Date(isoDate).getTime();
+  if (Number.isNaN(timestamp)) return "Just now";
+
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.max(1, Math.floor(diffMs / 60_000));
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function mapActivityStyle(item: DashboardActivityItem) {
+  if (item.type === "ATTENDANCE_SUBMITTED") {
+    return {
+      icon: CalendarCheck,
+      bg: "bg-emerald-100",
+      color: "text-emerald-600",
+    };
+  }
+  if (item.type === "MEMBER_ADDED") {
+    return { icon: UserPlus, bg: "bg-purple-100", color: "text-purple-600" };
+  }
+  return { icon: Target, bg: "bg-blue-100", color: "text-blue-600" };
+}
 
 export default function DashboardPage() {
-  const { user } = useStore();
+  const { user, dashboard, loginResponse } = useStore();
+  const dashboardData =
+    (loginResponse
+      ? dashboardFromLoginResponse(loginResponse as LoginResponse)
+      : null) ?? dashboard;
 
   const stats = [
     {
       title: "Total Members",
-      value: "1,284",
+      value: dashboardData
+        ? dashboardData.stats.totalMembers.toLocaleString()
+        : "--",
       icon: Users,
-      trend: "+12%",
-      up: true,
       color: "text-blue-600",
       bg: "bg-blue-50",
     },
     {
       title: "New Converts",
-      value: "156",
+      value: dashboardData
+        ? dashboardData.stats.newConverts.toLocaleString()
+        : "--",
       icon: UserPlus,
-      trend: "+8%",
-      up: true,
       color: "text-purple-600",
       bg: "bg-purple-50",
     },
     {
       title: "Attendance Rate",
-      value: "92%",
+      value: dashboardData ? dashboardData.stats.attendanceRate : "--",
       icon: CalendarCheck,
-      trend: "+2%",
-      up: true,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
     {
       title: "Retention",
-      value: "74%",
+      value: dashboardData ? dashboardData.stats.retention : "--",
       icon: TrendingUp,
-      trend: "-4%",
-      up: false,
       color: "text-amber-600",
       bg: "bg-amber-50",
     },
   ];
 
-  const chartData = [
-    { date: "2026-03-29", value: 85 },
-    { date: "2026-03-30", value: 42 },
-    { date: "2026-03-31", value: 68 },
-    { date: "2026-04-01", value: 94 },
-    { date: "2026-04-02", value: 55 },
-    { date: "2026-04-03", value: 72 },
-    { date: "2026-04-04", value: 110 },
-  ];
+  const chartData = dashboardData?.graphData ?? [];
+  const hasChartData = chartData.length > 0;
+  const activityFeed = dashboardData?.activityFeed ?? [];
 
   const maxY = Math.max(...chartData.map((d) => d.value), 1);
   const minY = 0;
@@ -123,6 +149,25 @@ export default function DashboardPage() {
 
       <BibleQuoteRotator />
 
+      {dashboardData ? (
+        <Card className="border-none bg-white">
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-bold text-slate-700">Convert Pipeline</span>
+              <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-700">
+                Pending: {dashboardData.convertStats.pending}
+              </span>
+              <span className="rounded-full bg-blue-100 px-3 py-1 font-semibold text-blue-700">
+                In Progress: {dashboardData.convertStats.inProgress}
+              </span>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 font-semibold text-emerald-700">
+                Integrated: {dashboardData.convertStats.integrated}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card
@@ -148,23 +193,8 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-3xl font-bold">{stat.value}</div>
               <div className="flex items-center gap-1.5 mt-2">
-                <span
-                  className={cn(
-                    "flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[10px] font-black",
-                    stat.up
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-rose-50 text-rose-600",
-                  )}
-                >
-                  {stat.up ? (
-                    <ArrowUpRight className="h-3 w-3" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3" />
-                  )}
-                  {stat.trend}
-                </span>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
-                  vs last month
+                  current snapshot
                 </span>
               </div>
             </CardContent>
@@ -193,86 +223,92 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="w-full">
-              <svg
-                viewBox={`0 0 ${w} ${h}`}
-                className="h-[260px] w-full"
-                role="img"
-                aria-label="Attendance line chart"
-                preserveAspectRatio="none"
-              >
-                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-                  const y = padding.top + t * innerH;
-                  const v = Math.round(maxY * (1 - t));
-                  return (
-                    <g key={t}>
-                      <line
-                        x1={padding.left}
-                        y1={y}
-                        x2={w - padding.right}
-                        y2={y}
-                        stroke="rgba(15,23,42,0.08)"
-                        strokeWidth="1"
+            {hasChartData ? (
+              <div className="w-full">
+                <svg
+                  viewBox={`0 0 ${w} ${h}`}
+                  className="h-[260px] w-full"
+                  role="img"
+                  aria-label="Attendance line chart"
+                  preserveAspectRatio="none"
+                >
+                  {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+                    const y = padding.top + t * innerH;
+                    const v = Math.round(maxY * (1 - t));
+                    return (
+                      <g key={t}>
+                        <line
+                          x1={padding.left}
+                          y1={y}
+                          x2={w - padding.right}
+                          y2={y}
+                          stroke="rgba(15,23,42,0.08)"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x={padding.left - 10}
+                          y={y + 4}
+                          textAnchor="end"
+                          fontSize="12"
+                          fill="rgba(15,23,42,0.55)"
+                        >
+                          {v}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  <path
+                    d={lineD}
+                    fill="none"
+                    stroke="var(--brand-blue)"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+
+                  {points.map((p, i) => (
+                    <g key={i}>
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={5}
+                        fill="#ffffff"
+                        stroke="var(--brand-blue)"
+                        strokeWidth="3"
                       />
-                      <text
-                        x={padding.left - 10}
-                        y={y + 4}
-                        textAnchor="end"
-                        fontSize="12"
-                        fill="rgba(15,23,42,0.55)"
-                      >
-                        {v}
-                      </text>
+                      <title>{`${new Date(p.d.date).toLocaleDateString(
+                        undefined,
+                        {
+                          month: "short",
+                          day: "2-digit",
+                        },
+                      )} • ${p.d.value}`}</title>
                     </g>
-                  );
-                })}
+                  ))}
 
-                <path
-                  d={lineD}
-                  fill="none"
-                  stroke="var(--brand-blue)"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-
-                {points.map((p, i) => (
-                  <g key={i}>
-                    <circle
-                      cx={p.x}
-                      cy={p.y}
-                      r={5}
-                      fill="#ffffff"
-                      stroke="var(--brand-blue)"
-                      strokeWidth="3"
-                    />
-                    <title>
+                  {points.map((p, i) => (
+                    <text
+                      key={i}
+                      x={p.x}
+                      y={h - 8}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fill="rgba(15,23,42,0.55)"
+                    >
                       {new Date(p.d.date).toLocaleDateString(undefined, {
                         month: "short",
                         day: "2-digit",
-                      })}{" "}
-                      • {p.d.value}
-                    </title>
-                  </g>
-                ))}
-
-                {points.map((p, i) => (
-                  <text
-                    key={i}
-                    x={p.x}
-                    y={h - 8}
-                    textAnchor="middle"
-                    fontSize="12"
-                    fill="rgba(15,23,42,0.55)"
-                  >
-                    {new Date(p.d.date).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "2-digit",
-                    })}
-                  </text>
-                ))}
-              </svg>
-            </div>
+                      })}
+                    </text>
+                  ))}
+                </svg>
+              </div>
+            ) : (
+              <div className="h-[260px] grid place-items-center text-sm text-muted-foreground">
+                No attendance graph data available.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -334,81 +370,48 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-6">
-              {[
-                {
-                  user: "Alice Johnson",
-                  action: "registered a new convert",
-                  target: "Frank Castle",
-                  time: "12 mins ago",
-                  icon: UserPlus,
-                  bg: "bg-purple-100",
-                  color: "text-purple-600",
-                },
-                {
-                  user: "Victory Cell",
-                  action: "submitted weekly report",
-                  target: "Week 14",
-                  time: "45 mins ago",
-                  icon: CalendarCheck,
-                  bg: "bg-emerald-100",
-                  color: "text-emerald-600",
-                },
-                {
-                  user: "System",
-                  action: "broadcast to unit members",
-                  target: "Mid-week Service Reminder",
-                  time: "2 hours ago",
-                  icon: Target,
-                  bg: "bg-blue-100",
-                  color: "text-blue-600",
-                },
-                {
-                  user: "Zion Bridge",
-                  action: "added 3 new members",
-                  target: "New Member Class",
-                  time: "5 hours ago",
-                  icon: Users,
-                  bg: "bg-amber-100",
-                  color: "text-amber-600",
-                },
-              ].map((act, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-5">
+              {activityFeed.length > 0 ? (
+                activityFeed.map((act) => {
+                  const style = mapActivityStyle(act);
+                  const Icon = style.icon;
+                  return (
                     <div
-                      className={cn(
-                        "h-12 w-12 rounded-2xl flex items-center justify-center shrink-0",
-                        act.bg,
-                        act.color,
-                      )}
+                      key={act.id}
+                      className="flex items-center justify-between group"
                     >
-                      <act.icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-600">
-                        <span className="font-bold text-slate-900">
-                          {act.user}
-                        </span>{" "}
-                        {act.action}{" "}
-                        <span className="font-bold text-slate-900">
-                          {act.target}
-                        </span>
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                          {act.time}
-                        </span>
+                      <div className="flex items-center gap-5">
+                        <div
+                          className={cn(
+                            "h-12 w-12 rounded-2xl flex items-center justify-center shrink-0",
+                            style.bg,
+                            style.color,
+                          )}
+                        >
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-slate-600">
+                            {act.message}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">
+                              {formatRelativeTime(act.timestamp)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                      <button className="cursor-pointer h-9 w-9 rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight className="h-4 w-4 text-slate-400" />
+                      </button>
                     </div>
-                  </div>
-                  <button className="cursor-pointer h-9 w-9 rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                  </button>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No activity feed data available.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

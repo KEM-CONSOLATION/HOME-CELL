@@ -1,12 +1,7 @@
 "use client";
 
 import { useStore } from "@/store";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Badge,
-} from "@/components/ui/dashboard-cards";
+import { Card, CardContent, CardHeader } from "@/components/ui/dashboard-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,15 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Plus,
-  Search,
-  Calendar,
-  MoreHorizontal,
-  Shield,
-  Activity,
-  UserCheck,
-} from "lucide-react";
+import { Plus, Search, MoreHorizontal, Shield, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +27,7 @@ import {
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { listCells, deleteCell } from "@/lib/cells-api";
 import type { Cell } from "@/types/cell";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CellsDirectoryPage() {
   const { user } = useStore();
@@ -66,9 +54,18 @@ export default function CellsDirectoryPage() {
     }
   };
 
-  const filteredCells = cells.filter((cell) =>
-    cell.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredCells = cells.filter((cell) => {
+    const q = searchTerm.toLowerCase();
+    return (
+      cell.name.toLowerCase().includes(q) ||
+      (cell.zone_name ?? "").toLowerCase().includes(q) ||
+      (cell.address ?? "").toLowerCase().includes(q)
+    );
+  });
+  const assignedLeaders = cells.filter(
+    (cell) => cell.cell_leader != null,
+  ).length;
+  const unassignedCells = cells.length - assignedLeaders;
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
@@ -111,23 +108,23 @@ export default function CellsDirectoryPage() {
       <div className="grid md:grid-cols-3 gap-6">
         {[
           {
-            label: "Total Active Cells",
+            label: "Total Cells",
             value: cells.length,
             icon: Shield,
             color: "text-blue-600",
             bg: "bg-blue-50",
           },
           {
-            label: "Active Leaders",
-            value: "14",
+            label: "Assigned Leaders",
+            value: assignedLeaders,
             icon: UserCheck,
             color: "text-emerald-600",
             bg: "bg-emerald-50",
           },
           {
-            label: "Avg. Cell Growth",
-            value: "+12.4%",
-            icon: Activity,
+            label: "Unassigned Cells",
+            value: unassignedCells,
+            icon: Shield,
             color: "text-purple-600",
             bg: "bg-purple-50",
           },
@@ -173,19 +170,28 @@ export default function CellsDirectoryPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-              <p className="text-sm text-muted-foreground">Loading cells…</p>
+            <div className="space-y-3 px-6 py-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={`cells-skeleton-${i}`}
+                  className="grid grid-cols-5 gap-4"
+                >
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                   <TableHead>Cell</TableHead>
+                  <TableHead>Zone</TableHead>
                   <TableHead>Leader</TableHead>
-                  <TableHead>Meeting Day</TableHead>
-                  <TableHead className="text-center">Members</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Address</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -207,25 +213,19 @@ export default function CellsDirectoryPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {cell.zone_name ?? "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
                         <span className="font-semibold text-primary">
                           {cell.cell_leader != null
                             ? `ID ${cell.cell_leader}`
                             : "—"}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          Saturdays, 5:00 PM
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
-                          —
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="success">ACTIVE</Badge>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {cell.address ?? "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end">

@@ -1,15 +1,15 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { Zone, ZoneWritePayload } from "@/types/zone";
 
 const BASE = "/auth/zones/";
 
 export async function listZones(): Promise<Zone[]> {
-  const { data } = await api.get<Zone[]>(BASE);
+  const { data } = await dedupedGet<Zone[]>(BASE);
   return data;
 }
 
 export async function getZone(id: number): Promise<Zone> {
-  const { data } = await api.get<Zone>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<Zone>(`${BASE}${id}/`);
   return data;
 }
 

@@ -1,15 +1,15 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { Cell, CellWritePayload } from "@/types/cell";
 
 const BASE = "/auth/cells/";
 
 export async function listCells(): Promise<Cell[]> {
-  const { data } = await api.get<Cell[]>(BASE);
+  const { data } = await dedupedGet<Cell[]>(BASE);
   return data;
 }
 
 export async function getCell(id: number | string): Promise<Cell> {
-  const { data } = await api.get<Cell>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<Cell>(`${BASE}${id}/`);
   return data;
 }
 

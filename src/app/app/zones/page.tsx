@@ -27,6 +27,7 @@ import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { listZones, deleteZone } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
 import dayjs from "dayjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ZonesDirectoryPage() {
   const { user } = useStore();
@@ -106,7 +107,7 @@ export default function ZonesDirectoryPage() {
                 Total zones
               </p>
               <h3 className="text-2xl font-bold">
-                {isLoading ? "—" : zones.length}
+                {isLoading ? <Skeleton className="h-7 w-10" /> : zones.length}
               </h3>
             </div>
           </div>
@@ -130,9 +131,20 @@ export default function ZonesDirectoryPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-              <p className="text-sm text-muted-foreground">Loading zones…</p>
+            <div className="space-y-3 px-6 py-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={`zones-skeleton-${i}`}
+                  className="grid grid-cols-6 gap-4"
+                >
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
             </div>
           ) : (
             <Table>

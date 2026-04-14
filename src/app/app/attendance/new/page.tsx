@@ -32,8 +32,12 @@ export default function NewAttendancePage() {
   const [presentIds, setPresentIds] = useState<number[]>([]);
 
   useEffect(() => {
-    void listCells().then(setCells).catch(() => setCells([]));
-    void listMembers().then(setMembers).catch(() => setMembers([]));
+    void listCells()
+      .then(setCells)
+      .catch(() => setCells([]));
+    void listMembers()
+      .then(setMembers)
+      .catch(() => setMembers([]));
   }, []);
 
   const cellNum = Number.parseInt(cellId, 10);

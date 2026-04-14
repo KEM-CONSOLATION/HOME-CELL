@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Search,
@@ -142,7 +135,7 @@ function matchesQuery(hit: SearchHit, q: string): boolean {
 
 export function GlobalSearch() {
   const router = useRouter();
-  const listId = useId();
+  const inputId = "global-search-input";
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -232,7 +225,7 @@ export function GlobalSearch() {
         "md:max-w-[min(40vw,28rem)] lg:max-w-[min(40vw,32rem)]",
       )}
     >
-      <label htmlFor={listId} className="sr-only">
+      <label htmlFor={inputId} className="sr-only">
         Global search
       </label>
       <div className="relative">
@@ -242,7 +235,7 @@ export function GlobalSearch() {
         />
         <input
           ref={inputRef}
-          id={listId}
+          id={inputId}
           type="search"
           role="combobox"
           aria-expanded={showPanel}

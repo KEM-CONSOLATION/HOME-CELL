@@ -209,9 +209,7 @@ export default function AnalyticsPage() {
                           stroke="var(--brand-blue)"
                           strokeWidth="3"
                         />
-                        <title>
-                          {p.d.label} • {p.d.value} souls
-                        </title>
+                        <title>{`${p.d.label} • ${p.d.value} souls`}</title>
                       </g>
                     ))}
 

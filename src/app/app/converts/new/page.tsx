@@ -186,7 +186,7 @@ export default function NewConvertPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Where they currently reside"
-                    className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -234,7 +234,9 @@ export default function NewConvertPage() {
                     className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
                   >
                     <option value="GLOBAL_OUTREACH">Global Outreach</option>
-                    <option value="PERSONAL_INVITATION">Personal Invitation</option>
+                    <option value="PERSONAL_INVITATION">
+                      Personal Invitation
+                    </option>
                     <option value="ONLINE">Online</option>
                     <option value="OTHER">Other</option>
                   </select>

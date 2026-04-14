@@ -1,15 +1,15 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { MemberRecord, MemberWrite } from "@/types/models";
 
 const BASE = "/auth/members/";
 
 export async function listMembers(): Promise<MemberRecord[]> {
-  const { data } = await api.get<MemberRecord[]>(BASE);
+  const { data } = await dedupedGet<MemberRecord[]>(BASE);
   return data;
 }
 
 export async function getMember(id: number | string): Promise<MemberRecord> {
-  const { data } = await api.get<MemberRecord>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<MemberRecord>(`${BASE}${id}/`);
   return data;
 }
 

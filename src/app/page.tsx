@@ -8,11 +8,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import api from "@/config/axios";
-import { userFromLoginResponse } from "@/lib/auth-user";
+import {
+  dashboardFromLoginResponse,
+  userFromLoginResponse,
+} from "@/lib/auth-user";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, setToken } = useStore();
+  const { setUser, setToken, setDashboard, setLoginResponse } = useStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -42,7 +45,9 @@ export default function LoginPage() {
       }
 
       setToken(data.access, data.refresh);
+      setLoginResponse(response.data as Record<string, unknown>);
       setUser(userFromLoginResponse(response.data));
+      setDashboard(dashboardFromLoginResponse(response.data));
 
       toast.success("Welcome back!", {
         description: "You have signed in successfully.",

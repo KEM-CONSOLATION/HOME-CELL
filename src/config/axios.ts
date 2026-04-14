@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import axios, {
   AxiosError,
+  AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
@@ -29,6 +30,36 @@ function getLoginRedirectUrl(): string {
 }
 
 const TOKEN_EXPIRED_STATUSES = [401, 403, 419, 498];
+const inflightGetRequests = new Map<string, Promise<AxiosResponse<unknown>>>();
+
+function stableStringify(value: unknown): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(
+      ([a], [b]) => a.localeCompare(b),
+    );
+    return `{${entries
+      .map(([k, v]) => `${k}:${stableStringify(v)}`)
+      .join(",")}}`;
+  }
+  return String(value);
+}
+
+export function dedupedGet<T>(
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<AxiosResponse<T>> {
+  const key = `GET:${url}:${stableStringify(config?.params)}`;
+  const existing = inflightGetRequests.get(key);
+  if (existing) return existing as Promise<AxiosResponse<T>>;
+
+  const request = axios
+    .get<T>(url, config)
+    .finally(() => inflightGetRequests.delete(key));
+  inflightGetRequests.set(key, request as Promise<AxiosResponse<unknown>>);
+  return request;
+}
 
 async function callRefresh(refreshTokenValue: string): Promise<string | null> {
   const url = `/api/proxy?${new URLSearchParams({

@@ -17,6 +17,7 @@ import type { Cell } from "@/types/cell";
 import { getMember, updateMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
 import { extractErrorMessage } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMemberPage() {
   const router = useRouter();
@@ -45,7 +46,9 @@ export default function EditMemberPage() {
   const [initialNotes, setInitialNotes] = useState("");
 
   useEffect(() => {
-    void listCells().then(setCells).catch(() => setCells([]));
+    void listCells()
+      .then(setCells)
+      .catch(() => setCells([]));
   }, []);
 
   useEffect(() => {
@@ -134,9 +137,22 @@ export default function EditMemberPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground">Loading member...</p>
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-36" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-52" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton
+                key={`member-edit-skeleton-${i}`}
+                className="h-10 w-full"
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

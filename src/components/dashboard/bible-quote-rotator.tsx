@@ -9,9 +9,8 @@ import { cn } from "@/lib/utils";
 const ROTATE_MS = 14_000;
 
 export function BibleQuoteRotator() {
-  const [index, setIndex] = useState(() =>
-    Math.floor(Math.random() * BIBLE_QUOTES.length),
-  );
+  // Keep first render deterministic for SSR hydration.
+  const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const next = useCallback(() => {

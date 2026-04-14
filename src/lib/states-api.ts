@@ -1,15 +1,15 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { State, StateWritePayload } from "@/types/state";
 
 const BASE = "/auth/states/";
 
 export async function listStates(): Promise<State[]> {
-  const { data } = await api.get<State[]>(BASE);
+  const { data } = await dedupedGet<State[]>(BASE);
   return data;
 }
 
 export async function getState(id: number): Promise<State> {
-  const { data } = await api.get<State>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<State>(`${BASE}${id}/`);
   return data;
 }
 

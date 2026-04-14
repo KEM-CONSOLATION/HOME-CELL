@@ -8,7 +8,13 @@ import {
   Badge,
 } from "@/components/ui/dashboard-cards";
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Phone, MoreHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Phone,
+  MoreHorizontal,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { extractErrorMessage } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MemberDetailsPage() {
   const params = useParams();
@@ -86,9 +93,30 @@ export default function MemberDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground">Loading member profile...</p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-40" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full md:col-span-2" />
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-white">
+          <CardHeader>
+            <Skeleton className="h-6 w-56" />
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -155,7 +183,9 @@ export default function MemberDetailsPage() {
               <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
               <p className="text-muted-foreground">{member.cell_name}</p>
             </div>
-            <Badge variant={member.status === "NEW_CONVERT" ? "warning" : "default"}>
+            <Badge
+              variant={member.status === "NEW_CONVERT" ? "warning" : "default"}
+            >
               {member.status_display}
             </Badge>
           </div>

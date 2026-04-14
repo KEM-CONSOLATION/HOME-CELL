@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { extractErrorMessage } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ConvertDetailsPage() {
   const params = useParams();
@@ -118,9 +119,29 @@ export default function ConvertDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 px-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground">Loading convert profile...</p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-40" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full md:col-span-2" />
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-white">
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full md:col-span-2" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -164,7 +185,9 @@ export default function ConvertDetailsPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem asChild>
-              <Link href={`/app/converts/${convert.id}/edit`}>Edit convert</Link>
+              <Link href={`/app/converts/${convert.id}/edit`}>
+                Edit convert
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={convert.status !== "NEW_CONVERT" || isPromoting}
@@ -193,7 +216,9 @@ export default function ConvertDetailsPage() {
               <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
               <p className="text-muted-foreground">{convert.cell_name}</p>
             </div>
-            <Badge variant={convert.status === "NEW_CONVERT" ? "warning" : "default"}>
+            <Badge
+              variant={convert.status === "NEW_CONVERT" ? "warning" : "default"}
+            >
               {convert.status_display}
             </Badge>
           </div>

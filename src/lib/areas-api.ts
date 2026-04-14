@@ -1,15 +1,15 @@
-import api from "@/config/axios";
+import api, { dedupedGet } from "@/config/axios";
 import type { Area, AreaWritePayload } from "@/types/area";
 
 const BASE = "/auth/areas/";
 
 export async function listAreas(): Promise<Area[]> {
-  const { data } = await api.get<Area[]>(BASE);
+  const { data } = await dedupedGet<Area[]>(BASE);
   return data;
 }
 
 export async function getArea(id: number): Promise<Area> {
-  const { data } = await api.get<Area>(`${BASE}${id}/`);
+  const { data } = await dedupedGet<Area>(`${BASE}${id}/`);
   return data;
 }
 

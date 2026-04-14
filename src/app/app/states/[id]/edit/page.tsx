@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import { getState, updateState } from "@/lib/states-api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditStatePage() {
   const router = useRouter();
@@ -83,9 +84,22 @@ export default function EditStatePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground animate-pulse">Loading state…</p>
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-32" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton
+                key={`state-edit-skeleton-${i}`}
+                className="h-10 w-full"
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -29,6 +29,7 @@ import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { getZone, deleteZone } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
 import dayjs from "dayjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ZoneDetailsPage() {
   const params = useParams();
@@ -84,9 +85,20 @@ export default function ZoneDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-        <p className="text-muted-foreground animate-pulse">Loading zone…</p>
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+        <Skeleton className="h-5 w-32" />
+        <Card className="border-none bg-white">
+          <CardHeader className="space-y-3">
+            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-4 w-36" />
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
