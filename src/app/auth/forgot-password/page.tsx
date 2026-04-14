@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
         >
           <div className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
-              <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <Skeleton className="h-5 w-5 rounded-full bg-primary-foreground/40" />
             ) : (
               <>
                 Send Reset Code

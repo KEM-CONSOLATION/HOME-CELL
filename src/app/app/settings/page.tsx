@@ -24,6 +24,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { user } = useStore();
@@ -64,7 +65,7 @@ export default function SettingsPage() {
           className="cursor-pointer inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group"
         >
           {isSaving ? (
-            <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            <Skeleton className="h-4 w-4 rounded-full bg-primary-foreground/40" />
           ) : (
             <Save className="h-4 w-4" />
           )}

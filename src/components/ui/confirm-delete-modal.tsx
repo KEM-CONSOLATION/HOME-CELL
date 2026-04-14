@@ -2,6 +2,7 @@
 
 import { Trash2, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface ConfirmDeleteModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export function ConfirmDeleteModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
@@ -97,7 +98,7 @@ export function ConfirmDeleteModal({
             className="rounded-2xl h-14"
           >
             {isLoading ? (
-              <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <Skeleton className="h-5 w-5 rounded-full bg-white/40" />
             ) : (
               <Trash2 />
             )}

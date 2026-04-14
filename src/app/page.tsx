@@ -12,6 +12,7 @@ import {
   dashboardFromLoginResponse,
   userFromLoginResponse,
 } from "@/lib/auth-user";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -140,7 +141,7 @@ export default function LoginPage() {
         >
           <div className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
-              <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <Skeleton className="h-5 w-5 rounded-full bg-primary-foreground/40" />
             ) : (
               <>
                 Continue to Dashboard

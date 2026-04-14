@@ -19,6 +19,7 @@ import { listMembers } from "@/lib/members-api";
 import { createAttendance } from "@/lib/attendance-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewAttendancePage() {
   const router = useRouter();
@@ -208,7 +209,7 @@ export default function NewAttendancePage() {
             className="cursor-pointer px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm inline-flex items-center gap-2 disabled:opacity-50"
           >
             {isSaving ? (
-              <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <Skeleton className="h-4 w-4 rounded-full bg-primary-foreground/40" />
             ) : (
               <Save className="h-4 w-4" />
             )}

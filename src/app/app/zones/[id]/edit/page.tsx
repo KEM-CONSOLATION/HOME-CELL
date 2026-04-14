@@ -238,7 +238,7 @@ export default function EditZonePage() {
             className="cursor-pointer px-8 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm flex items-center gap-2 hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
           >
             {isSaving ? (
-              <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <Skeleton className="h-4 w-4 rounded-full bg-primary-foreground/40" />
             ) : (
               <Save className="h-4 w-4" />
             )}
