@@ -124,6 +124,12 @@ axios.interceptors.response.use(
 
     const status = (error as { response?: { status?: number } })?.response
       ?.status;
+    const endpointParam =
+      (originalRequest?.params as { endpoint?: string } | undefined)
+        ?.endpoint ?? "";
+    const isLoginEndpoint =
+      endpointParam.includes("/auth/login/") ||
+      endpointParam.endsWith("/auth/login");
     const isRefreshEndpoint =
       originalRequest?.url?.includes("auth/refresh") ||
       originalRequest?.url?.includes("auth/logout");
@@ -133,6 +139,7 @@ axios.interceptors.response.use(
 
     if (
       !originalRequest ||
+      isLoginEndpoint ||
       !isTokenExpired ||
       originalRequest._retry ||
       isRefreshEndpoint
