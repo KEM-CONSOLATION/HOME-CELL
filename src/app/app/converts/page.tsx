@@ -43,15 +43,20 @@ import {
   memberRecordToWrite,
   promoteMember,
 } from "@/lib/members-api";
-import { listConverts } from "@/lib/converts-api";
+import { listConvertsPage } from "@/lib/converts-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function ConvertsPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [converts, setConverts] = useState<ConvertRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ConvertRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [promoteLoadingId, setPromoteLoadingId] = useState<number | null>(null);
@@ -61,9 +66,12 @@ export default function ConvertsPage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const rows = await listConverts();
+        const rows = await listConvertsPage(page);
         if (!cancelled) {
-          setConverts(rows);
+          setConverts(rows.items);
+          setTotalCount(rows.count);
+          setHasNext(Boolean(rows.next));
+          setHasPrevious(Boolean(rows.previous));
         }
       } catch (error) {
         if (!cancelled) {
@@ -78,7 +86,7 @@ export default function ConvertsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   const fullName = useMemo(() => {
     return (row: ConvertRecord) =>
@@ -97,6 +105,7 @@ export default function ConvertsPage() {
     try {
       await deleteMember(deleteTarget.id);
       setConverts((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       toast.success("Convert removed", {
         description: `${fullName(deleteTarget)} was removed from the list.`,
       });
@@ -121,6 +130,7 @@ export default function ConvertsPage() {
       payload.integration_status = "INTEGRATED";
       const updated = await promoteMember(row.id, payload);
       setConverts((prev) => prev.filter((item) => item.id !== updated.id));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       toast.success("Convert promoted", {
         description: `${fullName(row)} is now a full member.`,
       });
@@ -367,6 +377,15 @@ export default function ConvertsPage() {
             </p>
           )}
         </CardContent>
+        <PaginationControls
+          page={page}
+          count={totalCount}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isLoading={isLoading}
+          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </Card>
 
       <ConfirmDeleteModal

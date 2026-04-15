@@ -33,14 +33,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { deleteMember, listMembers } from "@/lib/members-api";
+import { deleteMember, listMembersPage } from "@/lib/members-api";
 import { extractErrorMessage } from "@/lib/utils";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function MembersPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [members, setMembers] = useState<MemberRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MemberRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -54,8 +59,13 @@ export default function MembersPage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const data = await listMembers();
-        if (!cancelled) setMembers(data);
+        const data = await listMembersPage(page);
+        if (!cancelled) {
+          setMembers(data.items);
+          setTotalCount(data.count);
+          setHasNext(Boolean(data.next));
+          setHasPrevious(Boolean(data.previous));
+        }
       } catch (error) {
         if (!cancelled) {
           toast.error("Failed to load members", {
@@ -69,7 +79,7 @@ export default function MembersPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   const filteredMembers = members.filter((m) => {
     const haystack =
@@ -84,6 +94,7 @@ export default function MembersPage() {
       try {
         await deleteMember(deleteTarget.id);
         setMembers((prev) => prev.filter((row) => row.id !== deleteTarget.id));
+        setTotalCount((prev) => Math.max(0, prev - 1));
         toast.success("Member removed", {
           description: `${fullName(deleteTarget)} was deleted from the directory.`,
         });
@@ -279,6 +290,15 @@ export default function MembersPage() {
             </div>
           )}
         </CardContent>
+        <PaginationControls
+          page={page}
+          count={totalCount}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isLoading={isLoading}
+          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </Card>
 
       <ConfirmDeleteModal

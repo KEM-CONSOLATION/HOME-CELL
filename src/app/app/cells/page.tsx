@@ -25,27 +25,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { listCells, deleteCell } from "@/lib/cells-api";
+import { listCellsPage, deleteCell } from "@/lib/cells-api";
 import type { Cell } from "@/types/cell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function CellsDirectoryPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [cells, setCells] = useState<Cell[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Cell | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    fetchCells();
-  }, []);
+    void fetchCells(page);
+  }, [page]);
 
-  const fetchCells = async () => {
+  const fetchCells = async (currentPage: number) => {
     setIsLoading(true);
     try {
-      const data = await listCells();
-      setCells(data);
+      const data = await listCellsPage(currentPage);
+      setCells(data.items);
+      setTotalCount(data.count);
+      setHasNext(Boolean(data.next));
+      setHasPrevious(Boolean(data.previous));
     } catch (error) {
       console.error("Failed to fetch cells:", error);
       toast.error("Failed to load cells");
@@ -76,6 +84,7 @@ export default function CellsDirectoryPage() {
         description: `${deleteTarget.name} was removed from the directory.`,
       });
       setCells((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       setDeleteTarget(null);
     } catch (error) {
       console.error("Delete error:", error);
@@ -278,6 +287,15 @@ export default function CellsDirectoryPage() {
             </Table>
           )}
         </CardContent>
+        <PaginationControls
+          page={page}
+          count={totalCount}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isLoading={isLoading}
+          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </Card>
 
       <ConfirmDeleteModal

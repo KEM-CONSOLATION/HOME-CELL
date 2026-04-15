@@ -24,28 +24,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { listZones, deleteZone } from "@/lib/zones-api";
+import { listZonesPage, deleteZone } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
 import dayjs from "dayjs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function ZonesDirectoryPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [zones, setZones] = useState<Zone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Zone | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    void fetchZones();
-  }, []);
+    void fetchZones(page);
+  }, [page]);
 
-  const fetchZones = async () => {
+  const fetchZones = async (currentPage: number) => {
     setIsLoading(true);
     try {
-      const data = await listZones();
-      setZones(data);
+      const data = await listZonesPage(currentPage);
+      setZones(data.items);
+      setTotalCount(data.count);
+      setHasNext(Boolean(data.next));
+      setHasPrevious(Boolean(data.previous));
     } catch (error) {
       console.error("Failed to fetch zones:", error);
       toast.error("Failed to load zones");
@@ -70,6 +78,7 @@ export default function ZonesDirectoryPage() {
         description: `${deleteTarget.name} was removed.`,
       });
       setZones((prev) => prev.filter((z) => z.id !== deleteTarget.id));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       setDeleteTarget(null);
     } catch (error) {
       console.error("Delete error:", error);
@@ -228,6 +237,15 @@ export default function ZonesDirectoryPage() {
             </p>
           )}
         </CardContent>
+        <PaginationControls
+          page={page}
+          count={totalCount}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isLoading={isLoading}
+          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </Card>
 
       <ConfirmDeleteModal

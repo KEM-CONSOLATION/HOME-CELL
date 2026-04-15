@@ -1,11 +1,21 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { AttendanceRecord, AttendanceWrite } from "@/types/models";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/attendance/";
 
 export async function listAttendance(): Promise<AttendanceRecord[]> {
-  const { data } = await dedupedGet<AttendanceRecord[]>(BASE);
-  return data;
+  const page = await listAttendancePage(1);
+  return page.items;
+}
+
+export async function listAttendancePage(
+  page = 1,
+): Promise<PaginatedList<AttendanceRecord>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<AttendanceRecord>(data);
 }
 
 export async function getAttendance(

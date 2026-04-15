@@ -16,17 +16,22 @@ import { Search, Plus, Trash2, Eye } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AttendanceRecord } from "@/types/models";
-import { deleteAttendance, listAttendance } from "@/lib/attendance-api";
+import { deleteAttendance, listAttendancePage } from "@/lib/attendance-api";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 export default function AttendanceListPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [rows, setRows] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(
     null,
   );
@@ -37,8 +42,13 @@ export default function AttendanceListPage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const data = await listAttendance();
-        if (!cancelled) setRows(data);
+        const data = await listAttendancePage(page);
+        if (!cancelled) {
+          setRows(data.items);
+          setTotalCount(data.count);
+          setHasNext(Boolean(data.next));
+          setHasPrevious(Boolean(data.previous));
+        }
       } catch (error) {
         if (!cancelled) {
           toast.error("Failed to load attendance", {
@@ -52,7 +62,7 @@ export default function AttendanceListPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
@@ -67,6 +77,7 @@ export default function AttendanceListPage() {
     try {
       await deleteAttendance(deleteTarget.id);
       setRows((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       toast.success("Attendance report deleted");
     } catch (error) {
       toast.error("Failed to delete attendance", {
@@ -188,6 +199,15 @@ export default function AttendanceListPage() {
             </p>
           )}
         </CardContent>
+        <PaginationControls
+          page={page}
+          count={totalCount}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isLoading={isLoading}
+          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </Card>
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}

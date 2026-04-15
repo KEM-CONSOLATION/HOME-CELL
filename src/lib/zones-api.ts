@@ -1,11 +1,19 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { Zone, ZoneWritePayload } from "@/types/zone";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/zones/";
 
 export async function listZones(): Promise<Zone[]> {
-  const { data } = await dedupedGet<Zone[]>(BASE);
-  return data;
+  const page = await listZonesPage(1);
+  return page.items;
+}
+
+export async function listZonesPage(page = 1): Promise<PaginatedList<Zone>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<Zone>(data);
 }
 
 export async function getZone(id: number): Promise<Zone> {

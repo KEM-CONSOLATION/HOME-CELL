@@ -1,11 +1,19 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { State, StateWritePayload } from "@/types/state";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/states/";
 
 export async function listStates(): Promise<State[]> {
-  const { data } = await dedupedGet<State[]>(BASE);
-  return data;
+  const page = await listStatesPage(1);
+  return page.items;
+}
+
+export async function listStatesPage(page = 1): Promise<PaginatedList<State>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<State>(data);
 }
 
 export async function getState(id: number): Promise<State> {

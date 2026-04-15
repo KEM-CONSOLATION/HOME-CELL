@@ -1,11 +1,19 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { Area, AreaWritePayload } from "@/types/area";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/areas/";
 
 export async function listAreas(): Promise<Area[]> {
-  const { data } = await dedupedGet<Area[]>(BASE);
-  return data;
+  const page = await listAreasPage(1);
+  return page.items;
+}
+
+export async function listAreasPage(page = 1): Promise<PaginatedList<Area>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<Area>(data);
 }
 
 export async function getArea(id: number): Promise<Area> {

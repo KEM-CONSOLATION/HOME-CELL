@@ -1,11 +1,21 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { MemberRecord, MemberWrite } from "@/types/models";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/members/";
 
 export async function listMembers(): Promise<MemberRecord[]> {
-  const { data } = await dedupedGet<MemberRecord[]>(BASE);
-  return data;
+  const page = await listMembersPage(1);
+  return page.items;
+}
+
+export async function listMembersPage(
+  page = 1,
+): Promise<PaginatedList<MemberRecord>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<MemberRecord>(data);
 }
 
 export async function getMember(id: number | string): Promise<MemberRecord> {

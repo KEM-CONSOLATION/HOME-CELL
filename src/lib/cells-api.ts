@@ -1,11 +1,19 @@
 import api, { dedupedGet } from "@/config/axios";
 import type { Cell, CellWritePayload } from "@/types/cell";
+import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 
 const BASE = "/auth/cells/";
 
 export async function listCells(): Promise<Cell[]> {
-  const { data } = await dedupedGet<Cell[]>(BASE);
-  return data;
+  const page = await listCellsPage(1);
+  return page.items;
+}
+
+export async function listCellsPage(page = 1): Promise<PaginatedList<Cell>> {
+  const { data } = await dedupedGet<unknown>(BASE, {
+    params: page > 1 ? { page } : undefined,
+  });
+  return normalizePaginatedList<Cell>(data);
 }
 
 export async function getCell(id: number | string): Promise<Cell> {
