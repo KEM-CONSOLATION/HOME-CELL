@@ -157,7 +157,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Navigation Tabs */}
         <div className="lg:col-span-3 space-y-1">
           {tabs.map((tab) => (
             <button
@@ -176,7 +175,6 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Settings Content */}
         <div className="lg:col-span-9 space-y-6">
           {activeTab === "profile" && (
             <>

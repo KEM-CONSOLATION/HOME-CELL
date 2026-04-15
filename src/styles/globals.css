@@ -116,7 +116,6 @@
   --color-dark: #121212;
 }
 
-/* Dark mode support */
 .dark {
   --color-dark: #ffffff;
   --color-dark-hover: #f5f5f5;

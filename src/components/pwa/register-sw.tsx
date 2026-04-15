@@ -2,9 +2,6 @@
 
 import { useEffect } from "react";
 
-/**
- * Registers the service worker in production only (avoids stale caches during local dev).
- */
 export function RegisterServiceWorker() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
@@ -16,9 +13,7 @@ export function RegisterServiceWorker() {
         await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
         });
-      } catch {
-        /* ignore registration errors (e.g. HTTP on localhost without HTTPS in some setups) */
-      }
+      } catch {}
     };
 
     if (document.readyState === "complete") {

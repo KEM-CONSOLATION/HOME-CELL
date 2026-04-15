@@ -6,25 +6,10 @@ import { Input } from "@/components/ui/input";
 export interface FormFieldProps extends React.ComponentProps<"input"> {
   label: string;
   icon?: React.ReactNode;
-  /** Error message displayed below the input */
   error?: string;
-  /** Additional className for the wrapper div */
   wrapperClassName?: string;
 }
 
-/**
- * A convenience wrapper combining shadcn Label + Input with an optional
- * left icon. Use this everywhere you need a labelled form field.
- *
- * @example
- * <FormField
- *   label="Meeting Date"
- *   type="date"
- *   icon={<Calendar className="h-4 w-4" />}
- *   value={date}
- *   onChange={(e) => setDate(e.target.value)}
- * />
- */
 export function FormField({
   label,
   icon,

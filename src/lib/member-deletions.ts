@@ -21,9 +21,7 @@ export function recordDeletedMemberId(id: string): void {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...prev, id]));
       notifyMemberDeletions();
     }
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export function getDeletedMemberIds(): string[] {

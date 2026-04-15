@@ -82,11 +82,6 @@ axios.interceptors.request.use(
   async (config) => {
     const accessToken = useStore.getState().access ?? null;
 
-    // If it's a relative URL and not already hitting the proxy,
-    // we need to make sure it's formatted as a proxy request.
-    // However, if we set baseURL to /api/proxy, axios will prepend it.
-    // We just need to ensure the query params are set correctly.
-
     if (
       config.url &&
       !config.url.startsWith("http") &&
@@ -109,7 +104,6 @@ axios.interceptors.request.use(
       endpointParam.includes("/auth/login/") ||
       endpointParam.endsWith("/auth/login");
 
-    // Never send a stale access token on login — some APIs reject it.
     if (skipBearer && config.headers) {
       delete config.headers.Authorization;
     } else if (accessToken && config.headers) {

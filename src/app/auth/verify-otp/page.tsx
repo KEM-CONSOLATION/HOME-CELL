@@ -20,7 +20,6 @@ export default function VerifyOTPPage() {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Move to next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }

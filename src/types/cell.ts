@@ -1,4 +1,3 @@
-/** Cell as returned by /api/auth/cells/ (shape may grow with backend) */
 export type Cell = {
   id: number;
   name: string;

@@ -1,7 +1,3 @@
-/**
- * Scripture excerpts (KJV — public domain in the United States).
- * Expand this list anytime; the rotator cycles through all entries.
- */
 export type BibleQuote = {
   reference: string;
   text: string;

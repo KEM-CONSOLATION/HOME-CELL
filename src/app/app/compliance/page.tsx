@@ -112,7 +112,6 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      {/* Compliance Overview */}
       <div className="grid md:grid-cols-4 gap-6">
         {[
           {

@@ -21,9 +21,7 @@ export function recordDeletedCellId(id: string): void {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...prev, id]));
       notifyCellDeletions();
     }
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export function getDeletedCellIds(): string[] {

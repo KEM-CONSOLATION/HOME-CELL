@@ -10,7 +10,6 @@ export interface ConfirmDeleteModalProps {
   onConfirm: () => void | Promise<void>;
   title?: string;
   description?: string;
-  /** Shown in bold, e.g. the member or record name */
   itemName?: string;
   confirmLabel?: string;
   isLoading?: boolean;

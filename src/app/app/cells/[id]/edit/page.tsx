@@ -178,7 +178,6 @@ export default function EditCellPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid gap-8">
-          {/* Identity & Location */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">
@@ -255,7 +254,6 @@ export default function EditCellPage() {
             </CardContent>
           </Card>
 
-          {/* Leadership & Schedule */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 mb-6">
               <div className="flex items-center gap-3">

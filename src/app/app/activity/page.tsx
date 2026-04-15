@@ -133,7 +133,6 @@ export default function ActivityAuditPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Filters Sidebar */}
         <div className="lg:col-span-3 space-y-6">
           <Card className="border-none bg-white">
             <CardHeader className="pb-4 border-b border-slate-50">
@@ -195,7 +194,6 @@ export default function ActivityAuditPage() {
           </Card>
         </div>
 
-        {/* Audit Feed */}
         <div className="lg:col-span-9 space-y-6">
           <Card className="border-none bg-white">
             <CardHeader className="pb-4">

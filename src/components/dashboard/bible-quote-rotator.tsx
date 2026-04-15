@@ -5,11 +5,9 @@ import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { BIBLE_QUOTES } from "@/data/bible-quotes";
 import { cn } from "@/lib/utils";
 
-/** Time each verse stays on screen before advancing */
 const ROTATE_MS = 14_000;
 
 export function BibleQuoteRotator() {
-  // Keep first render deterministic for SSR hydration.
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 

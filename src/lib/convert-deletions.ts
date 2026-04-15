@@ -21,9 +21,7 @@ export function recordDeletedConvertId(id: string): void {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...prev, id]));
       notifyConvertDeletions();
     }
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export function getDeletedConvertIds(): string[] {

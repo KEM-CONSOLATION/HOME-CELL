@@ -1,7 +1,6 @@
 import type { User } from "@/types/models";
 import type { DashboardSnapshot } from "@/types/models";
 
-/** Login JSON from backend (shape may vary). */
 export type LoginResponse = {
   access?: string;
   refresh?: string;
@@ -20,10 +19,6 @@ export type LoginResponse = {
   activity_feed?: unknown[];
 };
 
-/**
- * Maps API login payload to the `User` shape the app stores.
- * Backend may put `role` on the root; `user` may use first_name/last_name and numeric id.
- */
 export function userFromLoginResponse(data: LoginResponse): User | null {
   const u = data.user;
   if (!u || typeof u !== "object") return null;

@@ -100,7 +100,6 @@ export default function CommunicationHub() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Navigation / Feed */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-none bg-white">
             <CardHeader className="pb-4">
@@ -181,9 +180,7 @@ export default function CommunicationHub() {
           </Card>
         </div>
 
-        {/* Composer / History */}
         <div className="lg:col-span-8 space-y-6">
-          {/* Composer */}
           <Card className="border-none bg-white overflow-hidden">
             <div className="h-1 bg-primary w-full" />
             <CardContent className="pt-8 space-y-4">
@@ -230,7 +227,6 @@ export default function CommunicationHub() {
             </CardContent>
           </Card>
 
-          {/* History Table */}
           <Card className="border-none bg-white">
             <CardHeader>
               <CardTitle className="text-lg">

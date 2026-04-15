@@ -106,7 +106,6 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Report Generation Section */}
         <div className="lg:col-span-8 space-y-6">
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 pb-6 mb-6">
@@ -198,7 +197,6 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        {/* History / Downloads */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-none bg-white">
             <CardHeader className="pb-4 border-b border-slate-50">

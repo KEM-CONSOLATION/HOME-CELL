@@ -145,7 +145,6 @@ export default function CellDetailsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      {/* Header */}
       <div className="flex flex-col gap-6">
         <Link
           href="/app/cells"
@@ -208,7 +207,6 @@ export default function CellDetailsPage() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Core Metrics */}
         <div className="lg:col-span-8 space-y-8">
           <div className="grid sm:grid-cols-3 gap-6">
             {[
@@ -258,7 +256,6 @@ export default function CellDetailsPage() {
             ))}
           </div>
 
-          {/* Members Listing */}
           <Card className="border-none bg-white">
             <CardHeader className="border-b border-slate-50 pb-4">
               <div className="flex items-center justify-between">
@@ -286,9 +283,7 @@ export default function CellDetailsPage() {
           </Card>
         </div>
 
-        {/* Sidebar Context */}
         <div className="lg:col-span-4 space-y-6">
-          {/* assigned Leader */}
           <Card className="border-none bg-slate-900 text-white relative overflow-hidden">
             <div className="absolute left-[-20%] bottom-[-20%] h-40 w-40 bg-primary/20 rounded-full blur-[60px]" />
             <CardHeader className="border-b border-white/5 pb-4">
@@ -319,7 +314,6 @@ export default function CellDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Geographical Context */}
           <Card className="border-none bg-white h-64 flex flex-col items-center justify-center text-center p-6 gap-3 group overflow-hidden relative">
             <div className="absolute inset-0 bg-slate-100 transition-transform group-hover:scale-110" />
             <div className="relative z-10">
@@ -336,7 +330,6 @@ export default function CellDetailsPage() {
             </button>
           </Card>
 
-          {/* Performance index */}
           <Card className="border-none bg-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Compliance Audit</CardTitle>

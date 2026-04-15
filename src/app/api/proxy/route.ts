@@ -62,8 +62,6 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   const baseURL = SERVICE_URLS[service as keyof typeof SERVICE_URLS]!;
   const targetURL = `${baseURL}${endpoint}`;
 
-  // Preserve the WETH-TAX query contract:
-  // /api/proxy?service=base&endpoint=/foo&anyOtherParam=...
   const forwardedParams = new URLSearchParams(url.searchParams);
   forwardedParams.delete("service");
   forwardedParams.delete("endpoint");
@@ -108,7 +106,6 @@ async function handler(req: NextRequest): Promise<NextResponse> {
 
   let body: BodyInit | undefined;
   if (hasBody) {
-    // For form-data / urlencoded, forwarding raw bytes preserves boundary/encoding.
     if (isFormData) {
       const ab = await req.arrayBuffer();
       body = ab.byteLength ? ab : undefined;
@@ -163,7 +160,6 @@ async function handler(req: NextRequest): Promise<NextResponse> {
         headers: resHeaders,
       });
     } catch {
-      // Non-JSON upstream responses still come back as text.
       resHeaders.set(
         "Content-Type",
         upstream.headers.get("content-type") || "text/plain",
