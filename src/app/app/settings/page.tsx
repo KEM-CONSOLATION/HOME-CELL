@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dashboard-cards";
 import {
   User,
-  Mail,
   Phone,
   MapPin,
   Bell,
@@ -21,24 +20,103 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getProfile, updateProfile, type UserProfile } from "@/lib/profile-api";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const { user } = useStore();
+  const { user, setUser } = useStore();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  const handleSave = () => {
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingProfile(true);
+    void (async () => {
+      try {
+        const row = await getProfile();
+        if (!cancelled) {
+          setProfile(row);
+          setFirstName(
+            typeof row.first_name === "string" ? row.first_name : "",
+          );
+          setLastName(typeof row.last_name === "string" ? row.last_name : "");
+          setPhoneNumber(
+            typeof row.phone_number === "string" ? row.phone_number : "",
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error("Failed to load profile", {
+            description: extractErrorMessage(error),
+          });
+        }
+      } finally {
+        if (!cancelled) setIsLoadingProfile(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isProfileDirty =
+    profile != null &&
+    (firstName !== profile.first_name ||
+      lastName !== profile.last_name ||
+      phoneNumber !== profile.phone_number);
+
+  const handleSave = async () => {
+    if (!profile || isLoadingProfile || !isProfileDirty) return;
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const updated = await updateProfile({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        phone_number: phoneNumber.trim(),
+      });
+      setProfile(updated);
+      setFirstName(
+        typeof updated.first_name === "string" ? updated.first_name : "",
+      );
+      setLastName(
+        typeof updated.last_name === "string" ? updated.last_name : "",
+      );
+      setPhoneNumber(
+        typeof updated.phone_number === "string" ? updated.phone_number : "",
+      );
+      if (user) {
+        const fullName =
+          [updated.first_name, updated.last_name]
+            .filter(
+              (item): item is string =>
+                typeof item === "string" && item.length > 0,
+            )
+            .join(" ") || user.name;
+        setUser({
+          ...user,
+          name: fullName,
+          email: typeof updated.email === "string" ? updated.email : user.email,
+        });
+      }
       toast.success("Settings updated!", {
         description: "Your changes have been saved successfully.",
       });
+    } catch (error) {
+      toast.error("Failed to update profile", {
+        description: extractErrorMessage(error),
+      });
+    } finally {
       setIsSaving(false);
-    }, 1000);
+    }
   };
 
   const tabs = [
@@ -60,8 +138,13 @@ export default function SettingsPage() {
           </p>
         </div>
         <button
-          onClick={handleSave}
-          disabled={isSaving}
+          onClick={() => void handleSave()}
+          disabled={
+            isSaving ||
+            activeTab !== "profile" ||
+            isLoadingProfile ||
+            !isProfileDirty
+          }
           className="cursor-pointer inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground transition-all hover:translate-y-[-2px] active:translate-y-0 disabled:opacity-70 group"
         >
           {isSaving ? (
@@ -69,7 +152,7 @@ export default function SettingsPage() {
           ) : (
             <Save className="h-4 w-4" />
           )}
-          Save All Changes
+          Save Profile
         </button>
       </div>
 
@@ -105,83 +188,110 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-50">
-                    <div className="relative group">
-                      <div className="h-24 w-24 rounded-lg bg-slate-100 flex items-center justify-center border-2 border-slate-200 overflow-hidden">
-                        {user?.avatar ? (
-                          <img
-                            src={user.avatar}
-                            className="h-full w-full object-cover"
-                            alt="Avatar"
-                          />
-                        ) : (
-                          <User className="h-10 w-10 text-slate-300" />
-                        )}
-                      </div>
-                      <button className="cursor-pointer absolute -bottom-1 -right-1 h-8 w-8 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95">
-                        <Upload className="h-4 w-4" />
-                      </button>
+                  {isLoadingProfile ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-lg">{user?.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {user?.role.replace("_", " ")} • {user?.unitName}
-                      </p>
-                      <div className="mt-3 flex gap-2">
-                        <button className="cursor-pointer text-xs font-bold text-primary hover:underline">
-                          Change Photo
-                        </button>
-                        <span className="text-slate-200">|</span>
-                        <button className="cursor-pointer text-xs font-bold text-rose-500 hover:underline">
-                          Remove
-                        </button>
+                  ) : (
+                    <>
+                      <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-50">
+                        <div className="relative group">
+                          <div className="h-24 w-24 rounded-lg bg-slate-100 flex items-center justify-center border-2 border-slate-200 overflow-hidden">
+                            {user?.avatar ? (
+                              <img
+                                src={user.avatar}
+                                className="h-full w-full object-cover"
+                                alt="Avatar"
+                              />
+                            ) : (
+                              <User className="h-10 w-10 text-slate-300" />
+                            )}
+                          </div>
+                          <button className="cursor-pointer absolute -bottom-1 -right-1 h-8 w-8 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95">
+                            <Upload className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-lg">
+                            {[firstName, lastName].filter(Boolean).join(" ") ||
+                              user?.name}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {profile?.role_display ??
+                              user?.role.replace("_", " ")}{" "}
+                            • {user?.unitName}
+                          </p>
+                          <div className="mt-3 flex gap-2">
+                            <button className="cursor-pointer text-xs font-bold text-primary hover:underline">
+                              Change Photo
+                            </button>
+                            <span className="text-slate-200">|</span>
+                            <button className="cursor-pointer text-xs font-bold text-rose-500 hover:underline">
+                              Remove
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        defaultValue={user?.name}
-                        className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        defaultValue={user?.email}
-                        className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Phone Number
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="+234 ..."
-                        className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Region / State
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        defaultValue={user?.unitName}
-                        className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
-                      />
-                    </div>
-                  </div>
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            First Name
+                          </label>
+                          <input
+                            type="text"
+                            value={firstName ?? ""}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            Last Name
+                          </label>
+                          <input
+                            type="text"
+                            value={lastName ?? ""}
+                            onChange={(e) => setLastName(e.target.value)}
+                            className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            readOnly
+                            value={
+                              profile && typeof profile.email === "string"
+                                ? profile.email
+                                : ""
+                            }
+                            className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            Phone Number
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <input
+                              type="text"
+                              value={phoneNumber ?? ""}
+                              onChange={(e) => setPhoneNumber(e.target.value)}
+                              placeholder="+234 ..."
+                              className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -189,35 +299,84 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>Home Fellowship Info</CardTitle>
                   <CardDescription>
-                    Specific details about your assigned cell unit.
+                    Hierarchical assignments are managed by admin roles.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Cell Name
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  {isLoadingProfile ? (
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Assigned State
+                        </label>
                         <input
                           type="text"
-                          defaultValue="Grace & Truth Cell"
-                          className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                          readOnly
+                          value={
+                            profile?.assigned_state != null
+                              ? `State ID ${profile.assigned_state}`
+                              : "Not assigned"
+                          }
+                          className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
                         />
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Assigned Area
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={
+                            profile?.assigned_area != null
+                              ? `Area ID ${profile.assigned_area}`
+                              : "Not assigned"
+                          }
+                          className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Assigned Zone
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={
+                            profile?.assigned_zone != null
+                              ? `Zone ID ${profile.assigned_zone}`
+                              : "Not assigned"
+                          }
+                          className="w-full h-12 px-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                          Assigned Cell
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <input
+                            type="text"
+                            readOnly
+                            value={
+                              profile?.assigned_cell != null
+                                ? `Cell ID ${profile.assigned_cell}`
+                                : "Not assigned"
+                            }
+                            className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-100 text-muted-foreground cursor-not-allowed font-medium"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        Cell Address
-                      </label>
-                      <input
-                        type="text"
-                        defaultValue="Block A2, Heaven's Gate Estate"
-                        className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </>

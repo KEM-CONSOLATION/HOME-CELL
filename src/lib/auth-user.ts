@@ -13,6 +13,7 @@ export type LoginResponse = {
     graph_data?: unknown[];
     activity_feed?: unknown[];
   };
+  stats?: Record<string, unknown>;
   dashStats?: Record<string, unknown>;
   convert_stats?: Record<string, unknown>;
   graph_data?: unknown[];
@@ -66,7 +67,10 @@ export function dashboardFromLoginResponse(
   data: LoginResponse,
 ): DashboardSnapshot | null {
   const nestedDashboard = asRecord(data.dashboard);
-  const rawStats = asRecord(data.dashStats) ?? asRecord(nestedDashboard?.stats);
+  const rawStats =
+    asRecord(data.stats) ??
+    asRecord(data.dashStats) ??
+    asRecord(nestedDashboard?.stats);
   const rawConvert =
     asRecord(nestedDashboard?.convert_stats) ?? asRecord(data.convert_stats);
   const rawGraph =

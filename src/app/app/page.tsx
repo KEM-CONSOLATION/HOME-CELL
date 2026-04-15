@@ -27,6 +27,8 @@ import {
   dashboardFromLoginResponse,
   type LoginResponse,
 } from "@/lib/auth-user";
+import { useEffect } from "react";
+import { getDashboardStats } from "@/lib/dashboard-api";
 
 function formatRelativeTime(isoDate: string): string {
   const timestamp = new Date(isoDate).getTime();
@@ -58,11 +60,29 @@ function mapActivityStyle(item: DashboardActivityItem) {
 }
 
 export default function DashboardPage() {
-  const { user, dashboard, loginResponse } = useStore();
-  const dashboardData =
+  const { user, dashboard, loginResponse, setDashboard } = useStore();
+  const fallbackDashboard =
     (loginResponse
       ? dashboardFromLoginResponse(loginResponse as LoginResponse)
       : null) ?? dashboard;
+  const dashboardData = dashboard ?? fallbackDashboard;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const latestDashboard = await getDashboardStats();
+        if (!cancelled && latestDashboard) {
+          setDashboard(latestDashboard);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setDashboard]);
 
   const stats = [
     {
