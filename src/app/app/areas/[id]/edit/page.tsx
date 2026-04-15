@@ -16,8 +16,9 @@ import { getArea, updateArea } from "@/lib/areas-api";
 import { listStates } from "@/lib/states-api";
 import type { State as StateRow } from "@/types/state";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type StatesFieldMode = "loading" | "select" | "manual";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function EditAreaPage() {
   const router = useRouter();
@@ -32,15 +33,13 @@ export default function EditAreaPage() {
   const [stateId, setStateId] = useState("");
   const [areaLeaderId, setAreaLeaderId] = useState("");
   const [stateOptions, setStateOptions] = useState<StateRow[]>([]);
-  const [statesFieldMode, setStatesFieldMode] =
-    useState<StatesFieldMode>("loading");
+  const [leaders, setLeaders] = useState<MemberRecord[]>([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(true);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   const stateNum = Number.parseInt(stateId, 10);
   const leaderNum = Number.parseInt(areaLeaderId, 10);
-  const stateOk =
-    statesFieldMode !== "loading" &&
-    stateId.trim() !== "" &&
-    Number.isFinite(stateNum);
+  const stateOk = stateId.trim() !== "" && Number.isFinite(stateNum);
   const isValid =
     name.trim().length > 0 && stateOk && Number.isFinite(leaderNum);
 
@@ -53,24 +52,20 @@ export default function EditAreaPage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const [area, statesList] = await Promise.all([
+        const [area, statesList, membersList] = await Promise.all([
           getArea(idNum),
           listStates().catch(() => [] as StateRow[]),
+          listMembers().catch(() => [] as MemberRecord[]),
         ]);
         if (cancelled) return;
         setName(area.name);
         setStateId(String(area.state));
         setAreaLeaderId(String(area.area_leader));
-        if (statesList.length > 0) {
-          const sorted = [...statesList].sort((a, b) =>
-            a.name.localeCompare(b.name),
-          );
-          setStateOptions(sorted);
-          const hasCurrent = sorted.some((s) => s.id === area.state);
-          setStatesFieldMode(hasCurrent ? "select" : "manual");
-        } else {
-          setStatesFieldMode("manual");
-        }
+        const sortedStates = [...statesList].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+        setStateOptions(sortedStates);
+        setLeaders(membersList);
       } catch (error) {
         console.error("Failed to fetch area:", error);
         if (!cancelled) {
@@ -78,7 +73,11 @@ export default function EditAreaPage() {
           router.push("/app/areas");
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsLoadingStates(false);
+          setIsLoadingLeaders(false);
+        }
       }
     })();
     return () => {
@@ -162,8 +161,7 @@ export default function EditAreaPage() {
               <div>
                 <CardTitle>Area details</CardTitle>
                 <CardDescription>
-                  Choose a state from the list or enter a state ID if the list
-                  is unavailable.
+                  Select the state and assigned area leader by name.
                 </CardDescription>
               </div>
             </div>
@@ -185,42 +183,41 @@ export default function EditAreaPage() {
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                   State <span className="text-destructive">*</span>
                 </label>
-                {statesFieldMode === "loading" ? (
+                {isLoadingStates ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
-                ) : statesFieldMode === "select" ? (
-                  <select
-                    value={stateId}
-                    onChange={(e) => setStateId(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                  >
-                    <option value="">Select state</option>
-                    {stateOptions.map((s) => (
-                      <option key={s.id} value={String(s.id)}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
                 ) : (
-                  <input
-                    type="number"
-                    min={0}
+                  <Combobox
                     value={stateId}
-                    onChange={(e) => setStateId(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    onChange={setStateId}
+                    placeholder="Select state"
+                    searchPlaceholder="Search states..."
+                    options={stateOptions.map((state) => ({
+                      value: String(state.id),
+                      label: state.name,
+                    }))}
                   />
                 )}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                  Area leader ID <span className="text-destructive">*</span>
+                  Area leader <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={areaLeaderId}
-                  onChange={(e) => setAreaLeaderId(e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                />
+                {isLoadingLeaders ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Combobox
+                    value={areaLeaderId}
+                    onChange={setAreaLeaderId}
+                    placeholder="Select area leader"
+                    searchPlaceholder="Search leaders..."
+                    options={leaders.map((member) => ({
+                      value: String(member.id),
+                      label: [member.first_name, member.last_name]
+                        .filter(Boolean)
+                        .join(" "),
+                    }))}
+                  />
+                )}
               </div>
             </div>
           </CardContent>

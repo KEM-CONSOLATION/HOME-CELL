@@ -5,8 +5,18 @@ import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 const BASE = "/auth/zones/";
 
 export async function listZones(): Promise<Zone[]> {
-  const page = await listZonesPage(1);
-  return page.items;
+  const items: Zone[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await listZonesPage(page);
+    items.push(...response.items);
+    if (!response.next) break;
+    page += 1;
+    if (page > 200) break;
+  }
+
+  return items;
 }
 
 export async function listZonesPage(page = 1): Promise<PaginatedList<Zone>> {

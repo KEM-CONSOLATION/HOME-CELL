@@ -5,8 +5,18 @@ import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 const BASE = "/auth/cells/";
 
 export async function listCells(): Promise<Cell[]> {
-  const page = await listCellsPage(1);
-  return page.items;
+  const items: Cell[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await listCellsPage(page);
+    items.push(...response.items);
+    if (!response.next) break;
+    page += 1;
+    if (page > 200) break;
+  }
+
+  return items;
 }
 
 export async function listCellsPage(page = 1): Promise<PaginatedList<Cell>> {

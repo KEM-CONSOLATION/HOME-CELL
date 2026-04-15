@@ -20,10 +20,13 @@ import { createAttendance } from "@/lib/attendance-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function NewAttendancePage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingCells, setIsLoadingCells] = useState(true);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [cells, setCells] = useState<Cell[]>([]);
   const [members, setMembers] = useState<MemberRecord[]>([]);
   const [cellId, setCellId] = useState("");
@@ -35,10 +38,12 @@ export default function NewAttendancePage() {
   useEffect(() => {
     void listCells()
       .then(setCells)
-      .catch(() => setCells([]));
+      .catch(() => setCells([]))
+      .finally(() => setIsLoadingCells(false));
     void listMembers()
       .then(setMembers)
-      .catch(() => setMembers([]));
+      .catch(() => setMembers([]))
+      .finally(() => setIsLoadingMembers(false));
   }, []);
 
   const cellNum = Number.parseInt(cellId, 10);
@@ -110,21 +115,23 @@ export default function NewAttendancePage() {
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-semibold">Cell</label>
-              <select
-                value={cellId}
-                onChange={(e) => {
-                  setCellId(e.target.value);
-                  setPresentIds([]);
-                }}
-                className="w-full h-11 px-3 rounded-lg border bg-slate-50"
-              >
-                <option value="">Select cell</option>
-                {cells.map((cell) => (
-                  <option key={cell.id} value={cell.id}>
-                    {cell.name} (#{cell.id})
-                  </option>
-                ))}
-              </select>
+              {isLoadingCells ? (
+                <Skeleton className="h-11 w-full rounded-lg" />
+              ) : (
+                <Combobox
+                  value={cellId}
+                  onChange={(value) => {
+                    setCellId(value);
+                    setPresentIds([]);
+                  }}
+                  placeholder="Select cell"
+                  searchPlaceholder="Search cells..."
+                  options={cells.map((cell) => ({
+                    value: String(cell.id),
+                    label: `${cell.name} (#${cell.id})`,
+                  }))}
+                />
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">Meeting Date</label>
@@ -162,11 +169,23 @@ export default function NewAttendancePage() {
           <CardHeader>
             <CardTitle>Members Present ({presentIds.length})</CardTitle>
             <CardDescription>
-              Select members who attended. `total_present` is auto-calculated.
+              Select members who attended. `Total Present` is auto-calculated.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {visibleMembers.length === 0 ? (
+            {isLoadingMembers ? (
+              <div className="grid gap-2 md:grid-cols-2">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={`attendance-member-skeleton-${index}`}
+                    className="flex items-center gap-3 rounded-lg border px-3 py-2"
+                  >
+                    <Skeleton className="h-4 w-4 rounded-sm" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                ))}
+              </div>
+            ) : visibleMembers.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Select a cell to load members.
               </p>

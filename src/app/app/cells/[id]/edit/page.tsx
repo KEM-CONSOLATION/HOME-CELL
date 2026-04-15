@@ -7,15 +7,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/dashboard-cards";
-import {
-  ArrowLeft,
-  MapPin,
-  ShieldCheck,
-  Save,
-  Users,
-  Building2,
-  Calendar,
-} from "lucide-react";
+import { ArrowLeft, MapPin, ShieldCheck, Save, Building2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -24,8 +16,9 @@ import { getCell, updateCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Zone } from "@/types/zone";
-
-type ZoneFieldMode = "loading" | "select" | "manual";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function EditCellPage() {
   const router = useRouter();
@@ -39,14 +32,14 @@ export default function EditCellPage() {
   const [cellAddress, setCellAddress] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [cellLeaderId, setCellLeaderId] = useState("");
+  const [meetingDay, setMeetingDay] = useState("Saturday");
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
-  const [zoneFieldMode, setZoneFieldMode] = useState<ZoneFieldMode>("loading");
+  const [leaderOptions, setLeaderOptions] = useState<MemberRecord[]>([]);
+  const [isLoadingZones, setIsLoadingZones] = useState(true);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   const zoneNum = Number.parseInt(zoneId, 10);
-  const zoneOk =
-    zoneFieldMode !== "loading" &&
-    zoneId.trim() !== "" &&
-    Number.isFinite(zoneNum);
+  const zoneOk = zoneId.trim() !== "" && Number.isFinite(zoneNum);
   const isValid =
     cellName.trim().length > 0 && cellAddress.trim().length > 0 && zoneOk;
 
@@ -60,9 +53,10 @@ export default function EditCellPage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const [cell, zonesList] = await Promise.all([
+        const [cell, zonesList, membersList] = await Promise.all([
           getCell(id),
           listZones().catch(() => [] as Zone[]),
+          listMembers().catch(() => [] as MemberRecord[]),
         ]);
         if (cancelled) return;
         setCellName(cell.name);
@@ -71,17 +65,10 @@ export default function EditCellPage() {
         setCellLeaderId(
           cell.cell_leader != null ? String(cell.cell_leader) : "",
         );
-        if (zonesList.length > 0) {
-          const sorted = [...zonesList].sort((a, b) =>
-            a.name.localeCompare(b.name),
-          );
-          setZoneOptions(sorted);
-          const z = cell.zone;
-          const hasCurrent = z != null && sorted.some((row) => row.id === z);
-          setZoneFieldMode(hasCurrent ? "select" : "manual");
-        } else {
-          setZoneFieldMode("manual");
-        }
+        setZoneOptions(
+          [...zonesList].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+        setLeaderOptions(membersList);
       } catch (error) {
         console.error("Failed to fetch cell:", error);
         if (!cancelled) {
@@ -89,7 +76,11 @@ export default function EditCellPage() {
           router.push("/app/cells");
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsLoadingZones(false);
+          setIsLoadingLeaders(false);
+        }
       }
     })();
     return () => {
@@ -210,28 +201,18 @@ export default function EditCellPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Zone <span className="text-destructive">*</span>
                   </label>
-                  {zoneFieldMode === "loading" ? (
+                  {isLoadingZones ? (
                     <Skeleton className="h-10 w-full rounded-xl" />
-                  ) : zoneFieldMode === "select" ? (
-                    <select
-                      value={zoneId}
-                      onChange={(e) => setZoneId(e.target.value)}
-                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                    >
-                      <option value="">Select zone</option>
-                      {zoneOptions.map((z) => (
-                        <option key={z.id} value={String(z.id)}>
-                          {z.name}
-                        </option>
-                      ))}
-                    </select>
                   ) : (
-                    <input
-                      type="number"
-                      min={0}
+                    <Combobox
                       value={zoneId}
-                      onChange={(e) => setZoneId(e.target.value)}
-                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      onChange={setZoneId}
+                      placeholder="Select zone"
+                      searchPlaceholder="Search zones..."
+                      options={zoneOptions.map((zone) => ({
+                        value: String(zone.id),
+                        label: zone.name,
+                      }))}
                     />
                   )}
                 </div>
@@ -272,18 +253,26 @@ export default function EditCellPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Cell leader (user ID)
+                    Cell leader
                   </label>
                   <div className="relative">
-                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min={0}
-                      value={cellLeaderId}
-                      onChange={(e) => setCellLeaderId(e.target.value)}
-                      placeholder="Optional"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                    />
+                    {isLoadingLeaders ? (
+                      <Skeleton className="h-12 w-full rounded-xl" />
+                    ) : (
+                      <Combobox
+                        value={cellLeaderId}
+                        onChange={setCellLeaderId}
+                        placeholder="Optional — select cell leader"
+                        searchPlaceholder="Search leaders..."
+                        className="h-12 pl-12"
+                        options={leaderOptions.map((member) => ({
+                          value: String(member.id),
+                          label: [member.first_name, member.last_name]
+                            .filter(Boolean)
+                            .join(" "),
+                        }))}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -291,12 +280,22 @@ export default function EditCellPage() {
                     Meeting Day
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <select className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
-                      <option>Saturday</option>
-                      <option>Friday</option>
-                      <option>Sunday</option>
-                    </select>
+                    <Combobox
+                      value={meetingDay}
+                      onChange={setMeetingDay}
+                      placeholder="Select meeting day"
+                      searchPlaceholder="Search day..."
+                      className="h-12 pl-12"
+                      options={[
+                        { value: "Monday", label: "Monday" },
+                        { value: "Tuesday", label: "Tuesday" },
+                        { value: "Wednesday", label: "Wednesday" },
+                        { value: "Thursday", label: "Thursday" },
+                        { value: "Friday", label: "Friday" },
+                        { value: "Saturday", label: "Saturday" },
+                        { value: "Sunday", label: "Sunday" },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>

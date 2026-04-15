@@ -115,14 +115,12 @@ const navItems = [
       "ADMIN",
     ],
   },
-  /*
   {
     title: "Pastors & LGA",
     href: "/app/pastors",
     icon: UserCog,
     roles: ["AREA_LEADER", "STATE_LEADER", "STATE_PASTOR", "ADMIN"],
   },
-  */
   {
     title: "Fellowship Cells",
     href: "/app/cells",

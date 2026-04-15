@@ -23,10 +23,13 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function ReportsPage() {
   const { user } = useStore();
   const [isExporting, setIsExporting] = useState(false);
+  const [dateRange, setDateRange] = useState("Last 7 Days");
+  const [dataDepth, setDataDepth] = useState("Summary View");
 
   const handleExport = (type: string) => {
     setIsExporting(true);
@@ -169,23 +172,35 @@ export default function ReportsPage() {
                   </label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <select className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all font-medium appearance-none">
-                      <option>Last 7 Days</option>
-                      <option>This Month</option>
-                      <option>Quarter to Date</option>
-                      <option>All Time</option>
-                    </select>
+                    <Combobox
+                      value={dateRange}
+                      onChange={setDateRange}
+                      placeholder="Select date range"
+                      searchPlaceholder="Search ranges..."
+                      options={[
+                        { value: "Last 7 Days", label: "Last 7 Days" },
+                        { value: "This Month", label: "This Month" },
+                        { value: "Quarter to Date", label: "Quarter to Date" },
+                        { value: "All Time", label: "All Time" },
+                      ]}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Data Depth
                   </label>
-                  <select className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all font-medium appearance-none">
-                    <option>Summary View</option>
-                    <option>Detailed Audit</option>
-                    <option>Member Specific</option>
-                  </select>
+                  <Combobox
+                    value={dataDepth}
+                    onChange={setDataDepth}
+                    placeholder="Select data depth"
+                    searchPlaceholder="Search depth..."
+                    options={[
+                      { value: "Summary View", label: "Summary View" },
+                      { value: "Detailed Audit", label: "Detailed Audit" },
+                      { value: "Member Specific", label: "Member Specific" },
+                    ]}
+                  />
                 </div>
                 <div className="flex items-end">
                   <button className="cursor-pointer w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all">

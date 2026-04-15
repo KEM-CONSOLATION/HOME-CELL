@@ -5,8 +5,18 @@ import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 const BASE = "/auth/areas/";
 
 export async function listAreas(): Promise<Area[]> {
-  const page = await listAreasPage(1);
-  return page.items;
+  const items: Area[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await listAreasPage(page);
+    items.push(...response.items);
+    if (!response.next) break;
+    page += 1;
+    if (page > 200) break;
+  }
+
+  return items;
 }
 
 export async function listAreasPage(page = 1): Promise<PaginatedList<Area>> {

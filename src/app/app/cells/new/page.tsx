@@ -14,9 +14,7 @@ import {
   MapPin,
   Clock,
   ShieldCheck,
-  Users,
   Building2,
-  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -26,8 +24,9 @@ import { createCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type ZoneFieldMode = "loading" | "select" | "manual";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function NewCellPage() {
   const router = useRouter();
@@ -38,32 +37,36 @@ export default function NewCellPage() {
   const [cellAddress, setCellAddress] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [cellLeaderId, setCellLeaderId] = useState("");
+  const [meetingDay, setMeetingDay] = useState("Saturday");
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
-  const [zoneFieldMode, setZoneFieldMode] = useState<ZoneFieldMode>("loading");
+  const [leaderOptions, setLeaderOptions] = useState<MemberRecord[]>([]);
+  const [isLoadingZones, setIsLoadingZones] = useState(true);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   useEffect(() => {
     void listZones()
       .then((rows) => {
-        if (rows.length > 0) {
-          setZoneOptions(
-            [...rows].sort((a, b) => a.name.localeCompare(b.name)),
-          );
-          setZoneFieldMode("select");
-        } else {
-          setZoneFieldMode("manual");
-        }
+        setZoneOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
       })
       .catch(() => {
-        setZoneFieldMode("manual");
-        toast.error("Could not load zones. Enter zone ID manually.");
+        toast.error("Could not load zones.");
+      })
+      .finally(() => {
+        setIsLoadingZones(false);
+      });
+
+    void listMembers()
+      .then(setLeaderOptions)
+      .catch(() => {
+        toast.error("Could not load members for leader assignment.");
+      })
+      .finally(() => {
+        setIsLoadingLeaders(false);
       });
   }, []);
 
   const zoneNum = Number.parseInt(zoneId, 10);
-  const zoneOk =
-    zoneFieldMode !== "loading" &&
-    zoneId.trim() !== "" &&
-    Number.isFinite(zoneNum);
+  const zoneOk = zoneId.trim() !== "" && Number.isFinite(zoneNum);
   const isValid =
     cellName.trim().length > 0 && cellAddress.trim().length > 0 && zoneOk;
 
@@ -158,29 +161,18 @@ export default function NewCellPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Zone <span className="text-destructive">*</span>
                   </label>
-                  {zoneFieldMode === "loading" ? (
+                  {isLoadingZones ? (
                     <Skeleton className="h-10 w-full rounded-xl" />
-                  ) : zoneFieldMode === "select" ? (
-                    <select
-                      value={zoneId}
-                      onChange={(e) => setZoneId(e.target.value)}
-                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                    >
-                      <option value="">Select zone</option>
-                      {zoneOptions.map((z) => (
-                        <option key={z.id} value={String(z.id)}>
-                          {z.name}
-                        </option>
-                      ))}
-                    </select>
                   ) : (
-                    <input
-                      type="number"
-                      min={0}
+                    <Combobox
                       value={zoneId}
-                      onChange={(e) => setZoneId(e.target.value)}
-                      placeholder="Zone ID"
-                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      onChange={setZoneId}
+                      placeholder="Select zone"
+                      searchPlaceholder="Search zones..."
+                      options={zoneOptions.map((zone) => ({
+                        value: String(zone.id),
+                        label: zone.name,
+                      }))}
                     />
                   )}
                 </div>
@@ -221,18 +213,26 @@ export default function NewCellPage() {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Cell leader (user ID)
+                    Cell leader
                   </label>
                   <div className="relative">
-                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min={0}
-                      value={cellLeaderId}
-                      onChange={(e) => setCellLeaderId(e.target.value)}
-                      placeholder="Optional — numeric user ID"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                    />
+                    {isLoadingLeaders ? (
+                      <Skeleton className="h-12 w-full rounded-xl" />
+                    ) : (
+                      <Combobox
+                        value={cellLeaderId}
+                        onChange={setCellLeaderId}
+                        placeholder="Optional — select cell leader"
+                        searchPlaceholder="Search leaders..."
+                        className="h-12 pl-12"
+                        options={leaderOptions.map((member) => ({
+                          value: String(member.id),
+                          label: [member.first_name, member.last_name]
+                            .filter(Boolean)
+                            .join(" "),
+                        }))}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -240,12 +240,22 @@ export default function NewCellPage() {
                     Meeting Day
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <select className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none">
-                      <option>Saturday</option>
-                      <option>Friday</option>
-                      <option>Sunday</option>
-                    </select>
+                    <Combobox
+                      value={meetingDay}
+                      onChange={setMeetingDay}
+                      placeholder="Select meeting day"
+                      searchPlaceholder="Search day..."
+                      className="h-12 pl-12"
+                      options={[
+                        { value: "Monday", label: "Monday" },
+                        { value: "Tuesday", label: "Tuesday" },
+                        { value: "Wednesday", label: "Wednesday" },
+                        { value: "Thursday", label: "Thursday" },
+                        { value: "Friday", label: "Friday" },
+                        { value: "Saturday", label: "Saturday" },
+                        { value: "Sunday", label: "Sunday" },
+                      ]}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">

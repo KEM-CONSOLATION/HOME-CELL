@@ -25,10 +25,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function ActivityAuditPage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateConstraint, setDateConstraint] = useState("Today Only");
 
   const auditLogs = [
     {
@@ -171,18 +173,24 @@ export default function ActivityAuditPage() {
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1 mb-4">
                   Date Constraint
                 </p>
-                <select className="w-full h-11 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all font-bold text-xs appearance-none">
-                  <option>Today Only</option>
-                  <option>Last 7 Days</option>
-                  <option>Last 30 Days</option>
-                  <option>Custom Range</option>
-                </select>
+                <Combobox
+                  value={dateConstraint}
+                  onChange={setDateConstraint}
+                  placeholder="Select date range"
+                  searchPlaceholder="Search ranges..."
+                  options={[
+                    { value: "Today Only", label: "Today Only" },
+                    { value: "Last 7 Days", label: "Last 7 Days" },
+                    { value: "Last 30 Days", label: "Last 30 Days" },
+                    { value: "Custom Range", label: "Custom Range" },
+                  ]}
+                />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-none bg-slate-900 text-white p-6 relative overflow-hidden">
-            <div className="absolute right-[-10%] top-[-10%] h-32 w-32 bg-primary/20 rounded-full blur-[40px]" />
+            <div className="absolute right-[-10%] top-[-10%] h-32 w-32 bg-primary/20 rounded-full blur-2xl" />
             <div className="relative z-10 flex flex-col gap-3">
               <History className="h-8 w-8 text-primary" />
               <h4 className="font-bold">Security Integrity</h4>

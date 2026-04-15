@@ -16,8 +16,9 @@ import { getZone, updateZone } from "@/lib/zones-api";
 import { listAreas } from "@/lib/areas-api";
 import type { Area } from "@/types/area";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type AreaFieldMode = "loading" | "select" | "manual";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function EditZonePage() {
   const router = useRouter();
@@ -32,14 +33,13 @@ export default function EditZonePage() {
   const [areaId, setAreaId] = useState("");
   const [zonalLeaderId, setZonalLeaderId] = useState("");
   const [areaOptions, setAreaOptions] = useState<Area[]>([]);
-  const [areaFieldMode, setAreaFieldMode] = useState<AreaFieldMode>("loading");
+  const [leaders, setLeaders] = useState<MemberRecord[]>([]);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(true);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   const areaNum = Number.parseInt(areaId, 10);
   const leaderNum = Number.parseInt(zonalLeaderId, 10);
-  const areaOk =
-    areaFieldMode !== "loading" &&
-    areaId.trim() !== "" &&
-    Number.isFinite(areaNum);
+  const areaOk = areaId.trim() !== "" && Number.isFinite(areaNum);
   const isValid =
     name.trim().length > 0 && areaOk && Number.isFinite(leaderNum);
 
@@ -52,24 +52,19 @@ export default function EditZonePage() {
     setIsLoading(true);
     void (async () => {
       try {
-        const [z, areasList] = await Promise.all([
+        const [z, areasList, membersList] = await Promise.all([
           getZone(idNum),
           listAreas().catch(() => [] as Area[]),
+          listMembers().catch(() => [] as MemberRecord[]),
         ]);
         if (cancelled) return;
         setName(z.name);
         setAreaId(String(z.area));
         setZonalLeaderId(String(z.zonal_leader));
-        if (areasList.length > 0) {
-          const sorted = [...areasList].sort((a, b) =>
-            a.name.localeCompare(b.name),
-          );
-          setAreaOptions(sorted);
-          const hasCurrent = sorted.some((a) => a.id === z.area);
-          setAreaFieldMode(hasCurrent ? "select" : "manual");
-        } else {
-          setAreaFieldMode("manual");
-        }
+        setAreaOptions(
+          [...areasList].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+        setLeaders(membersList);
       } catch (error) {
         console.error("Failed to fetch zone:", error);
         if (!cancelled) {
@@ -77,7 +72,11 @@ export default function EditZonePage() {
           router.push("/app/zones");
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsLoadingAreas(false);
+          setIsLoadingLeaders(false);
+        }
       }
     })();
     return () => {
@@ -161,8 +160,7 @@ export default function EditZonePage() {
               <div>
                 <CardTitle>Zone details</CardTitle>
                 <CardDescription>
-                  Choose an area from the list or enter an area ID if the list
-                  is unavailable.
+                  Select an area and assign a zonal leader by name.
                 </CardDescription>
               </div>
             </div>
@@ -184,42 +182,41 @@ export default function EditZonePage() {
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                   Area <span className="text-destructive">*</span>
                 </label>
-                {areaFieldMode === "loading" ? (
+                {isLoadingAreas ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
-                ) : areaFieldMode === "select" ? (
-                  <select
-                    value={areaId}
-                    onChange={(e) => setAreaId(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                  >
-                    <option value="">Select area</option>
-                    {areaOptions.map((a) => (
-                      <option key={a.id} value={String(a.id)}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
                 ) : (
-                  <input
-                    type="number"
-                    min={0}
+                  <Combobox
                     value={areaId}
-                    onChange={(e) => setAreaId(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    onChange={setAreaId}
+                    placeholder="Select area"
+                    searchPlaceholder="Search areas..."
+                    options={areaOptions.map((area) => ({
+                      value: String(area.id),
+                      label: area.name,
+                    }))}
                   />
                 )}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                  Zonal leader ID <span className="text-destructive">*</span>
+                  Zonal leader <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={zonalLeaderId}
-                  onChange={(e) => setZonalLeaderId(e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                />
+                {isLoadingLeaders ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Combobox
+                    value={zonalLeaderId}
+                    onChange={setZonalLeaderId}
+                    placeholder="Select zonal leader"
+                    searchPlaceholder="Search leaders..."
+                    options={leaders.map((member) => ({
+                      value: String(member.id),
+                      label: [member.first_name, member.last_name]
+                        .filter(Boolean)
+                        .join(" "),
+                    }))}
+                  />
+                )}
               </div>
             </div>
           </CardContent>

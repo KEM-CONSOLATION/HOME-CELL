@@ -20,12 +20,17 @@ import { listAreas, patchArea } from "@/lib/areas-api";
 import type { State } from "@/types/state";
 import type { Area } from "@/types/area";
 import { extractErrorMessage } from "@/lib/utils";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function PastorsManagementPage() {
   const [states, setStates] = useState<State[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
   const [loadingAreas, setLoadingAreas] = useState(true);
+  const [loadingPastors, setLoadingPastors] = useState(true);
+  const [pastorOptions, setPastorOptions] = useState<MemberRecord[]>([]);
   const [search, setSearch] = useState("");
   const [statePastorEdits, setStatePastorEdits] = useState<
     Record<number, string>
@@ -54,6 +59,20 @@ export default function PastorsManagementPage() {
       } finally {
         setLoadingStates(false);
         setLoadingAreas(false);
+      }
+    })();
+
+    void (async () => {
+      setLoadingPastors(true);
+      try {
+        const members = await listMembers();
+        setPastorOptions(members);
+      } catch (error) {
+        toast.error("Failed to load pastors", {
+          description: extractErrorMessage(error),
+        });
+      } finally {
+        setLoadingPastors(false);
       }
     })();
   }, []);
@@ -93,7 +112,7 @@ export default function PastorsManagementPage() {
     const raw = getStatePastorValue(row).trim();
     const pastorId = Number.parseInt(raw, 10);
     if (!Number.isFinite(pastorId) || pastorId < 0) {
-      toast.error("Enter a valid State Pastor ID");
+      toast.error("Select a valid State Pastor");
       return;
     }
     setSavingStateId(row.id);
@@ -121,7 +140,7 @@ export default function PastorsManagementPage() {
     const raw = getLgaPastorValue(row).trim();
     const pastorId = Number.parseInt(raw, 10);
     if (!Number.isFinite(pastorId) || pastorId < 0) {
-      toast.error("Enter a valid LGA Pastor ID");
+      toast.error("Select a valid LGA Pastor");
       return;
     }
     setSavingAreaId(row.id);
@@ -148,9 +167,7 @@ export default function PastorsManagementPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Pastors & LGA Management
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Pastors</h1>
         <p className="text-muted-foreground mt-1">
           Assign State Pastors and LGA Pastors to their jurisdictions.
         </p>
@@ -224,7 +241,7 @@ export default function PastorsManagementPage() {
             <TableHeader>
               <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 <TableHead>State</TableHead>
-                <TableHead>State Pastor ID</TableHead>
+                <TableHead>State Pastor</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -249,17 +266,27 @@ export default function PastorsManagementPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="w-44">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={getStatePastorValue(row)}
-                          onChange={(e) =>
-                            setStatePastorEdits((prev) => ({
-                              ...prev,
-                              [row.id]: e.target.value,
-                            }))
-                          }
-                        />
+                        {loadingPastors ? (
+                          <Skeleton className="h-10 w-full" />
+                        ) : (
+                          <Combobox
+                            value={getStatePastorValue(row)}
+                            onChange={(value) =>
+                              setStatePastorEdits((prev) => ({
+                                ...prev,
+                                [row.id]: value,
+                              }))
+                            }
+                            placeholder="Select pastor"
+                            searchPlaceholder="Search pastors..."
+                            options={pastorOptions.map((member) => ({
+                              value: String(member.id),
+                              label: [member.first_name, member.last_name]
+                                .filter(Boolean)
+                                .join(" "),
+                            }))}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -289,7 +316,7 @@ export default function PastorsManagementPage() {
               <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 <TableHead>LGA</TableHead>
                 <TableHead>State</TableHead>
-                <TableHead>LGA Pastor ID</TableHead>
+                <TableHead>LGA Pastor</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -318,17 +345,27 @@ export default function PastorsManagementPage() {
                       </TableCell>
                       <TableCell>{row.state_name}</TableCell>
                       <TableCell className="w-44">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={getLgaPastorValue(row)}
-                          onChange={(e) =>
-                            setLgaPastorEdits((prev) => ({
-                              ...prev,
-                              [row.id]: e.target.value,
-                            }))
-                          }
-                        />
+                        {loadingPastors ? (
+                          <Skeleton className="h-10 w-full" />
+                        ) : (
+                          <Combobox
+                            value={getLgaPastorValue(row)}
+                            onChange={(value) =>
+                              setLgaPastorEdits((prev) => ({
+                                ...prev,
+                                [row.id]: value,
+                              }))
+                            }
+                            placeholder="Select pastor"
+                            searchPlaceholder="Search pastors..."
+                            options={pastorOptions.map((member) => ({
+                              value: String(member.id),
+                              label: [member.first_name, member.last_name]
+                                .filter(Boolean)
+                                .join(" "),
+                            }))}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

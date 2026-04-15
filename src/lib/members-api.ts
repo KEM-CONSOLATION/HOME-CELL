@@ -5,8 +5,18 @@ import { normalizePaginatedList, type PaginatedList } from "@/lib/pagination";
 const BASE = "/auth/members/";
 
 export async function listMembers(): Promise<MemberRecord[]> {
-  const page = await listMembersPage(1);
-  return page.items;
+  const items: MemberRecord[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await listMembersPage(page);
+    items.push(...response.items);
+    if (!response.next) break;
+    page += 1;
+    if (page > 200) break;
+  }
+
+  return items;
 }
 
 export async function listMembersPage(

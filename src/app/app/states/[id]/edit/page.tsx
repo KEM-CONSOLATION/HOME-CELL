@@ -14,6 +14,9 @@ import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import { getState, updateState } from "@/lib/states-api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { listMembers } from "@/lib/members-api";
+import type { MemberRecord } from "@/types/models";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function EditStatePage() {
   const router = useRouter();
@@ -26,9 +29,24 @@ export default function EditStatePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState("");
   const [statePastorId, setStatePastorId] = useState("");
+  const [leaders, setLeaders] = useState<MemberRecord[]>([]);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   const pastorNum = Number.parseInt(statePastorId, 10);
   const isValid = name.trim().length > 0 && Number.isFinite(pastorNum);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const rows = await listMembers();
+        setLeaders(rows);
+      } catch {
+        toast.error("Could not load members for pastor assignment.");
+      } finally {
+        setIsLoadingLeaders(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!Number.isFinite(idNum)) {
@@ -152,15 +170,24 @@ export default function EditStatePage() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                State pastor ID <span className="text-destructive">*</span>
+                State pastor <span className="text-destructive">*</span>
               </label>
-              <input
-                type="number"
-                min={0}
-                value={statePastorId}
-                onChange={(e) => setStatePastorId(e.target.value)}
-                className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-              />
+              {isLoadingLeaders ? (
+                <Skeleton className="h-12 w-full rounded-lg" />
+              ) : (
+                <Combobox
+                  value={statePastorId}
+                  onChange={setStatePastorId}
+                  placeholder="Select pastor"
+                  searchPlaceholder="Search pastors..."
+                  options={leaders.map((member) => ({
+                    value: String(member.id),
+                    label: [member.first_name, member.last_name]
+                      .filter(Boolean)
+                      .join(" "),
+                  }))}
+                />
+              )}
             </div>
           </CardContent>
         </Card>

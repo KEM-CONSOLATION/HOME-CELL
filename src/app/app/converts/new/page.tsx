@@ -21,18 +21,23 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createMember } from "@/lib/members-api";
+import { createMember, listMembers } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
+import { listZones } from "@/lib/zones-api";
 import { extractErrorMessage } from "@/lib/utils";
 import type { Cell } from "@/types/cell";
-import type { IntegrationStatus } from "@/types/models";
+import type { IntegrationStatus, MemberRecord } from "@/types/models";
+import type { Zone } from "@/types/zone";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function NewConvertPage() {
   const router = useRouter();
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
   const [cells, setCells] = useState<Cell[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [cellId, setCellId] = useState("");
@@ -49,9 +54,13 @@ export default function NewConvertPage() {
   const [nokPhone, setNokPhone] = useState("");
 
   useEffect(() => {
-    void listCells()
-      .then(setCells)
-      .catch(() => toast.error("Could not load cells. Enter ID manually."));
+    void Promise.all([listCells(), listZones(), listMembers()])
+      .then(([cellRows, zoneRows, memberRows]) => {
+        setCells(cellRows);
+        setZones(zoneRows);
+        setOfficers(memberRows);
+      })
+      .catch(() => toast.error("Could not load assignment options."));
   }, []);
 
   const cellNum = Number.parseInt(cellId, 10);
@@ -229,46 +238,50 @@ export default function NewConvertPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     How were they won?
                   </label>
-                  <select
+                  <Combobox
                     value={howWon}
-                    onChange={(e) => setHowWon(e.target.value)}
-                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                  >
-                    <option value="GLOBAL_OUTREACH">Global Outreach</option>
-                    <option value="PERSONAL_INVITATION">
-                      Personal Invitation
-                    </option>
-                    <option value="ONLINE">Online</option>
-                    <option value="OTHER">Other</option>
-                  </select>
+                    onChange={setHowWon}
+                    placeholder="Select source"
+                    searchPlaceholder="Search source..."
+                    options={[
+                      { value: "GLOBAL_OUTREACH", label: "Global Outreach" },
+                      {
+                        value: "PERSONAL_INVITATION",
+                        label: "Personal Invitation",
+                      },
+                      { value: "ONLINE", label: "Online" },
+                      { value: "OTHER", label: "Other" },
+                    ]}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Cell ID <span className="text-destructive">*</span>
+                    Cell <span className="text-destructive">*</span>
                   </label>
-                  <select
+                  <Combobox
                     value={cellId}
-                    onChange={(e) => setCellId(e.target.value)}
-                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                  >
-                    <option value="">Select a cell</option>
-                    {cells.map((cell) => (
-                      <option key={cell.id} value={cell.id}>
-                        {cell.name} (#{cell.id})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setCellId}
+                    placeholder="Select a cell"
+                    searchPlaceholder="Search cells..."
+                    options={cells.map((cell) => ({
+                      value: String(cell.id),
+                      label: `${cell.name} (#${cell.id})`,
+                    }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Zone ID (optional)
+                    Zone (optional)
                   </label>
-                  <input
-                    type="number"
-                    min={0}
+                  <Combobox
                     value={zoneId}
-                    onChange={(e) => setZoneId(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    onChange={setZoneId}
+                    placeholder="Select zone (optional)"
+                    searchPlaceholder="Search zones..."
+                    options={zones.map((zone) => ({
+                      value: String(zone.id),
+                      label: zone.name,
+                    }))}
                   />
                 </div>
               </div>
@@ -295,43 +308,52 @@ export default function NewConvertPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Assigned Cell
                   </label>
-                  <input
-                    type="text"
+                  <Combobox
                     value={cellId}
-                    onChange={(e) => setCellId(e.target.value)}
-                    placeholder="Cell ID"
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    onChange={setCellId}
+                    placeholder="Select a cell"
+                    searchPlaceholder="Search cells..."
+                    options={cells.map((cell) => ({
+                      value: String(cell.id),
+                      label: cell.name,
+                    }))}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Follow-up Officer
                   </label>
-                  <input
-                    type="number"
-                    min={0}
+                  <Combobox
                     value={followUpOfficer}
-                    onChange={(e) => setFollowUpOfficer(e.target.value)}
-                    placeholder="Leader user ID"
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                    onChange={setFollowUpOfficer}
+                    placeholder="Select follow-up officer (optional)"
+                    searchPlaceholder="Search officers..."
+                    options={officers.map((officer) => ({
+                      value: String(officer.id),
+                      label: [officer.first_name, officer.last_name]
+                        .filter(Boolean)
+                        .join(" "),
+                    }))}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Integration Status
                   </label>
-                  <select
+                  <Combobox
                     value={integrationStatus}
-                    onChange={(e) =>
-                      setIntegrationStatus(e.target.value as IntegrationStatus)
+                    onChange={(value) =>
+                      setIntegrationStatus(value as IntegrationStatus)
                     }
-                    className="cursor-pointer w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium appearance-none"
-                  >
-                    <option value="PENDING">Pending</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="INTEGRATED">Integrated</option>
-                    <option value="COMPLETED">Completed</option>
-                  </select>
+                    placeholder="Select integration status"
+                    searchPlaceholder="Search status..."
+                    options={[
+                      { value: "PENDING", label: "Pending" },
+                      { value: "IN_PROGRESS", label: "In Progress" },
+                      { value: "INTEGRATED", label: "Integrated" },
+                      { value: "COMPLETED", label: "Completed" },
+                    ]}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">

@@ -12,12 +12,15 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { IntegrationStatus } from "@/types/models";
+import type { IntegrationStatus, MemberRecord } from "@/types/models";
 import type { Cell } from "@/types/cell";
-import { getMember, updateMember } from "@/lib/members-api";
+import { getMember, listMembers, updateMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
+import { listZones } from "@/lib/zones-api";
+import type { Zone } from "@/types/zone";
 import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Combobox } from "@/components/ui/combobox";
 
 export default function EditConvertPage() {
   const router = useRouter();
@@ -27,6 +30,8 @@ export default function EditConvertPage() {
   const idNum = raw ? Number.parseInt(raw, 10) : NaN;
 
   const [cells, setCells] = useState<Cell[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -46,9 +51,15 @@ export default function EditConvertPage() {
   const [nokPhone, setNokPhone] = useState("");
 
   useEffect(() => {
-    void listCells()
-      .then(setCells)
-      .catch(() => setCells([]));
+    void Promise.all([
+      listCells().catch(() => [] as Cell[]),
+      listZones().catch(() => [] as Zone[]),
+      listMembers().catch(() => [] as MemberRecord[]),
+    ]).then(([cellRows, zoneRows, memberRows]) => {
+      setCells(cellRows);
+      setZones(zoneRows);
+      setOfficers(memberRows);
+    });
   }, []);
 
   useEffect(() => {
@@ -193,29 +204,36 @@ export default function EditConvertPage() {
               placeholder="Phone number"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
-            <select
+            <Combobox
               value={cellId}
-              onChange={(e) => setCellId(e.target.value)}
-              className="h-11 px-3 rounded-lg border bg-slate-50"
-            >
-              <option value="">Select cell</option>
-              {cells.map((cell) => (
-                <option key={cell.id} value={cell.id}>
-                  {cell.name} (#{cell.id})
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
+              onChange={setCellId}
+              placeholder="Select cell"
+              searchPlaceholder="Search cells..."
+              options={cells.map((cell) => ({
+                value: String(cell.id),
+                label: `${cell.name} (#${cell.id})`,
+              }))}
+            />
+            <Combobox
               value={zoneId}
-              onChange={(e) => setZoneId(e.target.value)}
-              placeholder="Zone ID (optional)"
-              className="h-11 px-3 rounded-lg border bg-slate-50"
+              onChange={setZoneId}
+              placeholder="Select zone (optional)"
+              searchPlaceholder="Search zones..."
+              options={zones.map((zone) => ({
+                value: String(zone.id),
+                label: zone.name,
+              }))}
             />
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Residential address"
+              className="h-11 px-3 rounded-lg border bg-slate-50 md:col-span-2"
+            />
+            <input
+              value={nokName}
+              onChange={(e) => setNokName(e.target.value)}
+              placeholder="Next of kin name"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
@@ -237,36 +255,38 @@ export default function EditConvertPage() {
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
-              type="number"
-              value={followUpOfficer}
-              onChange={(e) => setFollowUpOfficer(e.target.value)}
-              placeholder="Follow-up officer ID"
-              className="h-11 px-3 rounded-lg border bg-slate-50"
-            />
-            <input
-              value={nokName}
-              onChange={(e) => setNokName(e.target.value)}
-              placeholder="Next of kin name"
-              className="h-11 px-3 rounded-lg border bg-slate-50"
-            />
-            <input
               value={nokPhone}
               onChange={(e) => setNokPhone(e.target.value)}
               placeholder="Next of kin phone"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
-            <select
+            <Combobox
+              value={followUpOfficer}
+              onChange={setFollowUpOfficer}
+              placeholder="Select follow-up officer (optional)"
+              searchPlaceholder="Search officers..."
+              options={officers.map((officer) => ({
+                value: String(officer.id),
+                label: [officer.first_name, officer.last_name]
+                  .filter(Boolean)
+                  .join(" "),
+              }))}
+            />
+            <Combobox
               value={integrationStatus}
-              onChange={(e) =>
-                setIntegrationStatus(e.target.value as IntegrationStatus)
+              onChange={(value) =>
+                setIntegrationStatus(value as IntegrationStatus)
               }
-              className="h-11 px-3 rounded-lg border bg-slate-50 md:col-span-2"
-            >
-              <option value="PENDING">Pending</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="INTEGRATED">Integrated</option>
-              <option value="COMPLETED">Completed</option>
-            </select>
+              placeholder="Select integration status"
+              searchPlaceholder="Search status..."
+              options={[
+                { value: "PENDING", label: "Pending" },
+                { value: "IN_PROGRESS", label: "In Progress" },
+                { value: "INTEGRATED", label: "Integrated" },
+                { value: "COMPLETED", label: "Completed" },
+              ]}
+              className="md:col-span-2"
+            />
             <textarea
               value={initialNotes}
               onChange={(e) => setInitialNotes(e.target.value)}
