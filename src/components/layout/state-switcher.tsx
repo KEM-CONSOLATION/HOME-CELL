@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { ChevronDown, Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
@@ -20,17 +20,26 @@ function stateInitials(name: string): string {
 export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
   const { user, setUser } = useStore();
   const [states, setStates] = useState<State[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasFetchedStates, setHasFetchedStates] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const isFetchingRef = useRef(false);
 
-  useEffect(() => {
+  const ensureStatesLoaded = () => {
+    if (hasFetchedStates || isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    setLoading(true);
     void listStates()
-      .then((rows) =>
-        setStates([...rows].sort((a, b) => a.name.localeCompare(b.name))),
-      )
+      .then((rows) => {
+        setStates([...rows].sort((a, b) => a.name.localeCompare(b.name)));
+      })
       .catch(() => setStates([]))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        setHasFetchedStates(true);
+        setLoading(false);
+        isFetchingRef.current = false;
+      });
+  };
 
   const currentState =
     states.find((s) => String(s.id) === user?.unitId) ?? states[0];
@@ -58,7 +67,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
     return (
       <div className="flex justify-center py-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold border-2 border-primary/20 text-xs">
-          {loading ? "…" : badge}
+          {badge}
         </div>
       </div>
     );
@@ -68,11 +77,15 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
     <div className="px-4 py-4 relative">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={loading || states.length === 0}
+        onClick={() => {
+          const nextOpen = !isOpen;
+          setIsOpen(nextOpen);
+          if (nextOpen) ensureStatesLoaded();
+        }}
+        disabled={loading}
         className={cn(
           "cursor-pointer w-full flex items-center justify-between p-3 rounded-2xl border bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50 transition-all hover:border-primary/50 group",
-          (loading || states.length === 0) && "opacity-80 cursor-default",
+          loading && "opacity-80 cursor-default",
           isOpen && "ring-2 ring-primary/20 border-primary",
         )}
       >
@@ -85,7 +98,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
               Selected Region
             </span>
             <span className="text-sm font-bold truncate mt-1">
-              {loading ? "Loading…" : label}
+              {loading ? "Loading..." : label}
             </span>
           </div>
         </div>
@@ -97,7 +110,7 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
         />
       </button>
 
-      {isOpen && states.length > 0 && (
+      {isOpen && (
         <>
           <div
             className="fixed inset-0 z-20"
@@ -108,38 +121,48 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
             <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b mb-1">
               Switch States
             </div>
-            <div className="max-h-[250px] overflow-y-auto space-y-1">
-              {states.map((state) => (
-                <button
-                  type="button"
-                  key={state.id}
-                  onClick={() => handleSelect(state)}
-                  className={cn(
-                    "cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-accent",
-                    String(state.id) === user?.unitId
-                      ? "bg-primary/5 text-primary font-semibold"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
-                        String(state.id) === user?.unitId
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted",
-                      )}
-                    >
-                      {stateInitials(state.name)}
+            {loading ? (
+              <div className="px-3 py-5 text-sm text-muted-foreground">
+                Loading states...
+              </div>
+            ) : states.length === 0 ? (
+              <div className="px-3 py-5 text-sm text-muted-foreground">
+                No states available.
+              </div>
+            ) : (
+              <div className="max-h-[250px] overflow-y-auto space-y-1">
+                {states.map((state) => (
+                  <button
+                    type="button"
+                    key={state.id}
+                    onClick={() => handleSelect(state)}
+                    className={cn(
+                      "cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all hover:bg-accent",
+                      String(state.id) === user?.unitId
+                        ? "bg-primary/5 text-primary font-semibold"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold",
+                          String(state.id) === user?.unitId
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted",
+                        )}
+                      >
+                        {stateInitials(state.name)}
+                      </div>
+                      {state.name}
                     </div>
-                    {state.name}
-                  </div>
-                  {String(state.id) === user?.unitId && (
-                    <Check className="h-4 w-4" />
-                  )}
-                </button>
-              ))}
-            </div>
+                    {String(state.id) === user?.unitId && (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="mt-2 pt-2 border-t px-2">
               <button
                 type="button"

@@ -168,3 +168,37 @@ export interface DashboardSnapshot {
   graphData: DashboardGraphPoint[];
   activityFeed: DashboardActivityItem[];
 }
+
+export type ComplianceUnitStatus = "COMPLIANT" | "PENDING" | "OVERDUE";
+
+export interface ComplianceMetricsSnapshot {
+  overallCompliance: string;
+  reportsReceived: string;
+  pendingToday: number;
+  overdueReports: number;
+}
+
+export interface ComplianceUnitSnapshot {
+  id: string;
+  name: string;
+  leader: string;
+  status: ComplianceUnitStatus;
+  overdueLevel: number;
+  lastSubmission: string;
+  discipline: number;
+}
+
+export interface ComplianceSnapshot {
+  metrics: ComplianceMetricsSnapshot;
+  unitDirectory: ComplianceUnitSnapshot[];
+}
+
+export type ReportType = "ATTENDANCE" | "CONVERTS";
+
+export interface RecentReportRecord {
+  id: number;
+  reportType: ReportType;
+  name: string;
+  fileFormat: string;
+  timestamp: string;
+}

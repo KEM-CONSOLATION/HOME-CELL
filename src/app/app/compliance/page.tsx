@@ -19,7 +19,7 @@ import {
   MoreVertical,
   ArrowRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -29,66 +29,125 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getComplianceSnapshot } from "@/lib/compliance-api";
+import type {
+  ComplianceSnapshot,
+  ComplianceUnitSnapshot,
+} from "@/types/models";
 
 export default function CompliancePage() {
   const { user } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [snapshot, setSnapshot] = useState<ComplianceSnapshot | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   const handleRemindAll = () => {
+    if (
+      !snapshot ||
+      snapshot.metrics.pendingToday + snapshot.metrics.overdueReports <= 0
+    ) {
+      toast.info("All units are compliant", {
+        description:
+          "No reminders were sent because there are no pending units.",
+      });
+      return;
+    }
+
     toast.success("Reminders Sent!", {
       description:
         "Push notifications dispatched to all non-compliant leaders.",
     });
   };
 
-  const units = [
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        setIsLoading(true);
+        const complianceSnapshot = await getComplianceSnapshot();
+        if (!cancelled) {
+          setSnapshot(complianceSnapshot);
+          setIsError(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch compliance snapshot:", error);
+        if (!cancelled) {
+          setIsError(true);
+          toast.error("Unable to load compliance data", {
+            description: "Please refresh to try again.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredUnits = useMemo(() => {
+    if (!snapshot) return [];
+    return snapshot.unitDirectory.filter((unit) => {
+      const search = searchTerm.toLowerCase();
+      return (
+        unit.name.toLowerCase().includes(search) ||
+        unit.leader.toLowerCase().includes(search)
+      );
+    });
+  }, [searchTerm, snapshot]);
+
+  const stats = [
     {
-      name: "Grace Cell 1",
-      lead: "Alice Johnson",
-      status: "COMPLIANT",
-      time: "2h ago",
-      rate: "100%",
+      label: "Overall Compliance",
+      value: snapshot?.metrics.overallCompliance ?? "--",
+      icon: ShieldCheck,
+      color: "text-primary",
     },
     {
-      name: "Grace Cell 2",
-      lead: "Bob Smith",
-      status: "PENDING",
-      time: "-",
-      rate: "75%",
+      label: "Reports Received",
+      value: snapshot?.metrics.reportsReceived ?? "--",
+      icon: CheckCircle2,
+      color: "text-emerald-500",
     },
     {
-      name: "Truth Area 4",
-      lead: "Charlie Brown",
-      status: "PENDING",
-      time: "-",
-      rate: "82%",
+      label: "Pending Today",
+      value: snapshot?.metrics.pendingToday.toString() ?? "--",
+      icon: Clock,
+      color: "text-amber-500",
     },
     {
-      name: "Zion Bridge",
-      lead: "Diana Prince",
-      status: "COMPLIANT",
-      time: "Yesterday",
-      rate: "100%",
-    },
-    {
-      name: "Victory Cell",
-      lead: "Ethan Hunt",
-      status: "OVERDUE",
-      time: "2 days late",
-      rate: "40%",
-    },
-    {
-      name: "Heavens Gate",
-      lead: "Frank Castle",
-      status: "COMPLIANT",
-      time: "5h ago",
-      rate: "95%",
+      label: "Overdue Reports",
+      value: snapshot?.metrics.overdueReports.toString() ?? "--",
+      icon: AlertCircle,
+      color: "text-rose-500",
     },
   ];
 
-  const filteredUnits = units.filter((u) =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  function statusDotClass(unit: ComplianceUnitSnapshot): string {
+    return unit.status === "COMPLIANT"
+      ? "bg-emerald-500"
+      : unit.status === "PENDING"
+        ? "bg-amber-500"
+        : "bg-rose-500";
+  }
+
+  function statusTextClass(unit: ComplianceUnitSnapshot): string {
+    return unit.status === "COMPLIANT"
+      ? "text-emerald-600"
+      : unit.status === "PENDING"
+        ? "text-amber-600"
+        : "text-rose-600";
+  }
+
+  const nonCompliantCount = snapshot
+    ? snapshot.metrics.pendingToday + snapshot.metrics.overdueReports
+    : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -113,32 +172,7 @@ export default function CompliancePage() {
       </div>
 
       <div className="grid md:grid-cols-4 gap-6">
-        {[
-          {
-            label: "Overall Compliance",
-            value: "82%",
-            icon: ShieldCheck,
-            color: "text-primary",
-          },
-          {
-            label: "Reports Received",
-            value: "156/190",
-            icon: CheckCircle2,
-            color: "text-emerald-500",
-          },
-          {
-            label: "Pending Today",
-            value: "24",
-            icon: Clock,
-            color: "text-amber-500",
-          },
-          {
-            label: "Overdue Reports",
-            value: "10",
-            icon: AlertCircle,
-            color: "text-rose-500",
-          },
-        ].map((stat, i) => (
+        {stats.map((stat, i) => (
           <Card key={i} className="border-none bg-white">
             <CardContent className="pt-6">
               <div className="flex flex-col gap-3">
@@ -191,122 +225,129 @@ export default function CompliancePage() {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="grid gap-4">
-            {filteredUnits.map((unit, i) => (
-              <div
-                key={i}
-                className="group p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-all flex items-center justify-between"
-              >
-                <div className="flex items-center gap-6 flex-1">
-                  <div className="min-w-[200px]">
-                    <p className="font-bold text-sm">{unit.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
-                      {unit.lead}
-                    </p>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-8 flex-1">
-                    <div className="min-w-[120px]">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                        Status
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={cn(
-                            "h-2 w-2 rounded-full",
-                            unit.status === "COMPLIANT"
-                              ? "bg-emerald-500"
-                              : unit.status === "PENDING"
-                                ? "bg-amber-500"
-                                : "bg-rose-500",
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            "text-xs font-bold",
-                            unit.status === "COMPLIANT"
-                              ? "text-emerald-600"
-                              : unit.status === "PENDING"
-                                ? "text-amber-600"
-                                : "text-rose-600",
-                          )}
-                        >
-                          {unit.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="min-w-[140px]">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                        Last Submission
-                      </p>
-                      <p className="text-xs font-bold text-slate-700">
-                        {unit.time}
-                      </p>
-                    </div>
-
-                    <div className="flex-1 max-w-[100px]">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                        Discipline
-                      </p>
-                      <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          style={{ width: unit.rate }}
-                          className={cn(
-                            "h-full rounded-full transition-all duration-1000",
-                            parseInt(unit.rate) > 90
-                              ? "bg-emerald-500"
-                              : parseInt(unit.rate) > 70
-                                ? "bg-amber-500"
-                                : "bg-rose-500",
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="cursor-pointer h-9 w-9 flex items-center justify-center rounded-lg border bg-white hover:bg-slate-100 transition-colors">
-                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem
-                        onClick={() =>
-                          toast.info("Logs", {
-                            description: `Viewing logs for ${unit.name}`,
-                          })
-                        }
-                      >
-                        View Logs
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          toast.success("Reminder queued", {
-                            description: `Reminder sent to ${unit.lead}`,
-                          })
-                        }
-                      >
-                        Send Reminder
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() =>
-                          toast.error("Not enabled yet", {
-                            description: "Escalation flow will be wired later.",
-                          })
-                        }
-                      >
-                        Escalate
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+            {isLoading ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                Loading compliance dashboard...
               </div>
-            ))}
+            ) : isError ? (
+              <div className="py-10 text-center text-sm text-rose-600">
+                Could not load compliance data.
+              </div>
+            ) : filteredUnits.length === 0 ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                No units found for this search.
+              </div>
+            ) : (
+              filteredUnits.map((unit, i) => (
+                <div
+                  key={unit.id || `${unit.name}-${i}`}
+                  className="group p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-all flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-6 flex-1">
+                    <div className="min-w-[200px]">
+                      <p className="font-bold text-sm">{unit.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                        {unit.leader}
+                      </p>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-8 flex-1">
+                      <div className="min-w-[120px]">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                          Status
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "h-2 w-2 rounded-full",
+                              statusDotClass(unit),
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              "text-xs font-bold",
+                              statusTextClass(unit),
+                            )}
+                          >
+                            {unit.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="min-w-[140px]">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                          Last Submission
+                        </p>
+                        <p className="text-xs font-bold text-slate-700">
+                          {unit.lastSubmission}
+                        </p>
+                      </div>
+
+                      <div className="flex-1 max-w-[100px]">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                          Discipline
+                        </p>
+                        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            style={{ width: `${unit.discipline}%` }}
+                            className={cn(
+                              "h-full rounded-full transition-all duration-1000",
+                              unit.discipline > 90
+                                ? "bg-emerald-500"
+                                : unit.discipline > 70
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500",
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="cursor-pointer h-9 w-9 flex items-center justify-center rounded-lg border bg-white hover:bg-slate-100 transition-colors">
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            toast.info("Logs", {
+                              description: `Viewing logs for ${unit.name}`,
+                            })
+                          }
+                        >
+                          View Logs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            toast.success("Reminder queued", {
+                              description: `Reminder sent to ${unit.leader}`,
+                            })
+                          }
+                        >
+                          Send Reminder
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() =>
+                            toast.error("Not enabled yet", {
+                              description:
+                                "Escalation flow will be wired later.",
+                            })
+                          }
+                        >
+                          Escalate
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="mt-8 p-6 rounded-lg bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -316,8 +357,7 @@ export default function CompliancePage() {
                 Incomplete Sunday Reporting?
               </h4>
               <p className="text-slate-400 text-sm mt-1">
-                There are currently 10 units who haven&apos;t submitted their
-                weekly reports. Send a global nudge to resolve this.
+                {`There are currently ${nonCompliantCount} units who haven't submitted their weekly reports. Send a global nudge to resolve this.`}
               </p>
             </div>
             <button className="cursor-pointer relative z-10 px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform shrink-0">

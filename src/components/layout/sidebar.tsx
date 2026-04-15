@@ -20,7 +20,6 @@ import {
   MapPinned,
   Landmark,
   Layers,
-  UserCog,
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -115,12 +114,6 @@ const navItems = [
       "STATE_PASTOR",
       "ADMIN",
     ],
-  },
-  {
-    title: "Pastors",
-    href: "/app/pastors",
-    icon: UserCog,
-    roles: ["AREA_LEADER", "STATE_LEADER", "STATE_PASTOR", "ADMIN"],
   },
   {
     title: "Fellowship Cells",

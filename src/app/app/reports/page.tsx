@@ -13,81 +13,156 @@ import {
   Download,
   Filter,
   Calendar,
-  BarChart,
   ChevronRight,
   TrendingUp,
   Clock,
   CheckCircle2,
   FileDown,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Combobox } from "@/components/ui/combobox";
+import {
+  generateReportExcel,
+  listRecentReports,
+  resolveDateRange,
+} from "@/lib/reports-api";
+import type { RecentReportRecord, ReportType } from "@/types/models";
 
 export default function ReportsPage() {
   const { user } = useStore();
-  const [isExporting, setIsExporting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [dateRange, setDateRange] = useState("Last 7 Days");
-  const [dataDepth, setDataDepth] = useState("Summary View");
+  const [reportType, setReportType] = useState<ReportType>("ATTENDANCE");
+  const [recentReports, setRecentReports] = useState<RecentReportRecord[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [recentLoadError, setRecentLoadError] = useState(false);
 
-  const handleExport = (type: string) => {
-    setIsExporting(true);
-    setTimeout(() => {
-      toast.success(`Report exported as ${type}!`, {
-        description: "Your file is ready and downloading.",
+  const reportTypeLabel =
+    reportType === "ATTENDANCE" ? "Attendance" : "Converts";
+
+  function formatTimestamp(value: string): string {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "Unknown time";
+    return parsed.toLocaleString(undefined, {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  async function refreshRecentReports() {
+    try {
+      setIsLoadingRecent(true);
+      const items = await listRecentReports();
+      setRecentReports(items);
+      setRecentLoadError(false);
+    } catch (error) {
+      console.error("Failed to fetch recent reports:", error);
+      setRecentLoadError(true);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    void refreshRecentReports();
+  }, []);
+
+  async function handleGenerate(selectedType: ReportType) {
+    try {
+      setIsGenerating(true);
+      const { dateFrom, dateTo } = resolveDateRange(dateRange);
+      const blob = await generateReportExcel({
+        reportType: selectedType,
+        dateFrom,
+        dateTo,
       });
-      setIsExporting(false);
-    }, 1500);
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const rangeSuffix =
+        dateFrom && dateTo ? `${dateFrom}_to_${dateTo}` : "full";
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `${selectedType.toLowerCase()}_${rangeSuffix}.xlsx`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Report generated successfully", {
+        description: `${selectedType} report downloaded as Excel.`,
+      });
+
+      await refreshRecentReports();
+    } catch (error) {
+      console.error("Failed to generate report:", error);
+      toast.error("Report generation failed", {
+        description: "Please check your selections and try again.",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  const reportPacks = useMemo(
+    () => [
+      {
+        title: "Attendance Audit",
+        desc: "Detailed breakdown of meeting compliance and physical attendance.",
+        icon: CheckCircle2,
+        color: "text-blue-600",
+        bg: "bg-blue-50",
+        reportType: "ATTENDANCE" as ReportType,
+      },
+      {
+        title: "Converts Follow-Up Summary",
+        desc: "Consolidated view of convert inflow and follow-up progress.",
+        icon: TrendingUp,
+        color: "text-emerald-600",
+        bg: "bg-emerald-50",
+        reportType: "CONVERTS" as ReportType,
+      },
+    ],
+    [],
+  );
+
+  const reportTypeOptions = [
+    { value: "ATTENDANCE", label: "Attendance" },
+    { value: "CONVERTS", label: "Converts" },
+  ];
+
+  const dateRangeOptions = [
+    { value: "Last 7 Days", label: "Last 7 Days" },
+    { value: "This Month", label: "This Month" },
+    { value: "Quarter to Date", label: "Quarter to Date" },
+    { value: "All Time", label: "All Time" },
+  ];
+
+  const rangePreview = resolveDateRange(dateRange);
+
+  const totalDownloads = recentReports.length;
+
+  const reportInfoText =
+    rangePreview.dateFrom && rangePreview.dateTo
+      ? `${rangePreview.dateFrom} to ${rangePreview.dateTo}`
+      : "Default backend range";
+
+  const handleRefreshHistory = () => {
+    void refreshRecentReports();
   };
-
-  const reportPacks = [
-    {
-      title: "Weekly Soul Winning Summary",
-      desc: "Consolidated list of all new converts winning across the unit.",
-      icon: TrendingUp,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      title: "Cell Attendance Audit",
-      desc: "Detailed breakdown of meeting compliance and physical attendance.",
-      icon: CheckCircle2,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-    },
-    {
-      title: "Financial Remittance Report",
-      desc: "Tracking offerings and financial obligations from all cells.",
-      icon: BarChart,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-  ];
-
-  const recentReports = [
-    {
-      id: 1,
-      name: "March 2024 Monthly Review",
-      type: "PDF",
-      size: "2.4 MB",
-      date: "Apr 02, 2024",
-    },
-    {
-      id: 2,
-      name: "Week 12 Attendance Data",
-      type: "XLSX",
-      size: "1.1 MB",
-      date: "Mar 28, 2024",
-    },
-    {
-      id: 3,
-      name: "First Quarter Growth Analysis",
-      type: "PDF",
-      size: "5.8 MB",
-      date: "Mar 20, 2024",
-    },
-  ];
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -128,6 +203,7 @@ export default function ReportsPage() {
                 <div
                   key={i}
                   className="group p-6 rounded-2xl border border-slate-50 hover:border-primary/20 hover:bg-slate-50/50 transition-all cursor-pointer flex items-center justify-between"
+                  onClick={() => void handleGenerate(pack.reportType)}
                 >
                   <div className="flex items-center gap-5">
                     <div
@@ -148,9 +224,13 @@ export default function ReportsPage() {
                   </div>
                   <div className="flex items-center gap-2 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-xs font-black uppercase tracking-widest">
-                      Generate
+                      {isGenerating ? "Generating" : "Generate"}
                     </span>
-                    <ChevronRight className="h-4 w-4" />
+                    {isGenerating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
                   </div>
                 </div>
               ))}
@@ -172,42 +252,55 @@ export default function ReportsPage() {
                   </label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Combobox
-                      value={dateRange}
-                      onChange={setDateRange}
-                      placeholder="Select date range"
-                      searchPlaceholder="Search ranges..."
-                      options={[
-                        { value: "Last 7 Days", label: "Last 7 Days" },
-                        { value: "This Month", label: "This Month" },
-                        { value: "Quarter to Date", label: "Quarter to Date" },
-                        { value: "All Time", label: "All Time" },
-                      ]}
-                    />
+                    {mounted ? (
+                      <Combobox
+                        value={dateRange}
+                        onChange={setDateRange}
+                        placeholder="Select date range"
+                        searchPlaceholder="Search ranges..."
+                        options={dateRangeOptions}
+                      />
+                    ) : (
+                      <div className="h-10 rounded-lg border bg-background" />
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Data Depth
+                    Report Type
                   </label>
-                  <Combobox
-                    value={dataDepth}
-                    onChange={setDataDepth}
-                    placeholder="Select data depth"
-                    searchPlaceholder="Search depth..."
-                    options={[
-                      { value: "Summary View", label: "Summary View" },
-                      { value: "Detailed Audit", label: "Detailed Audit" },
-                      { value: "Member Specific", label: "Member Specific" },
-                    ]}
-                  />
+                  {mounted ? (
+                    <Combobox
+                      value={reportType}
+                      onChange={(value) =>
+                        setReportType((value as ReportType) || "ATTENDANCE")
+                      }
+                      placeholder="Select report type"
+                      searchPlaceholder="Search report types..."
+                      options={reportTypeOptions}
+                    />
+                  ) : (
+                    <div className="h-10 rounded-lg border bg-background" />
+                  )}
                 </div>
                 <div className="flex items-end">
-                  <button className="cursor-pointer w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all">
-                    Process Request
+                  <button
+                    onClick={() => void handleGenerate(reportType)}
+                    disabled={isGenerating}
+                    className={cn(
+                      "cursor-pointer w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl hover:translate-y-[-2px] active:translate-y-0 transition-all",
+                      isGenerating && "opacity-60 cursor-not-allowed",
+                    )}
+                  >
+                    {isGenerating ? "Generating..." : "Generate Excel"}
                   </button>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Generating{" "}
+                <span className="font-semibold">{reportTypeLabel}</span> for{" "}
+                <span className="font-semibold">{reportInfoText}</span>.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -222,38 +315,57 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                {recentReports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                        <FileText className="h-5 w-5 text-slate-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-sm truncate">
-                          {report.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
-                          {report.type} • {report.size}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleExport(report.type)}
-                      className={cn(
-                        "cursor-pointer h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-white transition-colors",
-                        isExporting && "opacity-50 cursor-not-allowed",
-                      )}
-                    >
-                      <Download className="h-4 w-4 text-muted-foreground" />
-                    </button>
+                {isLoadingRecent ? (
+                  <div className="py-8 text-sm text-muted-foreground text-center">
+                    Loading recent reports...
                   </div>
-                ))}
+                ) : recentLoadError ? (
+                  <div className="py-8 text-sm text-rose-600 text-center">
+                    Failed to load recent history.
+                  </div>
+                ) : recentReports.length === 0 ? (
+                  <div className="py-8 text-sm text-muted-foreground text-center">
+                    No recent downloads yet.
+                  </div>
+                ) : (
+                  recentReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5 text-slate-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm truncate">
+                            {report.name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
+                            {report.fileFormat} •{" "}
+                            {formatTimestamp(report.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => void handleGenerate(report.reportType)}
+                        disabled={isGenerating}
+                        className={cn(
+                          "cursor-pointer h-8 w-8 flex items-center justify-center rounded-lg border hover:bg-white transition-colors",
+                          isGenerating && "opacity-50 cursor-not-allowed",
+                        )}
+                      >
+                        <Download className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
-              <button className="cursor-pointer w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline">
-                View Complete History
+              <button
+                onClick={handleRefreshHistory}
+                className="cursor-pointer w-full mt-6 py-3 text-xs font-black uppercase tracking-widest text-primary hover:underline"
+              >
+                Refresh History ({totalDownloads})
               </button>
             </CardContent>
           </Card>

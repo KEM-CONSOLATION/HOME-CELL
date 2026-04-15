@@ -142,12 +142,23 @@ export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [cells, setCells] = useState<Cell[]>([]);
+  const [hasLoadedCells, setHasLoadedCells] = useState(false);
+  const [loadingCells, setLoadingCells] = useState(false);
+  const isFetchingCellsRef = useRef(false);
 
-  useEffect(() => {
+  const ensureCellsLoaded = useCallback(() => {
+    if (hasLoadedCells || isFetchingCellsRef.current) return;
+    isFetchingCellsRef.current = true;
+    setLoadingCells(true);
     void listCells()
       .then(setCells)
-      .catch(() => setCells([]));
-  }, []);
+      .catch(() => setCells([]))
+      .finally(() => {
+        setHasLoadedCells(true);
+        setLoadingCells(false);
+        isFetchingCellsRef.current = false;
+      });
+  }, [hasLoadedCells]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -248,8 +259,12 @@ export function GlobalSearch() {
             setQuery(e.target.value);
             setActive(0);
             setOpen(true);
+            if (e.target.value.trim().length > 0) ensureCellsLoaded();
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true);
+            if (query.trim().length > 0) ensureCellsLoaded();
+          }}
           onKeyDown={onKeyDown}
           className={cn(
             "h-11 w-full rounded-xl border border-primary/20 bg-background pl-11 pr-20 text-sm shadow-sm",
@@ -276,7 +291,11 @@ export function GlobalSearch() {
             "animate-in fade-in slide-in-from-top-2 duration-200",
           )}
         >
-          {results.length === 0 ? (
+          {loadingCells ? (
+            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+              Loading search index...
+            </p>
+          ) : results.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
               No matches for &quot;{query.trim()}&quot;. Try another name,
               phone, or page.
