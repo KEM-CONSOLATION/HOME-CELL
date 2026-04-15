@@ -116,7 +116,7 @@ const navItems = [
     ],
   },
   {
-    title: "Pastors & LGA",
+    title: "Pastors",
     href: "/app/pastors",
     icon: UserCog,
     roles: ["AREA_LEADER", "STATE_LEADER", "STATE_PASTOR", "ADMIN"],
