@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { IntegrationStatus, MemberRecord } from "@/types/models";
 import type { Cell } from "@/types/cell";
@@ -107,8 +107,22 @@ export default function EditConvertPage() {
   const cellNum = Number.parseInt(cellId, 10);
   const zoneNum = Number.parseInt(zoneId, 10);
   const followUpNum = Number.parseInt(followUpOfficer, 10);
+  const filteredCells = useMemo(() => {
+    if (!Number.isFinite(zoneNum) || zoneId.trim() === "") return [];
+    return cells.filter((cell) => cell.zone === zoneNum);
+  }, [cells, zoneId, zoneNum]);
+
+  useEffect(() => {
+    if (!cellId || zoneId) return;
+    const selectedCell = cells.find((cell) => String(cell.id) === cellId);
+    if (selectedCell?.zone != null) {
+      setZoneId(String(selectedCell.zone));
+    }
+  }, [cellId, cells, zoneId]);
+
   const isValid =
     firstName.trim().length > 0 &&
+    Number.isFinite(zoneNum) &&
     Number.isFinite(cellNum) &&
     phone.trim().length >= 7;
 
@@ -120,7 +134,7 @@ export default function EditConvertPage() {
       await updateMember(idNum, {
         first_name: firstName.trim(),
         last_name: lastName.trim() || undefined,
-        zone: Number.isFinite(zoneNum) ? zoneNum : undefined,
+        zone: zoneNum,
         cell: cellNum,
         status: "NEW_CONVERT",
         phone_number: phone.trim(),
@@ -206,18 +220,29 @@ export default function EditConvertPage() {
             />
             <Combobox
               value={cellId}
-              onChange={setCellId}
+              onChange={(value) => {
+                setCellId(value);
+                const selectedCell = cells.find(
+                  (cell) => String(cell.id) === value,
+                );
+                if (selectedCell?.zone != null) {
+                  setZoneId(String(selectedCell.zone));
+                }
+              }}
               placeholder="Select cell"
               searchPlaceholder="Search cells..."
-              options={cells.map((cell) => ({
+              options={filteredCells.map((cell) => ({
                 value: String(cell.id),
                 label: `${cell.name} (#${cell.id})`,
               }))}
             />
             <Combobox
               value={zoneId}
-              onChange={setZoneId}
-              placeholder="Select zone (optional)"
+              onChange={(value) => {
+                setZoneId(value);
+                setCellId("");
+              }}
+              placeholder="Select zone"
               searchPlaceholder="Search zones..."
               options={zones.map((zone) => ({
                 value: String(zone.id),

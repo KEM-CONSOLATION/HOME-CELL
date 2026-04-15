@@ -23,6 +23,10 @@ import { useRouter } from "next/navigation";
 import { createCell } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
+import { listAreas } from "@/lib/areas-api";
+import type { Area } from "@/types/area";
+import { listStates } from "@/lib/states-api";
+import type { State as StateRow } from "@/types/state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listMembers } from "@/lib/members-api";
 import type { MemberRecord } from "@/types/models";
@@ -35,15 +39,43 @@ export default function NewCellPage() {
 
   const [cellName, setCellName] = useState("");
   const [cellAddress, setCellAddress] = useState("");
+  const [stateId, setStateId] = useState("");
+  const [areaId, setAreaId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [cellLeaderId, setCellLeaderId] = useState("");
   const [meetingDay, setMeetingDay] = useState("Saturday");
+  const [stateOptions, setStateOptions] = useState<StateRow[]>([]);
+  const [areaOptions, setAreaOptions] = useState<Area[]>([]);
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
   const [leaderOptions, setLeaderOptions] = useState<MemberRecord[]>([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(true);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(true);
   const [isLoadingZones, setIsLoadingZones] = useState(true);
   const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   useEffect(() => {
+    void listStates()
+      .then((rows) => {
+        setStateOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
+      })
+      .catch(() => {
+        toast.error("Could not load states.");
+      })
+      .finally(() => {
+        setIsLoadingStates(false);
+      });
+
+    void listAreas()
+      .then((rows) => {
+        setAreaOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
+      })
+      .catch(() => {
+        toast.error("Could not load areas.");
+      })
+      .finally(() => {
+        setIsLoadingAreas(false);
+      });
+
     void listZones()
       .then((rows) => {
         setZoneOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
@@ -65,10 +97,53 @@ export default function NewCellPage() {
       });
   }, []);
 
+  const stateNum = Number.parseInt(stateId, 10);
+  const areaNum = Number.parseInt(areaId, 10);
+  const filteredAreas =
+    Number.isFinite(stateNum) && stateId.trim() !== ""
+      ? areaOptions.filter((area) => area.state === stateNum)
+      : [];
+  const filteredZones =
+    Number.isFinite(areaNum) && areaId.trim() !== ""
+      ? zoneOptions.filter((zone) => zone.area === areaNum)
+      : [];
+
+  useEffect(() => {
+    if (!areaId) return;
+    const selectedArea = areaOptions.find((area) => String(area.id) === areaId);
+    if (!selectedArea) {
+      setAreaId("");
+      setZoneId("");
+      return;
+    }
+    if (Number.isFinite(stateNum) && selectedArea.state !== stateNum) {
+      setAreaId("");
+      setZoneId("");
+    }
+  }, [areaId, areaOptions, stateNum]);
+
+  useEffect(() => {
+    if (!zoneId) return;
+    const selectedZone = zoneOptions.find((zone) => String(zone.id) === zoneId);
+    if (!selectedZone) {
+      setZoneId("");
+      return;
+    }
+    if (Number.isFinite(areaNum) && selectedZone.area !== areaNum) {
+      setZoneId("");
+    }
+  }, [zoneId, zoneOptions, areaNum]);
+
   const zoneNum = Number.parseInt(zoneId, 10);
+  const stateOk = stateId.trim() !== "" && Number.isFinite(stateNum);
+  const areaOk = areaId.trim() !== "" && Number.isFinite(areaNum);
   const zoneOk = zoneId.trim() !== "" && Number.isFinite(zoneNum);
   const isValid =
-    cellName.trim().length > 0 && cellAddress.trim().length > 0 && zoneOk;
+    cellName.trim().length > 0 &&
+    cellAddress.trim().length > 0 &&
+    stateOk &&
+    areaOk &&
+    zoneOk;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,6 +234,51 @@ export default function NewCellPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    State <span className="text-destructive">*</span>
+                  </label>
+                  {isLoadingStates ? (
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                  ) : (
+                    <Combobox
+                      value={stateId}
+                      onChange={(value) => {
+                        setStateId(value);
+                        setAreaId("");
+                        setZoneId("");
+                      }}
+                      placeholder="Select state"
+                      searchPlaceholder="Search states..."
+                      options={stateOptions.map((state) => ({
+                        value: String(state.id),
+                        label: state.name,
+                      }))}
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Area <span className="text-destructive">*</span>
+                  </label>
+                  {isLoadingAreas ? (
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                  ) : (
+                    <Combobox
+                      value={areaId}
+                      onChange={(value) => {
+                        setAreaId(value);
+                        setZoneId("");
+                      }}
+                      placeholder="Select area"
+                      searchPlaceholder="Search areas..."
+                      options={filteredAreas.map((area) => ({
+                        value: String(area.id),
+                        label: area.name,
+                      }))}
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Zone <span className="text-destructive">*</span>
                   </label>
                   {isLoadingZones ? (
@@ -169,7 +289,7 @@ export default function NewCellPage() {
                       onChange={setZoneId}
                       placeholder="Select zone"
                       searchPlaceholder="Search zones..."
-                      options={zoneOptions.map((zone) => ({
+                      options={filteredZones.map((zone) => ({
                         value: String(zone.id),
                         label: zone.name,
                       }))}

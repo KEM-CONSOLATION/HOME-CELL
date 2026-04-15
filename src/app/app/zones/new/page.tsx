@@ -16,6 +16,8 @@ import { useRouter } from "next/navigation";
 import { createZone } from "@/lib/zones-api";
 import { listAreas } from "@/lib/areas-api";
 import type { Area } from "@/types/area";
+import { listStates } from "@/lib/states-api";
+import type { State as StateRow } from "@/types/state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listMembers } from "@/lib/members-api";
 import type { MemberRecord } from "@/types/models";
@@ -26,14 +28,28 @@ export default function NewZonePage() {
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState("");
+  const [stateId, setStateId] = useState("");
   const [areaId, setAreaId] = useState("");
   const [zonalLeaderId, setZonalLeaderId] = useState("");
+  const [stateOptions, setStateOptions] = useState<StateRow[]>([]);
   const [areaOptions, setAreaOptions] = useState<Area[]>([]);
   const [leaders, setLeaders] = useState<MemberRecord[]>([]);
+  const [isLoadingStates, setIsLoadingStates] = useState(true);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
   const [isLoadingLeaders, setIsLoadingLeaders] = useState(true);
 
   useEffect(() => {
+    void listStates()
+      .then((rows) => {
+        setStateOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
+      })
+      .catch(() => {
+        toast.error("Could not load states.");
+      })
+      .finally(() => {
+        setIsLoadingStates(false);
+      });
+
     void listAreas()
       .then((rows) => {
         setAreaOptions([...rows].sort((a, b) => a.name.localeCompare(b.name)));
@@ -55,11 +71,30 @@ export default function NewZonePage() {
       });
   }, []);
 
+  const stateNum = Number.parseInt(stateId, 10);
+  const filteredAreas =
+    Number.isFinite(stateNum) && stateId.trim() !== ""
+      ? areaOptions.filter((area) => area.state === stateNum)
+      : areaOptions;
+
+  useEffect(() => {
+    if (!areaId) return;
+    const selectedArea = areaOptions.find((area) => String(area.id) === areaId);
+    if (!selectedArea) {
+      setAreaId("");
+      return;
+    }
+    if (Number.isFinite(stateNum) && selectedArea.state !== stateNum) {
+      setAreaId("");
+    }
+  }, [areaId, areaOptions, stateNum]);
+
   const areaNum = Number.parseInt(areaId, 10);
   const leaderNum = Number.parseInt(zonalLeaderId, 10);
+  const stateOk = stateId.trim() !== "" && Number.isFinite(stateNum);
   const areaOk = areaId.trim() !== "" && Number.isFinite(areaNum);
   const isValid =
-    name.trim().length > 0 && areaOk && Number.isFinite(leaderNum);
+    name.trim().length > 0 && stateOk && areaOk && Number.isFinite(leaderNum);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +171,28 @@ export default function NewZonePage() {
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                  State <span className="text-destructive">*</span>
+                </label>
+                {isLoadingStates ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Combobox
+                    value={stateId}
+                    onChange={(value) => {
+                      setStateId(value);
+                      setAreaId("");
+                    }}
+                    placeholder="Select state"
+                    searchPlaceholder="Search states..."
+                    options={stateOptions.map((state) => ({
+                      value: String(state.id),
+                      label: state.name,
+                    }))}
+                  />
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                   Area <span className="text-destructive">*</span>
                 </label>
                 {isLoadingAreas ? (
@@ -146,7 +203,7 @@ export default function NewZonePage() {
                     onChange={setAreaId}
                     placeholder="Select area"
                     searchPlaceholder="Search areas..."
-                    options={areaOptions.map((area) => ({
+                    options={filteredAreas.map((area) => ({
                       value: String(area.id),
                       label: area.name,
                     }))}
