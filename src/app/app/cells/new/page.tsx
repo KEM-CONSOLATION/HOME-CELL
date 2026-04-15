@@ -31,19 +31,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { listMembers } from "@/lib/members-api";
 import type { MemberRecord } from "@/types/models";
 import { Combobox } from "@/components/ui/combobox";
+import { useFormFields } from "@/hooks/use-form-fields";
+
+const createCellInitialFields = {
+  cellName: "",
+  cellAddress: "",
+  stateId: "",
+  areaId: "",
+  zoneId: "",
+  cellLeaderId: "",
+  meetingDay: "Saturday",
+};
 
 export default function NewCellPage() {
   const router = useRouter();
   const { user } = useStore();
   const [isSaving, setIsSaving] = useState(false);
-
-  const [cellName, setCellName] = useState("");
-  const [cellAddress, setCellAddress] = useState("");
-  const [stateId, setStateId] = useState("");
-  const [areaId, setAreaId] = useState("");
-  const [zoneId, setZoneId] = useState("");
-  const [cellLeaderId, setCellLeaderId] = useState("");
-  const [meetingDay, setMeetingDay] = useState("Saturday");
+  const { fields, setField, setFields } = useFormFields(
+    createCellInitialFields,
+  );
   const [stateOptions, setStateOptions] = useState<StateRow[]>([]);
   const [areaOptions, setAreaOptions] = useState<Area[]>([]);
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
@@ -97,50 +103,58 @@ export default function NewCellPage() {
       });
   }, []);
 
-  const stateNum = Number.parseInt(stateId, 10);
-  const areaNum = Number.parseInt(areaId, 10);
+  const stateNum = Number.parseInt(fields.stateId, 10);
+  const areaNum = Number.parseInt(fields.areaId, 10);
   const filteredAreas =
-    Number.isFinite(stateNum) && stateId.trim() !== ""
+    Number.isFinite(stateNum) && fields.stateId.trim() !== ""
       ? areaOptions.filter((area) => area.state === stateNum)
       : [];
   const filteredZones =
-    Number.isFinite(areaNum) && areaId.trim() !== ""
+    Number.isFinite(areaNum) && fields.areaId.trim() !== ""
       ? zoneOptions.filter((zone) => zone.area === areaNum)
       : [];
 
   useEffect(() => {
-    if (!areaId) return;
-    const selectedArea = areaOptions.find((area) => String(area.id) === areaId);
+    if (!fields.areaId) return;
+    const selectedArea = areaOptions.find(
+      (area) => String(area.id) === fields.areaId,
+    );
     if (!selectedArea) {
-      setAreaId("");
-      setZoneId("");
+      setFields({
+        areaId: "",
+        zoneId: "",
+      });
       return;
     }
     if (Number.isFinite(stateNum) && selectedArea.state !== stateNum) {
-      setAreaId("");
-      setZoneId("");
+      setFields({
+        areaId: "",
+        zoneId: "",
+      });
     }
-  }, [areaId, areaOptions, stateNum]);
+  }, [areaOptions, fields.areaId, setFields, stateNum]);
 
   useEffect(() => {
-    if (!zoneId) return;
-    const selectedZone = zoneOptions.find((zone) => String(zone.id) === zoneId);
+    if (!fields.zoneId) return;
+    const selectedZone = zoneOptions.find(
+      (zone) => String(zone.id) === fields.zoneId,
+    );
     if (!selectedZone) {
-      setZoneId("");
+      setField("zoneId", "");
       return;
     }
     if (Number.isFinite(areaNum) && selectedZone.area !== areaNum) {
-      setZoneId("");
+      setField("zoneId", "");
     }
-  }, [zoneId, zoneOptions, areaNum]);
+  }, [areaNum, fields.zoneId, setField, zoneOptions]);
 
-  const zoneNum = Number.parseInt(zoneId, 10);
-  const stateOk = stateId.trim() !== "" && Number.isFinite(stateNum);
-  const areaOk = areaId.trim() !== "" && Number.isFinite(areaNum);
-  const zoneOk = zoneId.trim() !== "" && Number.isFinite(zoneNum);
+  const zoneNum = Number.parseInt(fields.zoneId, 10);
+  const stateOk = fields.stateId.trim() !== "" && Number.isFinite(stateNum);
+  const areaOk = fields.areaId.trim() !== "" && Number.isFinite(areaNum);
+  const zoneOk = fields.zoneId.trim() !== "" && Number.isFinite(zoneNum);
   const isValid =
-    cellName.trim().length > 0 &&
-    cellAddress.trim().length > 0 &&
+    fields.cellName.trim().length > 0 &&
+    fields.cellAddress.trim().length > 0 &&
     stateOk &&
     areaOk &&
     zoneOk;
@@ -152,13 +166,13 @@ export default function NewCellPage() {
 
     try {
       await createCell({
-        name: cellName,
-        address: cellAddress,
+        name: fields.cellName,
+        address: fields.cellAddress,
         latitude: "0",
         longitude: "0",
         zone: zoneNum,
-        cell_leader: cellLeaderId.trim()
-          ? Number.parseInt(cellLeaderId, 10)
+        cell_leader: fields.cellLeaderId.trim()
+          ? Number.parseInt(fields.cellLeaderId, 10)
           : null,
       });
 
@@ -226,8 +240,8 @@ export default function NewCellPage() {
                   </label>
                   <input
                     type="text"
-                    value={cellName}
-                    onChange={(e) => setCellName(e.target.value)}
+                    value={fields.cellName}
+                    onChange={(e) => setField("cellName", e.target.value)}
                     placeholder="e.g. Grace Fellowship"
                     className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
@@ -240,11 +254,13 @@ export default function NewCellPage() {
                     <Skeleton className="h-10 w-full rounded-xl" />
                   ) : (
                     <Combobox
-                      value={stateId}
+                      value={fields.stateId}
                       onChange={(value) => {
-                        setStateId(value);
-                        setAreaId("");
-                        setZoneId("");
+                        setFields({
+                          stateId: value,
+                          areaId: "",
+                          zoneId: "",
+                        });
                       }}
                       placeholder="Select state"
                       searchPlaceholder="Search states..."
@@ -263,10 +279,12 @@ export default function NewCellPage() {
                     <Skeleton className="h-10 w-full rounded-xl" />
                   ) : (
                     <Combobox
-                      value={areaId}
+                      value={fields.areaId}
                       onChange={(value) => {
-                        setAreaId(value);
-                        setZoneId("");
+                        setFields({
+                          areaId: value,
+                          zoneId: "",
+                        });
                       }}
                       placeholder="Select area"
                       searchPlaceholder="Search areas..."
@@ -285,8 +303,8 @@ export default function NewCellPage() {
                     <Skeleton className="h-10 w-full rounded-xl" />
                   ) : (
                     <Combobox
-                      value={zoneId}
-                      onChange={setZoneId}
+                      value={fields.zoneId}
+                      onChange={(value) => setField("zoneId", value)}
                       placeholder="Select zone"
                       searchPlaceholder="Search zones..."
                       options={filteredZones.map((zone) => ({
@@ -304,8 +322,8 @@ export default function NewCellPage() {
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
-                      value={cellAddress}
-                      onChange={(e) => setCellAddress(e.target.value)}
+                      value={fields.cellAddress}
+                      onChange={(e) => setField("cellAddress", e.target.value)}
                       placeholder="Full street address in your area"
                       className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
@@ -340,8 +358,8 @@ export default function NewCellPage() {
                       <Skeleton className="h-12 w-full rounded-xl" />
                     ) : (
                       <Combobox
-                        value={cellLeaderId}
-                        onChange={setCellLeaderId}
+                        value={fields.cellLeaderId}
+                        onChange={(value) => setField("cellLeaderId", value)}
                         placeholder="Optional — select cell leader"
                         searchPlaceholder="Search leaders..."
                         className="h-12 pl-12"
@@ -361,8 +379,8 @@ export default function NewCellPage() {
                   </label>
                   <div className="relative">
                     <Combobox
-                      value={meetingDay}
-                      onChange={setMeetingDay}
+                      value={fields.meetingDay}
+                      onChange={(value) => setField("meetingDay", value)}
                       placeholder="Select meeting day"
                       searchPlaceholder="Search day..."
                       className="h-12 pl-12"

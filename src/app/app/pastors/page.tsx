@@ -14,22 +14,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Landmark,
-  MapPinned,
-  Plus,
-  Save,
-  Search,
-  Trash2,
-  Users,
-  X,
-} from "lucide-react";
+import { Landmark, MoreHorizontal, Plus, Search, Users, X } from "lucide-react";
 import { listStates, patchState } from "@/lib/states-api";
-import { listAreas, patchArea } from "@/lib/areas-api";
+import { listAreas } from "@/lib/areas-api";
 import type { State } from "@/types/state";
 import type { Area } from "@/types/area";
 import { extractErrorMessage } from "@/lib/utils";
-import { createMember, deleteMember, listMembers } from "@/lib/members-api";
+import {
+  createMember,
+  deleteMember,
+  listMembers,
+  updateMember,
+} from "@/lib/members-api";
 import type { MemberRecord } from "@/types/models";
 import { Combobox } from "@/components/ui/combobox";
 import { listCells } from "@/lib/cells-api";
@@ -37,268 +33,292 @@ import { listZones } from "@/lib/zones-api";
 import type { Cell } from "@/types/cell";
 import type { Zone } from "@/types/zone";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { useFormFields } from "@/hooks/use-form-fields";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const pastorFormInitialFields = {
+  firstName: "",
+  lastName: "",
+  phone: "",
+  address: "",
+  stateId: "",
+  areaId: "",
+  zoneId: "",
+  cellId: "",
+};
 
 export default function PastorsManagementPage() {
+  const [members, setMembers] = useState<MemberRecord[]>([]);
   const [states, setStates] = useState<State[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [loadingStates, setLoadingStates] = useState(true);
-  const [loadingAreas, setLoadingAreas] = useState(true);
-  const [loadingPastors, setLoadingPastors] = useState(true);
-  const [loadingCells, setLoadingCells] = useState(true);
-  const [loadingZones, setLoadingZones] = useState(true);
-  const [pastorOptions, setPastorOptions] = useState<MemberRecord[]>([]);
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [search, setSearch] = useState("");
-  const [pastorSearch, setPastorSearch] = useState("");
-  const [statePastorEdits, setStatePastorEdits] = useState<
-    Record<number, string>
-  >({});
-  const [lgaPastorEdits, setLgaPastorEdits] = useState<Record<number, string>>(
-    {},
-  );
-  const [savingStateId, setSavingStateId] = useState<number | null>(null);
-  const [savingAreaId, setSavingAreaId] = useState<number | null>(null);
+  const [viewTarget, setViewTarget] = useState<MemberRecord | null>(null);
+  const [editTarget, setEditTarget] = useState<MemberRecord | null>(null);
+  const {
+    fields: createPastor,
+    setField: setCreateField,
+    setFields: setCreateFields,
+    resetFields: resetCreateFields,
+  } = useFormFields(pastorFormInitialFields);
+  const {
+    fields: editPastor,
+    setField: setEditField,
+    setFields: setEditFields,
+  } = useFormFields(pastorFormInitialFields);
   const [isCreatingPastor, setIsCreatingPastor] = useState(false);
-  const [pastorFirstName, setPastorFirstName] = useState("");
-  const [pastorLastName, setPastorLastName] = useState("");
-  const [pastorPhone, setPastorPhone] = useState("");
-  const [pastorAddress, setPastorAddress] = useState("");
-  const [pastorStateId, setPastorStateId] = useState("");
-  const [pastorAreaId, setPastorAreaId] = useState("");
-  const [pastorCellId, setPastorCellId] = useState("");
-  const [pastorZoneId, setPastorZoneId] = useState("");
+  const [isUpdatingPastor, setIsUpdatingPastor] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MemberRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     void (async () => {
-      setLoadingStates(true);
-      setLoadingAreas(true);
+      setIsLoadingData(true);
       try {
-        const [statesRows, areasRows] = await Promise.all([
-          listStates(),
-          listAreas(),
-        ]);
+        const [statesRows, areasRows, zoneRows, cellRows, memberRows] =
+          await Promise.all([
+            listStates(),
+            listAreas(),
+            listZones(),
+            listCells(),
+            listMembers(),
+          ]);
         setStates(statesRows);
         setAreas(areasRows);
-      } catch (error) {
-        toast.error("Failed to load pastor assignments", {
-          description: extractErrorMessage(error),
-        });
-      } finally {
-        setLoadingStates(false);
-        setLoadingAreas(false);
-      }
-    })();
-
-    void (async () => {
-      setLoadingPastors(true);
-      try {
-        const members = await listMembers();
-        setPastorOptions(members);
-      } catch (error) {
-        toast.error("Failed to load pastors", {
-          description: extractErrorMessage(error),
-        });
-      } finally {
-        setLoadingPastors(false);
-      }
-    })();
-
-    void (async () => {
-      setLoadingCells(true);
-      setLoadingZones(true);
-      try {
-        const [cellRows, zoneRows] = await Promise.all([
-          listCells(),
-          listZones(),
-        ]);
-        setCells(cellRows);
         setZones(zoneRows);
+        setCells(cellRows);
+        setMembers(memberRows);
       } catch (error) {
-        toast.error("Failed to load units for pastor creation", {
+        toast.error("Failed to load pastors data", {
           description: extractErrorMessage(error),
         });
       } finally {
-        setLoadingCells(false);
-        setLoadingZones(false);
+        setIsLoadingData(false);
       }
     })();
   }, []);
 
-  const filteredStates = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return states;
-    return states.filter((row) => row.name.toLowerCase().includes(q));
-  }, [search, states]);
+  const statePastorIds = useMemo(
+    () => new Set(states.map((row) => row.state_pastor).filter((id) => id > 0)),
+    [states],
+  );
 
-  const filteredAreas = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return areas;
-    return areas.filter(
-      (row) =>
-        row.name.toLowerCase().includes(q) ||
-        row.state_name.toLowerCase().includes(q),
+  const pastors = useMemo(() => {
+    return members.filter(
+      (member) => member.status === "WORKER" || statePastorIds.has(member.id),
     );
-  }, [search, areas]);
+  }, [members, statePastorIds]);
 
-  const managedPastors = useMemo(() => {
-    const q = pastorSearch.trim().toLowerCase();
-    const nonConvertMembers = pastorOptions.filter(
-      (member) => member.status !== "NEW_CONVERT",
-    );
-    if (!q) return nonConvertMembers;
-    return nonConvertMembers.filter((member) =>
+  const filteredPastors = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return pastors;
+    return pastors.filter((member) =>
       `${member.first_name} ${member.last_name ?? ""} ${member.phone_number} ${member.cell_name}`
         .toLowerCase()
         .includes(q),
     );
-  }, [pastorOptions, pastorSearch]);
+  }, [pastors, search]);
 
-  const pastorCellNum = Number.parseInt(pastorCellId, 10);
-  const pastorStateNum = Number.parseInt(pastorStateId, 10);
-  const pastorAreaNum = Number.parseInt(pastorAreaId, 10);
-  const pastorZoneNum = Number.parseInt(pastorZoneId, 10);
+  const cellById = useMemo(
+    () => new Map(cells.map((cell) => [cell.id, cell])),
+    [cells],
+  );
+  const zoneById = useMemo(
+    () => new Map(zones.map((zone) => [zone.id, zone])),
+    [zones],
+  );
+  const areaById = useMemo(
+    () => new Map(areas.map((area) => [area.id, area])),
+    [areas],
+  );
+  const stateById = useMemo(
+    () => new Map(states.map((state) => [state.id, state])),
+    [states],
+  );
+
+  const getStateNameFromCellId = (cellId: number) => {
+    const cell = cellById.get(cellId);
+    const zoneId = cell?.zone;
+    if (!zoneId) return "Not set";
+    const zone = zoneById.get(zoneId);
+    if (!zone) return "Not set";
+    const area = areaById.get(zone.area);
+    if (!area) return "Not set";
+    return stateById.get(area.state)?.name ?? "Not set";
+  };
+
+  const pastorCellNum = Number.parseInt(createPastor.cellId, 10);
+  const pastorStateNum = Number.parseInt(createPastor.stateId, 10);
+  const pastorAreaNum = Number.parseInt(createPastor.areaId, 10);
+  const pastorZoneNum = Number.parseInt(createPastor.zoneId, 10);
   const canCreatePastor =
-    pastorFirstName.trim().length > 0 &&
-    pastorPhone.trim().length >= 7 &&
+    createPastor.firstName.trim().length > 0 &&
+    createPastor.phone.trim().length >= 7 &&
     Number.isFinite(pastorCellNum);
-  const pastorDropdownOptions = pastorOptions.map((member) => ({
-    value: String(member.id),
-    label: [member.first_name, member.last_name].filter(Boolean).join(" "),
-  }));
   const filteredCreateAreas =
-    Number.isFinite(pastorStateNum) && pastorStateId.trim() !== ""
+    Number.isFinite(pastorStateNum) && createPastor.stateId.trim() !== ""
       ? areas.filter((area) => area.state === pastorStateNum)
       : [];
   const filteredCreateZones =
-    Number.isFinite(pastorAreaNum) && pastorAreaId.trim() !== ""
+    Number.isFinite(pastorAreaNum) && createPastor.areaId.trim() !== ""
       ? zones.filter((zone) => zone.area === pastorAreaNum)
       : [];
   const filteredCreateCells =
-    Number.isFinite(pastorZoneNum) && pastorZoneId.trim() !== ""
+    Number.isFinite(pastorZoneNum) && createPastor.zoneId.trim() !== ""
       ? cells.filter((cell) => cell.zone === pastorZoneNum)
       : [];
 
   useEffect(() => {
-    if (!pastorAreaId) return;
-    const selectedArea = areas.find((area) => String(area.id) === pastorAreaId);
+    if (!createPastor.areaId) return;
+    const selectedArea = areas.find(
+      (area) => String(area.id) === createPastor.areaId,
+    );
     if (!selectedArea) {
-      setPastorAreaId("");
-      setPastorZoneId("");
-      setPastorCellId("");
+      setCreateFields({
+        areaId: "",
+        zoneId: "",
+        cellId: "",
+      });
       return;
     }
     if (
       Number.isFinite(pastorStateNum) &&
       selectedArea.state !== pastorStateNum
     ) {
-      setPastorAreaId("");
-      setPastorZoneId("");
-      setPastorCellId("");
+      setCreateFields({
+        areaId: "",
+        zoneId: "",
+        cellId: "",
+      });
     }
-  }, [areas, pastorAreaId, pastorStateNum]);
+  }, [areas, createPastor.areaId, pastorStateNum, setCreateFields]);
 
   useEffect(() => {
-    if (!pastorZoneId) return;
-    const selectedZone = zones.find((zone) => String(zone.id) === pastorZoneId);
+    if (!createPastor.zoneId) return;
+    const selectedZone = zones.find(
+      (zone) => String(zone.id) === createPastor.zoneId,
+    );
     if (!selectedZone) {
-      setPastorZoneId("");
-      setPastorCellId("");
+      setCreateFields({
+        zoneId: "",
+        cellId: "",
+      });
       return;
     }
     if (Number.isFinite(pastorAreaNum) && selectedZone.area !== pastorAreaNum) {
-      setPastorZoneId("");
-      setPastorCellId("");
+      setCreateFields({
+        zoneId: "",
+        cellId: "",
+      });
     }
-  }, [zones, pastorZoneId, pastorAreaNum]);
+  }, [zones, createPastor.zoneId, pastorAreaNum, setCreateFields]);
 
   useEffect(() => {
-    if (!pastorCellId) return;
-    const selectedCell = cells.find((cell) => String(cell.id) === pastorCellId);
+    if (!createPastor.cellId) return;
+    const selectedCell = cells.find(
+      (cell) => String(cell.id) === createPastor.cellId,
+    );
     if (!selectedCell) {
-      setPastorCellId("");
+      setCreateField("cellId", "");
       return;
     }
     if (Number.isFinite(pastorZoneNum) && selectedCell.zone !== pastorZoneNum) {
-      setPastorCellId("");
+      setCreateField("cellId", "");
     }
-  }, [cells, pastorCellId, pastorZoneNum]);
+  }, [cells, createPastor.cellId, pastorZoneNum, setCreateField]);
 
-  const assignedStatePastors = states.filter(
-    (row) => row.state_pastor > 0,
-  ).length;
-  const assignedLgaPastors = areas.filter((row) => row.area_leader > 0).length;
-  const totalPastors = pastorOptions.filter(
-    (member) => member.status !== "NEW_CONVERT",
-  ).length;
+  const canUpdatePastor =
+    editPastor.firstName.trim().length > 0 &&
+    editPastor.phone.trim().length >= 7 &&
+    Number.isFinite(Number.parseInt(editPastor.zoneId, 10)) &&
+    Number.isFinite(Number.parseInt(editPastor.cellId, 10));
 
-  const getStatePastorValue = (row: State) => {
-    const draft = statePastorEdits[row.id];
-    return draft ?? String(row.state_pastor ?? "");
-  };
+  const editStateNum = Number.parseInt(editPastor.stateId, 10);
+  const editAreaNum = Number.parseInt(editPastor.areaId, 10);
+  const editZoneNum = Number.parseInt(editPastor.zoneId, 10);
+  const filteredEditAreas =
+    Number.isFinite(editStateNum) && editPastor.stateId.trim() !== ""
+      ? areas.filter((area) => area.state === editStateNum)
+      : [];
+  const filteredEditZones =
+    Number.isFinite(editAreaNum) && editPastor.areaId.trim() !== ""
+      ? zones.filter((zone) => zone.area === editAreaNum)
+      : [];
+  const filteredEditCells =
+    Number.isFinite(editZoneNum) && editPastor.zoneId.trim() !== ""
+      ? cells.filter((cell) => cell.zone === editZoneNum)
+      : [];
 
-  const getLgaPastorValue = (row: Area) => {
-    const draft = lgaPastorEdits[row.id];
-    return draft ?? String(row.area_leader ?? "");
-  };
-
-  const saveStatePastor = async (row: State) => {
-    const raw = getStatePastorValue(row).trim();
-    const pastorId = Number.parseInt(raw, 10);
-    if (!Number.isFinite(pastorId) || pastorId < 0) {
-      toast.error("Select a valid State Pastor");
+  useEffect(() => {
+    if (!editPastor.areaId) return;
+    const selectedArea = areas.find(
+      (area) => String(area.id) === editPastor.areaId,
+    );
+    if (!selectedArea) {
+      setEditFields({ areaId: "", zoneId: "", cellId: "" });
       return;
     }
-    setSavingStateId(row.id);
-    try {
-      const updated = await patchState(row.id, { state_pastor: pastorId });
-      setStates((prev) =>
-        prev.map((item) => (item.id === row.id ? updated : item)),
-      );
-      setStatePastorEdits((prev) => {
-        const next = { ...prev };
-        delete next[row.id];
-        return next;
-      });
-      toast.success(`Updated ${row.name} assignment`);
-    } catch (error) {
-      toast.error("Failed to update State Pastor", {
-        description: extractErrorMessage(error),
-      });
-    } finally {
-      setSavingStateId(null);
+    if (Number.isFinite(editStateNum) && selectedArea.state !== editStateNum) {
+      setEditFields({ areaId: "", zoneId: "", cellId: "" });
     }
-  };
+  }, [areas, editPastor.areaId, editStateNum, setEditFields]);
 
-  const saveLgaPastor = async (row: Area) => {
-    const raw = getLgaPastorValue(row).trim();
-    const pastorId = Number.parseInt(raw, 10);
-    if (!Number.isFinite(pastorId) || pastorId < 0) {
-      toast.error("Select a valid LGA Pastor");
+  useEffect(() => {
+    if (!editPastor.zoneId) return;
+    const selectedZone = zones.find(
+      (zone) => String(zone.id) === editPastor.zoneId,
+    );
+    if (!selectedZone) {
+      setEditFields({ zoneId: "", cellId: "" });
       return;
     }
-    setSavingAreaId(row.id);
-    try {
-      const updated = await patchArea(row.id, { area_leader: pastorId });
-      setAreas((prev) =>
-        prev.map((item) => (item.id === row.id ? updated : item)),
-      );
-      setLgaPastorEdits((prev) => {
-        const next = { ...prev };
-        delete next[row.id];
-        return next;
-      });
-      toast.success(`Updated ${row.name} assignment`);
-    } catch (error) {
-      toast.error("Failed to update LGA Pastor", {
-        description: extractErrorMessage(error),
-      });
-    } finally {
-      setSavingAreaId(null);
+    if (Number.isFinite(editAreaNum) && selectedZone.area !== editAreaNum) {
+      setEditFields({ zoneId: "", cellId: "" });
     }
+  }, [zones, editPastor.zoneId, editAreaNum, setEditFields]);
+
+  useEffect(() => {
+    if (!editPastor.cellId) return;
+    const selectedCell = cells.find(
+      (cell) => String(cell.id) === editPastor.cellId,
+    );
+    if (!selectedCell) {
+      setEditField("cellId", "");
+      return;
+    }
+    if (Number.isFinite(editZoneNum) && selectedCell.zone !== editZoneNum) {
+      setEditField("cellId", "");
+    }
+  }, [cells, editPastor.cellId, editZoneNum, setEditField]);
+
+  const openEditModal = (pastor: MemberRecord) => {
+    const linkedCell = cells.find((cell) => cell.id === pastor.cell);
+    const linkedZone = linkedCell?.zone
+      ? zones.find((zone) => zone.id === linkedCell.zone)
+      : undefined;
+    const linkedArea = linkedZone
+      ? areas.find((area) => area.id === linkedZone.area)
+      : undefined;
+    setEditTarget(pastor);
+    setEditFields({
+      firstName: pastor.first_name,
+      lastName: pastor.last_name ?? "",
+      phone: pastor.phone_number,
+      address: pastor.residential_address ?? "",
+      stateId: linkedArea ? String(linkedArea.state) : "",
+      areaId: linkedArea ? String(linkedArea.id) : "",
+      zoneId: linkedZone ? String(linkedZone.id) : "",
+      cellId: String(pastor.cell),
+    });
   };
 
   const handleCreatePastor = async () => {
@@ -309,24 +329,17 @@ export default function PastorsManagementPage() {
     setIsCreatingPastor(true);
     try {
       const created = await createMember({
-        first_name: pastorFirstName.trim(),
-        last_name: pastorLastName.trim() || undefined,
-        phone_number: pastorPhone.trim(),
-        residential_address: pastorAddress.trim() || undefined,
+        first_name: createPastor.firstName.trim(),
+        last_name: createPastor.lastName.trim() || undefined,
+        phone_number: createPastor.phone.trim(),
+        residential_address: createPastor.address.trim() || undefined,
         cell: pastorCellNum,
         zone: Number.isFinite(pastorZoneNum) ? pastorZoneNum : undefined,
         status: "WORKER",
         integration_status: "INTEGRATED",
       });
-      setPastorOptions((prev) => [created, ...prev]);
-      setPastorFirstName("");
-      setPastorLastName("");
-      setPastorPhone("");
-      setPastorAddress("");
-      setPastorStateId("");
-      setPastorAreaId("");
-      setPastorCellId("");
-      setPastorZoneId("");
+      setMembers((prev) => [created, ...prev]);
+      resetCreateFields();
       setIsCreateModalOpen(false);
       toast.success("Pastor created successfully.");
     } catch (error) {
@@ -338,28 +351,71 @@ export default function PastorsManagementPage() {
     }
   };
 
+  const handleUpdatePastor = async () => {
+    if (!editTarget || !canUpdatePastor) {
+      toast.error("Complete pastor details before saving.");
+      return;
+    }
+    setIsUpdatingPastor(true);
+    const editZoneNumValue = Number.parseInt(editPastor.zoneId, 10);
+    const editCellNumValue = Number.parseInt(editPastor.cellId, 10);
+    const followUpNum = Number.parseInt(
+      String(editTarget.follow_up_officer ?? ""),
+      10,
+    );
+    try {
+      const updated = await updateMember(editTarget.id, {
+        first_name: editPastor.firstName.trim(),
+        last_name: editPastor.lastName.trim() || undefined,
+        zone: editZoneNumValue,
+        cell: editCellNumValue,
+        status: "WORKER",
+        phone_number: editPastor.phone.trim(),
+        residential_address: editPastor.address.trim() || undefined,
+        nok_name: editTarget.nok_name || undefined,
+        nok_phone: editTarget.nok_phone || undefined,
+        date_joined: editTarget.date_joined || undefined,
+        salvation_date: editTarget.salvation_date ?? undefined,
+        how_won: editTarget.how_won || undefined,
+        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
+        integration_status: editTarget.integration_status,
+        initial_notes: editTarget.initial_notes || undefined,
+      });
+      setMembers((prev) =>
+        prev.map((member) => (member.id === updated.id ? updated : member)),
+      );
+      setEditTarget(null);
+      toast.success("Pastor updated successfully.");
+    } catch (error) {
+      toast.error("Failed to update pastor", {
+        description: extractErrorMessage(error),
+      });
+    } finally {
+      setIsUpdatingPastor(false);
+    }
+  };
+
   const onConfirmDeletePastor = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
+      const linkedStates = states.filter(
+        (row) => row.state_pastor === deleteTarget.id,
+      );
+      if (linkedStates.length > 0) {
+        await Promise.all(
+          linkedStates.map((row) => patchState(row.id, { state_pastor: 0 })),
+        );
+        setStates((prev) =>
+          prev.map((row) =>
+            row.state_pastor === deleteTarget.id
+              ? { ...row, state_pastor: 0 }
+              : row,
+          ),
+        );
+      }
       await deleteMember(deleteTarget.id);
-      setPastorOptions((prev) =>
-        prev.filter((row) => row.id !== deleteTarget.id),
-      );
-      setStates((prev) =>
-        prev.map((row) =>
-          row.state_pastor === deleteTarget.id
-            ? { ...row, state_pastor: 0 }
-            : row,
-        ),
-      );
-      setAreas((prev) =>
-        prev.map((row) =>
-          row.area_leader === deleteTarget.id
-            ? { ...row, area_leader: 0 }
-            : row,
-        ),
-      );
+      setMembers((prev) => prev.filter((row) => row.id !== deleteTarget.id));
       toast.success("Pastor removed successfully.");
       setDeleteTarget(null);
     } catch (error) {
@@ -377,8 +433,7 @@ export default function PastorsManagementPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pastors</h1>
           <p className="text-muted-foreground mt-1">
-            Create pastors, manage their records, and assign them to
-            jurisdictions.
+            Create, view, update, and delete pastor records.
           </p>
         </div>
         <Button type="button" onClick={() => setIsCreateModalOpen(true)}>
@@ -387,7 +442,7 @@ export default function PastorsManagementPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-none bg-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -399,10 +454,10 @@ export default function PastorsManagementPage() {
                   Total pastors
                 </p>
                 <h2 className="text-2xl font-bold">
-                  {loadingPastors ? (
+                  {isLoadingData ? (
                     <Skeleton className="h-7 w-10" />
                   ) : (
-                    totalPastors
+                    pastors.length
                   )}
                 </h2>
               </div>
@@ -420,31 +475,10 @@ export default function PastorsManagementPage() {
                   States with pastors
                 </p>
                 <h2 className="text-2xl font-bold">
-                  {loadingStates ? (
+                  {isLoadingData ? (
                     <Skeleton className="h-7 w-10" />
                   ) : (
-                    assignedStatePastors
-                  )}
-                </h2>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none bg-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <MapPinned className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                  LGAs with pastors
-                </p>
-                <h2 className="text-2xl font-bold">
-                  {loadingAreas ? (
-                    <Skeleton className="h-7 w-10" />
-                  ) : (
-                    assignedLgaPastors
+                    states.filter((row) => row.state_pastor > 0).length
                   )}
                 </h2>
               </div>
@@ -455,12 +489,12 @@ export default function PastorsManagementPage() {
 
       <Card className="border-none bg-white">
         <CardHeader className="border-b border-slate-50 space-y-3">
-          <h2 className="text-lg font-bold">Manage Pastors</h2>
+          <h2 className="text-lg font-bold">Pastors Directory</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              value={pastorSearch}
-              onChange={(e) => setPastorSearch(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search pastor name, phone or cell..."
               className="pl-10"
             />
@@ -474,11 +508,12 @@ export default function PastorsManagementPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Cell</TableHead>
+                  <TableHead>State</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loadingPastors ? (
+                {isLoadingData ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={`pastor-skeleton-${i}`}>
                       <TableCell>
@@ -490,22 +525,25 @@ export default function PastorsManagementPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-20" />
                       </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Skeleton className="ml-auto h-8 w-16" />
+                        <Skeleton className="ml-auto h-8 w-36" />
                       </TableCell>
                     </TableRow>
                   ))
-                ) : managedPastors.length === 0 ? (
+                ) : filteredPastors.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-8 text-center text-sm text-muted-foreground"
                     >
                       No pastors found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  managedPastors.map((row) => (
+                  filteredPastors.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell className="font-semibold">
                         {[row.first_name, row.last_name]
@@ -514,16 +552,39 @@ export default function PastorsManagementPage() {
                       </TableCell>
                       <TableCell>{row.phone_number}</TableCell>
                       <TableCell>{row.cell_name}</TableCell>
+                      <TableCell>{getStateNameFromCellId(row.cell)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setDeleteTarget(row)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remove
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="rounded-2xl h-11 w-11"
+                            >
+                              <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem
+                              onClick={() => setViewTarget(row)}
+                            >
+                              View pastor
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => openEditModal(row)}
+                            >
+                              Edit pastor
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeleteTarget(row)}
+                            >
+                              Delete pastor
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -533,165 +594,6 @@ export default function PastorsManagementPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card className="border-none bg-white">
-        <CardHeader className="border-b border-slate-50">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search state or LGA..."
-              className="pl-10"
-            />
-          </div>
-        </CardHeader>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card className="border-none bg-white">
-          <CardHeader className="border-b border-slate-50">
-            <h2 className="text-lg font-bold">State Pastors</h2>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  <TableHead>State</TableHead>
-                  <TableHead>State Pastor</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loadingStates
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <TableRow key={`state-skeleton-${i}`}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-32" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-10 w-28" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="ml-auto h-9 w-20" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : filteredStates.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="font-semibold">
-                          {row.name}
-                        </TableCell>
-                        <TableCell className="w-44">
-                          {loadingPastors ? (
-                            <Skeleton className="h-10 w-full" />
-                          ) : (
-                            <Combobox
-                              value={getStatePastorValue(row)}
-                              onChange={(value) =>
-                                setStatePastorEdits((prev) => ({
-                                  ...prev,
-                                  [row.id]: value,
-                                }))
-                              }
-                              placeholder="Select pastor"
-                              searchPlaceholder="Search pastors..."
-                              options={pastorDropdownOptions}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => void saveStatePastor(row)}
-                            disabled={savingStateId === row.id}
-                          >
-                            <Save className="h-4 w-4" />
-                            Save
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none bg-white">
-          <CardHeader className="border-b border-slate-50">
-            <h2 className="text-lg font-bold">LGA Pastors</h2>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  <TableHead>LGA</TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead>LGA Pastor</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loadingAreas
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <TableRow key={`area-skeleton-${i}`}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-28" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-28" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-10 w-28" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="ml-auto h-9 w-20" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : filteredAreas.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="font-semibold">
-                          {row.name}
-                        </TableCell>
-                        <TableCell>{row.state_name}</TableCell>
-                        <TableCell className="w-44">
-                          {loadingPastors ? (
-                            <Skeleton className="h-10 w-full" />
-                          ) : (
-                            <Combobox
-                              value={getLgaPastorValue(row)}
-                              onChange={(value) =>
-                                setLgaPastorEdits((prev) => ({
-                                  ...prev,
-                                  [row.id]: value,
-                                }))
-                              }
-                              placeholder="Select pastor"
-                              searchPlaceholder="Search pastors..."
-                              options={pastorDropdownOptions}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => void saveLgaPastor(row)}
-                            disabled={savingAreaId === row.id}
-                          >
-                            <Save className="h-4 w-4" />
-                            Save
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
 
       {isCreateModalOpen ? (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
@@ -734,39 +636,41 @@ export default function PastorsManagementPage() {
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
-                  value={pastorFirstName}
-                  onChange={(e) => setPastorFirstName(e.target.value)}
+                  value={createPastor.firstName}
+                  onChange={(e) => setCreateField("firstName", e.target.value)}
                   placeholder="First name"
                 />
                 <Input
-                  value={pastorLastName}
-                  onChange={(e) => setPastorLastName(e.target.value)}
+                  value={createPastor.lastName}
+                  onChange={(e) => setCreateField("lastName", e.target.value)}
                   placeholder="Last name (optional)"
                 />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
-                  value={pastorPhone}
-                  onChange={(e) => setPastorPhone(e.target.value)}
+                  value={createPastor.phone}
+                  onChange={(e) => setCreateField("phone", e.target.value)}
                   placeholder="Phone number"
                 />
                 <Input
-                  value={pastorAddress}
-                  onChange={(e) => setPastorAddress(e.target.value)}
+                  value={createPastor.address}
+                  onChange={(e) => setCreateField("address", e.target.value)}
                   placeholder="Address (optional)"
                 />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {loadingStates ? (
+                {isLoadingData ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (
                   <Combobox
-                    value={pastorStateId}
+                    value={createPastor.stateId}
                     onChange={(value) => {
-                      setPastorStateId(value);
-                      setPastorAreaId("");
-                      setPastorZoneId("");
-                      setPastorCellId("");
+                      setCreateFields({
+                        stateId: value,
+                        areaId: "",
+                        zoneId: "",
+                        cellId: "",
+                      });
                     }}
                     options={states.map((row) => ({
                       value: String(row.id),
@@ -776,15 +680,17 @@ export default function PastorsManagementPage() {
                     searchPlaceholder="Search states..."
                   />
                 )}
-                {loadingAreas ? (
+                {isLoadingData ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (
                   <Combobox
-                    value={pastorAreaId}
+                    value={createPastor.areaId}
                     onChange={(value) => {
-                      setPastorAreaId(value);
-                      setPastorZoneId("");
-                      setPastorCellId("");
+                      setCreateFields({
+                        areaId: value,
+                        zoneId: "",
+                        cellId: "",
+                      });
                     }}
                     options={filteredCreateAreas.map((row) => ({
                       value: String(row.id),
@@ -796,14 +702,16 @@ export default function PastorsManagementPage() {
                 )}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {loadingZones ? (
+                {isLoadingData ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (
                   <Combobox
-                    value={pastorZoneId}
+                    value={createPastor.zoneId}
                     onChange={(value) => {
-                      setPastorZoneId(value);
-                      setPastorCellId("");
+                      setCreateFields({
+                        zoneId: value,
+                        cellId: "",
+                      });
                     }}
                     options={filteredCreateZones.map((row) => ({
                       value: String(row.id),
@@ -813,12 +721,12 @@ export default function PastorsManagementPage() {
                     searchPlaceholder="Search zones..."
                   />
                 )}
-                {loadingCells ? (
+                {isLoadingData ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (
                   <Combobox
-                    value={pastorCellId}
-                    onChange={setPastorCellId}
+                    value={createPastor.cellId}
+                    onChange={(value) => setCreateField("cellId", value)}
                     options={filteredCreateCells.map((row) => ({
                       value: String(row.id),
                       label: row.name,
@@ -846,6 +754,207 @@ export default function PastorsManagementPage() {
                   Create Pastor
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {editTarget ? (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => {
+              if (!isUpdatingPastor) setEditTarget(null);
+            }}
+            aria-label="Close edit pastor modal"
+          />
+          <div className="relative w-full max-w-3xl rounded-lg border bg-card p-6 md:p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight">
+                  Edit Pastor
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Update pastor profile and assignment details.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setEditTarget(null)}
+                disabled={isUpdatingPastor}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  value={editPastor.firstName}
+                  onChange={(e) => setEditField("firstName", e.target.value)}
+                  placeholder="First name"
+                />
+                <Input
+                  value={editPastor.lastName}
+                  onChange={(e) => setEditField("lastName", e.target.value)}
+                  placeholder="Last name (optional)"
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  value={editPastor.phone}
+                  onChange={(e) => setEditField("phone", e.target.value)}
+                  placeholder="Phone number"
+                />
+                <Input
+                  value={editPastor.address}
+                  onChange={(e) => setEditField("address", e.target.value)}
+                  placeholder="Address (optional)"
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Combobox
+                  value={editPastor.stateId}
+                  onChange={(value) =>
+                    setEditFields({
+                      stateId: value,
+                      areaId: "",
+                      zoneId: "",
+                      cellId: "",
+                    })
+                  }
+                  options={states.map((row) => ({
+                    value: String(row.id),
+                    label: row.name,
+                  }))}
+                  placeholder="Select state"
+                  searchPlaceholder="Search states..."
+                />
+                <Combobox
+                  value={editPastor.areaId}
+                  onChange={(value) =>
+                    setEditFields({
+                      areaId: value,
+                      zoneId: "",
+                      cellId: "",
+                    })
+                  }
+                  options={filteredEditAreas.map((row) => ({
+                    value: String(row.id),
+                    label: row.name,
+                  }))}
+                  placeholder="Select area"
+                  searchPlaceholder="Search areas..."
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Combobox
+                  value={editPastor.zoneId}
+                  onChange={(value) =>
+                    setEditFields({
+                      zoneId: value,
+                      cellId: "",
+                    })
+                  }
+                  options={filteredEditZones.map((row) => ({
+                    value: String(row.id),
+                    label: row.name,
+                  }))}
+                  placeholder="Select zone"
+                  searchPlaceholder="Search zones..."
+                />
+                <Combobox
+                  value={editPastor.cellId}
+                  onChange={(value) => setEditField("cellId", value)}
+                  options={filteredEditCells.map((row) => ({
+                    value: String(row.id),
+                    label: row.name,
+                  }))}
+                  placeholder="Select cell"
+                  searchPlaceholder="Search cells..."
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditTarget(null)}
+                  disabled={isUpdatingPastor}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void handleUpdatePastor()}
+                  disabled={!canUpdatePastor || isUpdatingPastor}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {viewTarget ? (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setViewTarget(null)}
+            aria-label="Close pastor details modal"
+          />
+          <div className="relative w-full max-w-xl rounded-lg border bg-card p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight">
+                  Pastor Details
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  View pastor profile and assignment details.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setViewTarget(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <p>
+                <span className="font-semibold">Name:</span>{" "}
+                {[viewTarget.first_name, viewTarget.last_name]
+                  .filter(Boolean)
+                  .join(" ")}
+              </p>
+              <p>
+                <span className="font-semibold">Phone:</span>{" "}
+                {viewTarget.phone_number || "Not set"}
+              </p>
+              <p>
+                <span className="font-semibold">Address:</span>{" "}
+                {viewTarget.residential_address || "Not set"}
+              </p>
+              <p>
+                <span className="font-semibold">Cell:</span>{" "}
+                {viewTarget.cell_name || "Not set"}
+              </p>
+              <p>
+                <span className="font-semibold">State:</span>{" "}
+                {getStateNameFromCellId(viewTarget.cell)}
+              </p>
+              <p>
+                <span className="font-semibold">Assigned State Pastor:</span>{" "}
+                {states
+                  .filter((row) => row.state_pastor === viewTarget.id)
+                  .map((row) => row.name)
+                  .join(", ") || "None"}
+              </p>
             </div>
           </div>
         </div>

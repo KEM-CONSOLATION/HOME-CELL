@@ -21,10 +21,11 @@ import {
   Landmark,
   Layers,
   UserCog,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StateSwitcher } from "./state-switcher";
 import { LogoutModal } from "./logout-modal";
 
@@ -183,6 +184,8 @@ export function Sidebar({
   const { user, resetAuth } = useStore();
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const navScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showBottomScrollHint, setShowBottomScrollHint] = useState(false);
 
   const handleLogout = () => {
     resetAuth();
@@ -194,6 +197,41 @@ export function Sidebar({
   );
 
   const isCollapsed = mobile ? false : collapsed;
+
+  const updateScrollHint = useCallback(() => {
+    const node = navScrollRef.current;
+    if (!node) {
+      setShowBottomScrollHint(false);
+      return;
+    }
+    const canScroll = node.scrollHeight - node.clientHeight > 4;
+    const atBottom =
+      node.scrollTop + node.clientHeight >= node.scrollHeight - 4;
+    setShowBottomScrollHint(canScroll && !atBottom);
+  }, []);
+
+  useEffect(() => {
+    const node = navScrollRef.current;
+    if (!node) return;
+    const rafId = window.requestAnimationFrame(updateScrollHint);
+
+    node.addEventListener("scroll", updateScrollHint, { passive: true });
+    window.addEventListener("resize", updateScrollHint);
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateScrollHint())
+        : null;
+
+    if (observer) observer.observe(node);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      node.removeEventListener("scroll", updateScrollHint);
+      window.removeEventListener("resize", updateScrollHint);
+      observer?.disconnect();
+    };
+  }, [updateScrollHint, filteredNavItems.length, isCollapsed, mobile]);
 
   return (
     <div
@@ -244,36 +282,49 @@ export function Sidebar({
 
       <StateSwitcher collapsed={isCollapsed} />
 
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-primary text-primary-foreground hover:bg-primary/95"
-                  : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
-                isCollapsed && "justify-center px-0",
-              )}
-            >
-              <item.icon
+      <div className="relative flex-1 min-h-0">
+        <div
+          ref={navScrollRef}
+          className="h-full overflow-y-auto px-3 py-2 space-y-1"
+        >
+          {filteredNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  "h-5 w-5 transition-transform duration-200",
-                  !isActive && "group-hover:scale-110",
-                  isActive && "scale-105",
+                  "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/95"
+                    : "text-muted-foreground hover:bg-accent/80 hover:text-foreground",
+                  isCollapsed && "justify-center px-0",
                 )}
-              />
-              {!isCollapsed && (
-                <span className="animate-in fade-in slide-in-from-left-2 duration-300">
-                  {item.title}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+              >
+                <item.icon
+                  className={cn(
+                    "h-5 w-5 transition-transform duration-200",
+                    !isActive && "group-hover:scale-110",
+                    isActive && "scale-105",
+                  )}
+                />
+                {!isCollapsed && (
+                  <span className="animate-in fade-in slide-in-from-left-2 duration-300">
+                    {item.title}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+        {showBottomScrollHint && !isCollapsed && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 px-3 pb-1">
+            <div className="rounded-xl bg-linear-to-t from-card via-card/85 to-transparent pt-7 pb-1 flex items-center justify-center gap-1 text-[11px] font-semibold tracking-wide text-muted-foreground">
+              <ChevronDown className="h-3.5 w-3.5 animate-bounce" />
+              Scroll for more
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="px-3 py-4 border-t space-y-2">

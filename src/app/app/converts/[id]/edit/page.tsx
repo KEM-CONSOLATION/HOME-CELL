@@ -21,6 +21,24 @@ import type { Zone } from "@/types/zone";
 import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Combobox } from "@/components/ui/combobox";
+import { useFormFields } from "@/hooks/use-form-fields";
+
+const editConvertInitialFields = {
+  firstName: "",
+  lastName: "",
+  cellId: "",
+  zoneId: "",
+  phone: "",
+  address: "",
+  dateJoined: "",
+  salvationDate: "",
+  howWon: "",
+  followUpOfficer: "",
+  integrationStatus: "PENDING",
+  initialNotes: "",
+  nokName: "",
+  nokPhone: "",
+};
 
 export default function EditConvertPage() {
   const router = useRouter();
@@ -34,21 +52,9 @@ export default function EditConvertPage() {
   const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [cellId, setCellId] = useState("");
-  const [zoneId, setZoneId] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [dateJoined, setDateJoined] = useState("");
-  const [salvationDate, setSalvationDate] = useState("");
-  const [howWon, setHowWon] = useState("");
-  const [followUpOfficer, setFollowUpOfficer] = useState("");
-  const [integrationStatus, setIntegrationStatus] =
-    useState<IntegrationStatus>("PENDING");
-  const [initialNotes, setInitialNotes] = useState("");
-  const [nokName, setNokName] = useState("");
-  const [nokPhone, setNokPhone] = useState("");
+  const { fields, setField, setFields } = useFormFields(
+    editConvertInitialFields,
+  );
 
   useEffect(() => {
     void Promise.all([
@@ -73,21 +79,22 @@ export default function EditConvertPage() {
       try {
         const row = await getMember(idNum);
         if (cancelled) return;
-        setFirstName(row.first_name);
-        setLastName(row.last_name ?? "");
-        setCellId(String(row.cell));
-        setPhone(row.phone_number);
-        setAddress(row.residential_address ?? "");
-        setNokName(row.nok_name ?? "");
-        setNokPhone(row.nok_phone ?? "");
-        setDateJoined(row.date_joined ?? "");
-        setSalvationDate(row.salvation_date ?? "");
-        setHowWon(row.how_won ?? "");
-        setFollowUpOfficer(
-          row.follow_up_officer != null ? String(row.follow_up_officer) : "",
-        );
-        setIntegrationStatus(row.integration_status);
-        setInitialNotes(row.initial_notes ?? "");
+        setFields({
+          firstName: row.first_name,
+          lastName: row.last_name ?? "",
+          cellId: String(row.cell),
+          phone: row.phone_number,
+          address: row.residential_address ?? "",
+          nokName: row.nok_name ?? "",
+          nokPhone: row.nok_phone ?? "",
+          dateJoined: row.date_joined ?? "",
+          salvationDate: row.salvation_date ?? "",
+          howWon: row.how_won ?? "",
+          followUpOfficer:
+            row.follow_up_officer != null ? String(row.follow_up_officer) : "",
+          integrationStatus: row.integration_status as IntegrationStatus,
+          initialNotes: row.initial_notes ?? "",
+        });
       } catch (error) {
         if (!cancelled) {
           toast.error("Failed to load convert", {
@@ -104,27 +111,29 @@ export default function EditConvertPage() {
     };
   }, [idNum, router]);
 
-  const cellNum = Number.parseInt(cellId, 10);
-  const zoneNum = Number.parseInt(zoneId, 10);
-  const followUpNum = Number.parseInt(followUpOfficer, 10);
+  const cellNum = Number.parseInt(fields.cellId, 10);
+  const zoneNum = Number.parseInt(fields.zoneId, 10);
+  const followUpNum = Number.parseInt(fields.followUpOfficer, 10);
   const filteredCells = useMemo(() => {
-    if (!Number.isFinite(zoneNum) || zoneId.trim() === "") return [];
+    if (!Number.isFinite(zoneNum) || fields.zoneId.trim() === "") return [];
     return cells.filter((cell) => cell.zone === zoneNum);
-  }, [cells, zoneId, zoneNum]);
+  }, [cells, fields.zoneId, zoneNum]);
 
   useEffect(() => {
-    if (!cellId || zoneId) return;
-    const selectedCell = cells.find((cell) => String(cell.id) === cellId);
+    if (!fields.cellId || fields.zoneId) return;
+    const selectedCell = cells.find(
+      (cell) => String(cell.id) === fields.cellId,
+    );
     if (selectedCell?.zone != null) {
-      setZoneId(String(selectedCell.zone));
+      setField("zoneId", String(selectedCell.zone));
     }
-  }, [cellId, cells, zoneId]);
+  }, [fields.cellId, fields.zoneId, cells, setField]);
 
   const isValid =
-    firstName.trim().length > 0 &&
+    fields.firstName.trim().length > 0 &&
     Number.isFinite(zoneNum) &&
     Number.isFinite(cellNum) &&
-    phone.trim().length >= 7;
+    fields.phone.trim().length >= 7;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,21 +141,21 @@ export default function EditConvertPage() {
     setIsSaving(true);
     try {
       await updateMember(idNum, {
-        first_name: firstName.trim(),
-        last_name: lastName.trim() || undefined,
+        first_name: fields.firstName.trim(),
+        last_name: fields.lastName.trim() || undefined,
         zone: zoneNum,
         cell: cellNum,
         status: "NEW_CONVERT",
-        phone_number: phone.trim(),
-        residential_address: address.trim() || undefined,
-        nok_name: nokName.trim() || undefined,
-        nok_phone: nokPhone.trim() || undefined,
-        date_joined: dateJoined || undefined,
-        salvation_date: salvationDate || undefined,
-        how_won: howWon || undefined,
+        phone_number: fields.phone.trim(),
+        residential_address: fields.address.trim() || undefined,
+        nok_name: fields.nokName.trim() || undefined,
+        nok_phone: fields.nokPhone.trim() || undefined,
+        date_joined: fields.dateJoined || undefined,
+        salvation_date: fields.salvationDate || undefined,
+        how_won: fields.howWon || undefined,
         follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
-        integration_status: integrationStatus,
-        initial_notes: initialNotes.trim() || undefined,
+        integration_status: fields.integrationStatus as IntegrationStatus,
+        initial_notes: fields.initialNotes.trim() || undefined,
       });
       toast.success("Convert updated");
       router.push(`/app/converts/${idNum}`);
@@ -201,32 +210,32 @@ export default function EditConvertPage() {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              value={fields.firstName}
+              onChange={(e) => setField("firstName", e.target.value)}
               placeholder="First name"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              value={fields.lastName}
+              onChange={(e) => setField("lastName", e.target.value)}
               placeholder="Last name"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={fields.phone}
+              onChange={(e) => setField("phone", e.target.value)}
               placeholder="Phone number"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <Combobox
-              value={cellId}
+              value={fields.cellId}
               onChange={(value) => {
-                setCellId(value);
+                setField("cellId", value);
                 const selectedCell = cells.find(
                   (cell) => String(cell.id) === value,
                 );
                 if (selectedCell?.zone != null) {
-                  setZoneId(String(selectedCell.zone));
+                  setField("zoneId", String(selectedCell.zone));
                 }
               }}
               placeholder="Select cell"
@@ -237,10 +246,12 @@ export default function EditConvertPage() {
               }))}
             />
             <Combobox
-              value={zoneId}
+              value={fields.zoneId}
               onChange={(value) => {
-                setZoneId(value);
-                setCellId("");
+                setFields({
+                  zoneId: value,
+                  cellId: "",
+                });
               }}
               placeholder="Select zone"
               searchPlaceholder="Search zones..."
@@ -250,44 +261,44 @@ export default function EditConvertPage() {
               }))}
             />
             <input
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              value={fields.address}
+              onChange={(e) => setField("address", e.target.value)}
               placeholder="Residential address"
               className="h-11 px-3 rounded-lg border bg-slate-50 md:col-span-2"
             />
             <input
-              value={nokName}
-              onChange={(e) => setNokName(e.target.value)}
+              value={fields.nokName}
+              onChange={(e) => setField("nokName", e.target.value)}
               placeholder="Next of kin name"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
               type="date"
-              value={dateJoined}
-              onChange={(e) => setDateJoined(e.target.value)}
+              value={fields.dateJoined}
+              onChange={(e) => setField("dateJoined", e.target.value)}
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
               type="date"
-              value={salvationDate}
-              onChange={(e) => setSalvationDate(e.target.value)}
+              value={fields.salvationDate}
+              onChange={(e) => setField("salvationDate", e.target.value)}
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
-              value={howWon}
-              onChange={(e) => setHowWon(e.target.value)}
+              value={fields.howWon}
+              onChange={(e) => setField("howWon", e.target.value)}
               placeholder="How won"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
-              value={nokPhone}
-              onChange={(e) => setNokPhone(e.target.value)}
+              value={fields.nokPhone}
+              onChange={(e) => setField("nokPhone", e.target.value)}
               placeholder="Next of kin phone"
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <Combobox
-              value={followUpOfficer}
-              onChange={setFollowUpOfficer}
+              value={fields.followUpOfficer}
+              onChange={(value) => setField("followUpOfficer", value)}
               placeholder="Select follow-up officer (optional)"
               searchPlaceholder="Search officers..."
               options={officers.map((officer) => ({
@@ -298,10 +309,8 @@ export default function EditConvertPage() {
               }))}
             />
             <Combobox
-              value={integrationStatus}
-              onChange={(value) =>
-                setIntegrationStatus(value as IntegrationStatus)
-              }
+              value={fields.integrationStatus}
+              onChange={(value) => setField("integrationStatus", value)}
               placeholder="Select integration status"
               searchPlaceholder="Search status..."
               options={[
@@ -313,8 +322,8 @@ export default function EditConvertPage() {
               className="md:col-span-2"
             />
             <textarea
-              value={initialNotes}
-              onChange={(e) => setInitialNotes(e.target.value)}
+              value={fields.initialNotes}
+              onChange={(e) => setField("initialNotes", e.target.value)}
               placeholder="Initial notes"
               className="min-h-[110px] px-3 py-2 rounded-lg border bg-slate-50 resize-none md:col-span-2"
             />
