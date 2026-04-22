@@ -269,29 +269,6 @@ export default function NewConvertPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Cell <span className="text-destructive">*</span>
-                  </label>
-                  <Combobox
-                    value={fields.cellId}
-                    onChange={(value) => {
-                      setField("cellId", value);
-                      const selectedCell = cells.find(
-                        (cell) => String(cell.id) === value,
-                      );
-                      if (selectedCell?.zone != null) {
-                        setField("zoneId", String(selectedCell.zone));
-                      }
-                    }}
-                    placeholder="Select a cell"
-                    searchPlaceholder="Search cells..."
-                    options={filteredCells.map((cell) => ({
-                      value: String(cell.id),
-                      label: `${cell.name} (#${cell.id})`,
-                    }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Zone <span className="text-destructive">*</span>
                   </label>
                   <Combobox
@@ -307,6 +284,22 @@ export default function NewConvertPage() {
                     options={zones.map((zone) => ({
                       value: String(zone.id),
                       label: zone.name,
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Cell <span className="text-destructive">*</span>
+                  </label>
+                  <Combobox
+                    value={fields.cellId}
+                    onChange={(value) => setField("cellId", value)}
+                    disabled={!Number.isFinite(zoneNum)}
+                    placeholder="Select a cell"
+                    searchPlaceholder="Search cells..."
+                    options={filteredCells.map((cell) => ({
+                      value: String(cell.id),
+                      label: `${cell.name} (#${cell.id})`,
                     }))}
                   />
                 </div>

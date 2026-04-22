@@ -228,24 +228,6 @@ export default function EditConvertPage() {
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <Combobox
-              value={fields.cellId}
-              onChange={(value) => {
-                setField("cellId", value);
-                const selectedCell = cells.find(
-                  (cell) => String(cell.id) === value,
-                );
-                if (selectedCell?.zone != null) {
-                  setField("zoneId", String(selectedCell.zone));
-                }
-              }}
-              placeholder="Select cell"
-              searchPlaceholder="Search cells..."
-              options={filteredCells.map((cell) => ({
-                value: String(cell.id),
-                label: `${cell.name} (#${cell.id})`,
-              }))}
-            />
-            <Combobox
               value={fields.zoneId}
               onChange={(value) => {
                 setFields({
@@ -258,6 +240,17 @@ export default function EditConvertPage() {
               options={zones.map((zone) => ({
                 value: String(zone.id),
                 label: zone.name,
+              }))}
+            />
+            <Combobox
+              value={fields.cellId}
+              onChange={(value) => setField("cellId", value)}
+              disabled={!Number.isFinite(zoneNum)}
+              placeholder="Select cell"
+              searchPlaceholder="Search cells..."
+              options={filteredCells.map((cell) => ({
+                value: String(cell.id),
+                label: `${cell.name} (#${cell.id})`,
               }))}
             />
             <input
