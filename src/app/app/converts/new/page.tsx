@@ -50,6 +50,7 @@ const newConvertInitialFields = {
 export default function NewConvertPage() {
   const router = useRouter();
   const { user } = useStore();
+  const today = new Date().toISOString().slice(0, 10);
   const [isSaving, setIsSaving] = useState(false);
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -81,6 +82,10 @@ export default function NewConvertPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
+    if (fields.salvationDate && fields.salvationDate > today) {
+      toast.error("Salvation date cannot be in the future.");
+      return;
+    }
     setIsSaving(true);
     try {
       await createMember({
@@ -237,6 +242,7 @@ export default function NewConvertPage() {
                       onChange={(e) =>
                         setField("salvationDate", e.target.value)
                       }
+                      max={today}
                       className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>

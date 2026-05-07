@@ -42,6 +42,7 @@ const editConvertInitialFields = {
 export default function EditConvertPage() {
   const router = useRouter();
   const params = useParams();
+  const today = new Date().toISOString().slice(0, 10);
   const idParam = (params as { id?: string | string[] } | null)?.id;
   const raw = Array.isArray(idParam) ? idParam[0] : idParam;
   const idNum = raw ? Number.parseInt(raw, 10) : NaN;
@@ -131,6 +132,14 @@ export default function EditConvertPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid || !Number.isFinite(idNum)) return;
+    if (fields.dateJoined && fields.dateJoined > today) {
+      toast.error("Join date cannot be in the future.");
+      return;
+    }
+    if (fields.salvationDate && fields.salvationDate > today) {
+      toast.error("Salvation date cannot be in the future.");
+      return;
+    }
     setIsSaving(true);
     try {
       await updateMember(idNum, {
@@ -261,12 +270,14 @@ export default function EditConvertPage() {
               type="date"
               value={fields.dateJoined}
               onChange={(e) => setField("dateJoined", e.target.value)}
+              max={today}
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input
               type="date"
               value={fields.salvationDate}
               onChange={(e) => setField("salvationDate", e.target.value)}
+              max={today}
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <input

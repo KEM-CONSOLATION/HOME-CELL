@@ -51,6 +51,7 @@ const newMemberInitialFields = {
 export default function NewMemberPage() {
   const router = useRouter();
   const { user } = useStore();
+  const today = new Date().toISOString().slice(0, 10);
   const [isSaving, setIsSaving] = useState(false);
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -80,6 +81,14 @@ export default function NewMemberPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
+    if (fields.dateJoined && fields.dateJoined > today) {
+      toast.error("Join date cannot be in the future.");
+      return;
+    }
+    if (fields.salvationDate && fields.salvationDate > today) {
+      toast.error("Salvation date cannot be in the future.");
+      return;
+    }
     setIsSaving(true);
     try {
       await createMember({
@@ -248,6 +257,7 @@ export default function NewMemberPage() {
                       type="date"
                       value={fields.dateJoined}
                       onChange={(e) => setField("dateJoined", e.target.value)}
+                      max={today}
                       className="w-full h-12 pl-12 pr-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                     />
                   </div>
@@ -356,6 +366,7 @@ export default function NewMemberPage() {
                     type="date"
                     value={fields.salvationDate}
                     onChange={(e) => setField("salvationDate", e.target.value)}
+                    max={today}
                     className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />
                 </div>
