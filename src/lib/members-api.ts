@@ -80,7 +80,6 @@ export function memberRecordToWrite(member: MemberRecord): MemberWrite {
     date_joined: member.date_joined,
     salvation_date: member.salvation_date ?? undefined,
     how_won: member.how_won,
-    follow_up_officer: member.follow_up_officer,
     integration_status: member.integration_status,
     initial_notes: member.initial_notes,
   };

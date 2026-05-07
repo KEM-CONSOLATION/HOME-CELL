@@ -359,10 +359,6 @@ export default function PastorsManagementPage() {
     setIsUpdatingPastor(true);
     const editZoneNumValue = Number.parseInt(editPastor.zoneId, 10);
     const editCellNumValue = Number.parseInt(editPastor.cellId, 10);
-    const followUpNum = Number.parseInt(
-      String(editTarget.follow_up_officer ?? ""),
-      10,
-    );
     try {
       const updated = await updateMember(editTarget.id, {
         first_name: editPastor.firstName.trim(),
@@ -377,7 +373,6 @@ export default function PastorsManagementPage() {
         date_joined: editTarget.date_joined || undefined,
         salvation_date: editTarget.salvation_date ?? undefined,
         how_won: editTarget.how_won || undefined,
-        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
         integration_status: editTarget.integration_status,
         initial_notes: editTarget.initial_notes || undefined,
       });

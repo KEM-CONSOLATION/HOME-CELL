@@ -462,8 +462,8 @@ export default function SettingsPage() {
                     desc: "Receive alerts when new converts are assigned to your cell.",
                   },
                   {
-                    label: "Follow-up Reminders",
-                    desc: "Periodic reminders for pending convert follow-ups.",
+                    label: "Integration Reminders",
+                    desc: "Periodic reminders for pending convert integration updates.",
                   },
                   {
                     label: "State Announcements",

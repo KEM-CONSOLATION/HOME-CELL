@@ -12,9 +12,9 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { IntegrationStatus, MemberRecord } from "@/types/models";
+import type { IntegrationStatus } from "@/types/models";
 import type { Cell } from "@/types/cell";
-import { getMember, listMembers, updateMember } from "@/lib/members-api";
+import { getMember, updateMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
@@ -33,7 +33,6 @@ const editConvertInitialFields = {
   dateJoined: "",
   salvationDate: "",
   howWon: "",
-  followUpOfficer: "",
   integrationStatus: "PENDING",
   initialNotes: "",
   nokName: "",
@@ -49,7 +48,6 @@ export default function EditConvertPage() {
 
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { fields, setField, setFields } = useFormFields(
@@ -60,11 +58,9 @@ export default function EditConvertPage() {
     void Promise.all([
       listCells().catch(() => [] as Cell[]),
       listZones().catch(() => [] as Zone[]),
-      listMembers().catch(() => [] as MemberRecord[]),
-    ]).then(([cellRows, zoneRows, memberRows]) => {
+    ]).then(([cellRows, zoneRows]) => {
       setCells(cellRows);
       setZones(zoneRows);
-      setOfficers(memberRows);
     });
   }, []);
 
@@ -90,8 +86,6 @@ export default function EditConvertPage() {
           dateJoined: row.date_joined ?? "",
           salvationDate: row.salvation_date ?? "",
           howWon: row.how_won ?? "",
-          followUpOfficer:
-            row.follow_up_officer != null ? String(row.follow_up_officer) : "",
           integrationStatus: row.integration_status as IntegrationStatus,
           initialNotes: row.initial_notes ?? "",
         });
@@ -113,7 +107,6 @@ export default function EditConvertPage() {
 
   const cellNum = Number.parseInt(fields.cellId, 10);
   const zoneNum = Number.parseInt(fields.zoneId, 10);
-  const followUpNum = Number.parseInt(fields.followUpOfficer, 10);
   const filteredCells = useMemo(() => {
     if (!Number.isFinite(zoneNum) || fields.zoneId.trim() === "") return [];
     return cells.filter((cell) => cell.zone === zoneNum);
@@ -153,7 +146,6 @@ export default function EditConvertPage() {
         date_joined: fields.dateJoined || undefined,
         salvation_date: fields.salvationDate || undefined,
         how_won: fields.howWon || undefined,
-        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
         integration_status: fields.integrationStatus as IntegrationStatus,
         initial_notes: fields.initialNotes.trim() || undefined,
       });
@@ -206,7 +198,7 @@ export default function EditConvertPage() {
         <Card className="border-none bg-white">
           <CardHeader>
             <CardTitle>Convert details</CardTitle>
-            <CardDescription>Update follow-up information.</CardDescription>
+            <CardDescription>Update convert information.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <input
@@ -290,18 +282,6 @@ export default function EditConvertPage() {
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
             <Combobox
-              value={fields.followUpOfficer}
-              onChange={(value) => setField("followUpOfficer", value)}
-              placeholder="Select follow-up officer (optional)"
-              searchPlaceholder="Search officers..."
-              options={officers.map((officer) => ({
-                value: String(officer.id),
-                label: [officer.first_name, officer.last_name]
-                  .filter(Boolean)
-                  .join(" "),
-              }))}
-            />
-            <Combobox
               value={fields.integrationStatus}
               onChange={(value) => setField("integrationStatus", value)}
               placeholder="Select integration status"
@@ -310,7 +290,6 @@ export default function EditConvertPage() {
                 { value: "PENDING", label: "Pending" },
                 { value: "IN_PROGRESS", label: "In Progress" },
                 { value: "INTEGRATED", label: "Integrated" },
-                { value: "COMPLETED", label: "Completed" },
               ]}
               className="md:col-span-2"
             />

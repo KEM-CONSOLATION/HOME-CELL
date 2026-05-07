@@ -208,7 +208,7 @@ export default function MemberDetailsPage() {
 
       <Card className="border-none bg-white">
         <CardHeader>
-          <CardTitle>Follow-up and next of kin</CardTitle>
+          <CardTitle>Next of kin and notes</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm md:grid-cols-2">
           <p>
@@ -222,10 +222,6 @@ export default function MemberDetailsPage() {
           <p>
             <span className="text-muted-foreground">Integration:</span>{" "}
             {member.integration_status_display}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Follow-up officer:</span>{" "}
-            {member.follow_up_officer_name || "Unassigned"}
           </p>
           <p className="md:col-span-2">
             <span className="text-muted-foreground">Initial notes:</span>{" "}

@@ -12,13 +12,9 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type {
-  MemberWriteStatus,
-  IntegrationStatus,
-  MemberRecord,
-} from "@/types/models";
+import type { MemberWriteStatus, IntegrationStatus } from "@/types/models";
 import type { Cell } from "@/types/cell";
-import { getMember, listMembers, updateMember } from "@/lib/members-api";
+import { getMember, updateMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import type { Zone } from "@/types/zone";
@@ -40,7 +36,6 @@ const editMemberInitialFields = {
   dateJoined: "",
   salvationDate: "",
   howWon: "",
-  followUpOfficer: "",
   integrationStatus: "PENDING",
   initialNotes: "",
 };
@@ -53,7 +48,6 @@ export default function EditMemberPage() {
   const idNum = raw ? Number.parseInt(raw, 10) : NaN;
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { fields, setField, setFields } = useFormFields(
@@ -64,11 +58,9 @@ export default function EditMemberPage() {
     void Promise.all([
       listCells().catch(() => [] as Cell[]),
       listZones().catch(() => [] as Zone[]),
-      listMembers().catch(() => [] as MemberRecord[]),
-    ]).then(([cellRows, zoneRows, memberRows]) => {
+    ]).then(([cellRows, zoneRows]) => {
       setCells(cellRows);
       setZones(zoneRows);
-      setOfficers(memberRows);
     });
   }, []);
 
@@ -98,8 +90,6 @@ export default function EditMemberPage() {
           dateJoined: row.date_joined ?? "",
           salvationDate: row.salvation_date ?? "",
           howWon: row.how_won ?? "",
-          followUpOfficer:
-            row.follow_up_officer != null ? String(row.follow_up_officer) : "",
           integrationStatus: row.integration_status as IntegrationStatus,
           initialNotes: row.initial_notes ?? "",
         });
@@ -121,7 +111,6 @@ export default function EditMemberPage() {
 
   const cellNum = Number.parseInt(fields.cellId, 10);
   const zoneNum = Number.parseInt(fields.zoneId, 10);
-  const followUpNum = Number.parseInt(fields.followUpOfficer, 10);
   const filteredCells = useMemo(() => {
     if (!Number.isFinite(zoneNum) || fields.zoneId.trim() === "") return [];
     return cells.filter((cell) => cell.zone === zoneNum);
@@ -161,7 +150,6 @@ export default function EditMemberPage() {
         date_joined: fields.dateJoined || undefined,
         salvation_date: fields.salvationDate || undefined,
         how_won: fields.howWon || undefined,
-        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
         integration_status: fields.integrationStatus as IntegrationStatus,
         initial_notes: fields.initialNotes.trim() || undefined,
       });
@@ -294,23 +282,19 @@ export default function EditMemberPage() {
               onChange={(e) => setField("salvationDate", e.target.value)}
               className="h-11 px-3 rounded-lg border bg-slate-50"
             />
-            <input
-              value={fields.howWon}
-              onChange={(e) => setField("howWon", e.target.value)}
-              placeholder="How won"
-              className="h-11 px-3 rounded-lg border bg-slate-50"
-            />
             <Combobox
-              value={fields.followUpOfficer}
-              onChange={(value) => setField("followUpOfficer", value)}
-              placeholder="Select follow-up officer (optional)"
-              searchPlaceholder="Search officers..."
-              options={officers.map((officer) => ({
-                value: String(officer.id),
-                label: [officer.first_name, officer.last_name]
-                  .filter(Boolean)
-                  .join(" "),
-              }))}
+              value={fields.howWon}
+              onChange={(value) => setField("howWon", value)}
+              placeholder="Select source"
+              searchPlaceholder="Search source..."
+              options={[
+                { value: "GLOBAL_OUTREACH", label: "Global Outreach" },
+                { value: "PERSONAL_EVANGELISM", label: "Personal Evangelism" },
+                { value: "CHURCH_SERVICE", label: "Church Service" },
+                { value: "SOCIAL_MEDIA", label: "Social Media" },
+                { value: "FRIEND_INVITATION", label: "Friend Invitation" },
+                { value: "OTHER", label: "Other" },
+              ]}
             />
             <input
               value={fields.address}
@@ -327,7 +311,6 @@ export default function EditMemberPage() {
                 { value: "PENDING", label: "Pending" },
                 { value: "IN_PROGRESS", label: "In Progress" },
                 { value: "INTEGRATED", label: "Integrated" },
-                { value: "COMPLETED", label: "Completed" },
               ]}
               className="md:col-span-2"
             />

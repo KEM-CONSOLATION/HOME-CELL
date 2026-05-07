@@ -252,7 +252,7 @@ export default function ConvertDetailsPage() {
 
       <Card className="border-none bg-white">
         <CardHeader>
-          <CardTitle>Follow-up</CardTitle>
+          <CardTitle>Integration</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm md:grid-cols-2">
           <p>

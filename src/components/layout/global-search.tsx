@@ -64,7 +64,7 @@ const NAV_HITS: Omit<SearchHit, "id">[] = [
   },
   {
     title: "New Converts",
-    subtitle: "Follow-up list",
+    subtitle: "Converts list",
     href: "/app/converts",
     group: "Navigation",
     icon: UserPlus,

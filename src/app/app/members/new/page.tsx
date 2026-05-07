@@ -20,16 +20,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createMember, listMembers } from "@/lib/members-api";
+import { createMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import { extractErrorMessage } from "@/lib/utils";
 import type { Cell } from "@/types/cell";
-import type {
-  IntegrationStatus,
-  MemberRecord,
-  MemberWriteStatus,
-} from "@/types/models";
+import type { IntegrationStatus, MemberWriteStatus } from "@/types/models";
 import type { Zone } from "@/types/zone";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Combobox } from "@/components/ui/combobox";
@@ -48,7 +44,6 @@ const newMemberInitialFields = {
   dateJoined: new Date().toISOString().slice(0, 10),
   salvationDate: "",
   howWon: "GLOBAL_OUTREACH",
-  followUpOfficer: "",
   integrationStatus: "PENDING",
   initialNotes: "",
 };
@@ -59,22 +54,19 @@ export default function NewMemberPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const { fields, setField, setFields } = useFormFields(newMemberInitialFields);
 
   useEffect(() => {
-    void Promise.all([listCells(), listZones(), listMembers()])
-      .then(([cellRows, zoneRows, memberRows]) => {
+    void Promise.all([listCells(), listZones()])
+      .then(([cellRows, zoneRows]) => {
         setCells(cellRows);
         setZones(zoneRows);
-        setOfficers(memberRows);
       })
       .catch(() => toast.error("Could not load assignment options."));
   }, []);
 
   const cellNum = Number.parseInt(fields.cellId, 10);
   const zoneNum = Number.parseInt(fields.zoneId, 10);
-  const followUpNum = Number.parseInt(fields.followUpOfficer, 10);
   const filteredCells = useMemo(() => {
     if (!Number.isFinite(zoneNum) || fields.zoneId.trim() === "") return [];
     return cells.filter((cell) => cell.zone === zoneNum);
@@ -103,7 +95,6 @@ export default function NewMemberPage() {
         date_joined: fields.dateJoined || undefined,
         salvation_date: fields.salvationDate || undefined,
         how_won: fields.howWon,
-        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
         integration_status: fields.integrationStatus as IntegrationStatus,
         initial_notes: fields.initialNotes.trim() || undefined,
       });
@@ -310,7 +301,6 @@ export default function NewMemberPage() {
                       { value: "PENDING", label: "Pending" },
                       { value: "IN_PROGRESS", label: "In Progress" },
                       { value: "INTEGRATED", label: "Integrated" },
-                      { value: "COMPLETED", label: "Completed" },
                     ]}
                   />
                 </div>
@@ -327,7 +317,7 @@ export default function NewMemberPage() {
                 <div>
                   <CardTitle>Extra Details</CardTitle>
                   <CardDescription>
-                    Emergency contacts and follow-up metadata.
+                    Emergency contacts and notes.
                   </CardDescription>
                 </div>
               </div>
@@ -373,29 +363,25 @@ export default function NewMemberPage() {
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     How Won
                   </label>
-                  <input
-                    type="text"
-                    value={fields.howWon}
-                    onChange={(e) => setField("howWon", e.target.value)}
-                    placeholder="GLOBAL_OUTREACH"
-                    className="w-full h-12 px-4 rounded-lg border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Follow-up Officer
-                  </label>
                   <Combobox
-                    value={fields.followUpOfficer}
-                    onChange={(value) => setField("followUpOfficer", value)}
-                    placeholder="Select officer (optional)"
-                    searchPlaceholder="Search officers..."
-                    options={officers.map((officer) => ({
-                      value: String(officer.id),
-                      label: [officer.first_name, officer.last_name]
-                        .filter(Boolean)
-                        .join(" "),
-                    }))}
+                    value={fields.howWon}
+                    onChange={(value) => setField("howWon", value)}
+                    placeholder="Select source"
+                    searchPlaceholder="Search source..."
+                    options={[
+                      { value: "GLOBAL_OUTREACH", label: "Global Outreach" },
+                      {
+                        value: "PERSONAL_EVANGELISM",
+                        label: "Personal Evangelism",
+                      },
+                      { value: "CHURCH_SERVICE", label: "Church Service" },
+                      { value: "SOCIAL_MEDIA", label: "Social Media" },
+                      {
+                        value: "FRIEND_INVITATION",
+                        label: "Friend Invitation",
+                      },
+                      { value: "OTHER", label: "Other" },
+                    ]}
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">

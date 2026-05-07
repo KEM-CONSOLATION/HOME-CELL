@@ -128,8 +128,8 @@ export default function ReportsPage() {
         reportType: "ATTENDANCE" as ReportType,
       },
       {
-        title: "Converts Follow-Up Summary",
-        desc: "Consolidated view of convert inflow and follow-up progress.",
+        title: "Converts Summary",
+        desc: "Consolidated view of convert inflow and integration progress.",
         icon: TrendingUp,
         color: "text-emerald-600",
         bg: "bg-emerald-50",

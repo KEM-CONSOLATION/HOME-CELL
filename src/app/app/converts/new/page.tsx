@@ -21,12 +21,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createMember, listMembers } from "@/lib/members-api";
+import { createMember } from "@/lib/members-api";
 import { listCells } from "@/lib/cells-api";
 import { listZones } from "@/lib/zones-api";
 import { extractErrorMessage } from "@/lib/utils";
 import type { Cell } from "@/types/cell";
-import type { IntegrationStatus, MemberRecord } from "@/types/models";
+import type { IntegrationStatus } from "@/types/models";
 import type { Zone } from "@/types/zone";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Combobox } from "@/components/ui/combobox";
@@ -41,7 +41,6 @@ const newConvertInitialFields = {
   address: "",
   salvationDate: "",
   howWon: "GLOBAL_OUTREACH",
-  followUpOfficer: "",
   integrationStatus: "PENDING",
   initialNotes: "",
   nokName: "",
@@ -54,24 +53,21 @@ export default function NewConvertPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [cells, setCells] = useState<Cell[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [officers, setOfficers] = useState<MemberRecord[]>([]);
   const { fields, setField, setFields } = useFormFields(
     newConvertInitialFields,
   );
 
   useEffect(() => {
-    void Promise.all([listCells(), listZones(), listMembers()])
-      .then(([cellRows, zoneRows, memberRows]) => {
+    void Promise.all([listCells(), listZones()])
+      .then(([cellRows, zoneRows]) => {
         setCells(cellRows);
         setZones(zoneRows);
-        setOfficers(memberRows);
       })
       .catch(() => toast.error("Could not load assignment options."));
   }, []);
 
   const cellNum = Number.parseInt(fields.cellId, 10);
   const zoneNum = Number.parseInt(fields.zoneId, 10);
-  const followUpNum = Number.parseInt(fields.followUpOfficer, 10);
   const filteredCells = useMemo(() => {
     if (!Number.isFinite(zoneNum) || fields.zoneId.trim() === "") return [];
     return cells.filter((cell) => cell.zone === zoneNum);
@@ -100,12 +96,11 @@ export default function NewConvertPage() {
         date_joined: new Date().toISOString().slice(0, 10),
         salvation_date: fields.salvationDate || undefined,
         how_won: fields.howWon,
-        follow_up_officer: Number.isFinite(followUpNum) ? followUpNum : null,
         integration_status: fields.integrationStatus as IntegrationStatus,
         initial_notes: fields.initialNotes.trim() || undefined,
       });
       toast.success("Convert registered!", {
-        description: "They have been added to the follow-up list.",
+        description: "They have been added to the converts list.",
       });
       router.push("/app/converts");
     } catch (error) {
@@ -134,8 +129,7 @@ export default function NewConvertPage() {
           Register New Convert
         </h1>
         <p className="text-muted-foreground">
-          Log a new soul won for Christ and assign them for follow-up in{" "}
-          {user?.unitName}.
+          Log a new soul won for Christ and register them in {user?.unitName}.
         </p>
       </div>
 
@@ -259,10 +253,15 @@ export default function NewConvertPage() {
                     options={[
                       { value: "GLOBAL_OUTREACH", label: "Global Outreach" },
                       {
-                        value: "PERSONAL_INVITATION",
-                        label: "Personal Invitation",
+                        value: "PERSONAL_EVANGELISM",
+                        label: "Personal Evangelism",
                       },
-                      { value: "ONLINE", label: "Online" },
+                      { value: "CHURCH_SERVICE", label: "Church Service" },
+                      { value: "SOCIAL_MEDIA", label: "Social Media" },
+                      {
+                        value: "FRIEND_INVITATION",
+                        label: "Friend Invitation",
+                      },
                       { value: "OTHER", label: "Other" },
                     ]}
                   />
@@ -314,7 +313,7 @@ export default function NewConvertPage() {
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle>Follow-up Status</CardTitle>
+                  <CardTitle>Integration Status</CardTitle>
                   <CardDescription>
                     Initial notes and cell assignment.
                   </CardDescription>
@@ -340,23 +339,6 @@ export default function NewConvertPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Follow-up Officer
-                  </label>
-                  <Combobox
-                    value={fields.followUpOfficer}
-                    onChange={(value) => setField("followUpOfficer", value)}
-                    placeholder="Select follow-up officer (optional)"
-                    searchPlaceholder="Search officers..."
-                    options={officers.map((officer) => ({
-                      value: String(officer.id),
-                      label: [officer.first_name, officer.last_name]
-                        .filter(Boolean)
-                        .join(" "),
-                    }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Integration Status
                   </label>
                   <Combobox
@@ -368,7 +350,6 @@ export default function NewConvertPage() {
                       { value: "PENDING", label: "Pending" },
                       { value: "IN_PROGRESS", label: "In Progress" },
                       { value: "INTEGRATED", label: "Integrated" },
-                      { value: "COMPLETED", label: "Completed" },
                     ]}
                   />
                 </div>

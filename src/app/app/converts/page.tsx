@@ -183,7 +183,7 @@ export default function ConvertsPage() {
             label: "Fully Integrated",
             value: String(
               converts.filter((c) =>
-                ["INTEGRATED", "COMPLETED"].includes(c.integration_status),
+                ["INTEGRATED"].includes(c.integration_status),
               ).length,
             ),
             icon: CheckCircle,

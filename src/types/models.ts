@@ -31,11 +31,7 @@ export type MemberStatus = "MEMBER" | "NEW_CONVERT" | "WORKER" | "CELL_LEADER";
 
 export type MemberWriteStatus = "MEMBER" | "NEW_CONVERT" | "WORKER";
 
-export type IntegrationStatus =
-  | "PENDING"
-  | "IN_PROGRESS"
-  | "INTEGRATED"
-  | "COMPLETED";
+export type IntegrationStatus = "PENDING" | "IN_PROGRESS" | "INTEGRATED";
 
 export interface MemberRecord {
   id: number;
@@ -54,8 +50,6 @@ export interface MemberRecord {
   salvation_date: string | null;
   how_won: string;
   how_won_display: string;
-  follow_up_officer: number | null;
-  follow_up_officer_name: string | null;
   integration_status: IntegrationStatus;
   integration_status_display: string;
   initial_notes: string;
@@ -74,7 +68,6 @@ export interface MemberWrite {
   date_joined?: string;
   salvation_date?: string;
   how_won?: string;
-  follow_up_officer?: number | null;
   integration_status?: IntegrationStatus;
   initial_notes?: string;
 }
@@ -111,8 +104,6 @@ export interface AttendanceMemberDetail {
   salvation_date: string;
   how_won: string;
   how_won_display: string;
-  follow_up_officer: number | null;
-  follow_up_officer_name: string;
   integration_status: IntegrationStatus;
   integration_status_display: string;
   initial_notes: string;
