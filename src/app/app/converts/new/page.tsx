@@ -315,28 +315,13 @@ export default function NewConvertPage() {
                 <div>
                   <CardTitle>Integration Status</CardTitle>
                   <CardDescription>
-                    Initial notes and cell assignment.
+                    Initial notes and integration progress.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Assigned Cell
-                  </label>
-                  <Combobox
-                    value={fields.cellId}
-                    onChange={(value) => setField("cellId", value)}
-                    placeholder="Select a cell"
-                    searchPlaceholder="Search cells..."
-                    options={filteredCells.map((cell) => ({
-                      value: String(cell.id),
-                      label: cell.name,
-                    }))}
-                  />
-                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
                     Integration Status
