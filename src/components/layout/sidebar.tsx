@@ -87,6 +87,18 @@ const navItems = [
     ],
   },
   {
+    title: "Fellowship Cells",
+    href: "/app/cells",
+    icon: LayoutGrid,
+    roles: [
+      "ZONAL_LEADER",
+      "AREA_LEADER",
+      "STATE_LEADER",
+      "STATE_PASTOR",
+      "ADMIN",
+    ],
+  },
+  {
     title: "States",
     href: "/app/states",
     icon: Landmark,
@@ -123,18 +135,6 @@ const navItems = [
   //   roles: ["AREA_LEADER", "STATE_LEADER", "STATE_PASTOR", "ADMIN"],
   // },
   {
-    title: "Fellowship Cells",
-    href: "/app/cells",
-    icon: LayoutGrid,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
     title: "Compliance",
     href: "/app/compliance",
     icon: ShieldCheck,
@@ -159,16 +159,16 @@ const navItems = [
     ],
   },
   {
-    title: "Communications",
-    href: "/app/chat",
-    icon: MessageSquare,
-    roles: ["STATE_LEADER", "STATE_PASTOR", "ADMIN"],
-  },
-  {
     title: "Analytics",
     href: "/app/analytics",
     icon: BarChart3,
     roles: ["STATE_PASTOR", "ADMIN"],
+  },
+  {
+    title: "Communications",
+    href: "/app/chat",
+    icon: MessageSquare,
+    roles: ["STATE_LEADER", "STATE_PASTOR", "ADMIN"],
   },
 ];
 

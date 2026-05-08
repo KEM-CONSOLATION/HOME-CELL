@@ -41,8 +41,16 @@ export default function CompliancePage() {
   const [snapshot, setSnapshot] = useState<ComplianceSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const remindersSupported = false;
 
   const handleRemindAll = () => {
+    if (!remindersSupported) {
+      toast.info("Reminders not enabled yet", {
+        description:
+          "Backend reminder endpoints are not wired in this app yet.",
+      });
+      return;
+    }
     if (
       !snapshot ||
       snapshot.metrics.pendingToday + snapshot.metrics.overdueReports <= 0
@@ -163,6 +171,7 @@ export default function CompliancePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRemindAll}
+            disabled={!remindersSupported}
             className="cursor-pointer h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center gap-2"
           >
             <Bell className="h-4 w-4" />
@@ -313,32 +322,22 @@ export default function CompliancePage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuItem
-                          onClick={() =>
-                            toast.info("Logs", {
-                              description: `Viewing logs for ${unit.name}`,
-                            })
-                          }
+                          disabled={!remindersSupported}
+                          onClick={() => handleRemindAll()}
                         >
                           View Logs
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            toast.success("Reminder queued", {
-                              description: `Reminder sent to ${unit.leader}`,
-                            })
-                          }
+                          disabled={!remindersSupported}
+                          onClick={() => handleRemindAll()}
                         >
                           Send Reminder
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() =>
-                            toast.error("Not enabled yet", {
-                              description:
-                                "Escalation flow will be wired later.",
-                            })
-                          }
+                          disabled={!remindersSupported}
+                          onClick={() => handleRemindAll()}
                         >
                           Escalate
                         </DropdownMenuItem>
@@ -360,7 +359,12 @@ export default function CompliancePage() {
                 {`There are currently ${nonCompliantCount} units who haven't submitted their weekly reports. Send a global nudge to resolve this.`}
               </p>
             </div>
-            <button className="cursor-pointer relative z-10 px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform shrink-0">
+            <button
+              type="button"
+              disabled={!remindersSupported}
+              onClick={handleRemindAll}
+              className="cursor-pointer relative z-10 px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform shrink-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
               Broadcast Nudge
               <ArrowRight className="h-4 w-4" />
             </button>
