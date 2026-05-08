@@ -40,7 +40,7 @@ const createCellInitialFields = {
   areaId: "",
   zoneId: "",
   cellLeaderId: "",
-  meetingDay: "Saturday",
+  hostName: "",
 };
 
 export default function NewCellPage() {
@@ -378,21 +378,11 @@ export default function NewCellPage() {
                     Meeting Day
                   </label>
                   <div className="relative">
-                    <Combobox
-                      value={fields.meetingDay}
-                      onChange={(value) => setField("meetingDay", value)}
-                      placeholder="Select meeting day"
-                      searchPlaceholder="Search day..."
-                      className="h-12 pl-12"
-                      options={[
-                        { value: "Monday", label: "Monday" },
-                        { value: "Tuesday", label: "Tuesday" },
-                        { value: "Wednesday", label: "Wednesday" },
-                        { value: "Thursday", label: "Thursday" },
-                        { value: "Friday", label: "Friday" },
-                        { value: "Saturday", label: "Saturday" },
-                        { value: "Sunday", label: "Sunday" },
-                      ]}
+                    <input
+                      type="text"
+                      value="Tuesday"
+                      disabled
+                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 text-slate-900/80 focus:outline-none font-medium cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -404,8 +394,9 @@ export default function NewCellPage() {
                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="time"
-                      defaultValue="17:00"
-                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
+                      value="18:00"
+                      disabled
+                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 text-slate-900/80 focus:outline-none font-medium cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -415,6 +406,8 @@ export default function NewCellPage() {
                   </label>
                   <input
                     type="text"
+                    value={fields.hostName}
+                    onChange={(e) => setField("hostName", e.target.value)}
                     placeholder="e.g. Papa John's Residence"
                     className="w-full h-12 px-4 rounded-xl border bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all font-medium"
                   />

@@ -7,7 +7,14 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/dashboard-cards";
-import { ArrowLeft, MapPin, ShieldCheck, Save, Building2 } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  ShieldCheck,
+  Save,
+  Building2,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -38,7 +45,6 @@ export default function EditCellPage() {
   const [areaId, setAreaId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [cellLeaderId, setCellLeaderId] = useState("");
-  const [meetingDay, setMeetingDay] = useState("Saturday");
   const [stateOptions, setStateOptions] = useState<StateRow[]>([]);
   const [areaOptions, setAreaOptions] = useState<Area[]>([]);
   const [zoneOptions, setZoneOptions] = useState<Zone[]>([]);
@@ -405,21 +411,25 @@ export default function EditCellPage() {
                     Meeting Day
                   </label>
                   <div className="relative">
-                    <Combobox
-                      value={meetingDay}
-                      onChange={setMeetingDay}
-                      placeholder="Select meeting day"
-                      searchPlaceholder="Search day..."
-                      className="h-12 pl-12"
-                      options={[
-                        { value: "Monday", label: "Monday" },
-                        { value: "Tuesday", label: "Tuesday" },
-                        { value: "Wednesday", label: "Wednesday" },
-                        { value: "Thursday", label: "Thursday" },
-                        { value: "Friday", label: "Friday" },
-                        { value: "Saturday", label: "Saturday" },
-                        { value: "Sunday", label: "Sunday" },
-                      ]}
+                    <input
+                      type="text"
+                      value="Tuesday"
+                      disabled
+                      className="w-full h-12 px-4 rounded-xl border bg-slate-50 text-slate-900/80 focus:outline-none font-medium cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                    Meeting Time
+                  </label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="time"
+                      value="18:00"
+                      disabled
+                      className="w-full h-12 pl-12 pr-4 rounded-xl border bg-slate-50 text-slate-900/80 focus:outline-none font-medium cursor-not-allowed"
                     />
                   </div>
                 </div>
