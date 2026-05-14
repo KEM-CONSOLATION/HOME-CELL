@@ -21,6 +21,7 @@ import {
 import {
   Search,
   UserPlus,
+  Plus,
   Clock,
   MessageCircle,
   CheckCircle,
@@ -47,6 +48,7 @@ import { listConvertsPage } from "@/lib/converts-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ConvertsPage() {
   const { user } = useStore();
@@ -251,131 +253,154 @@ export default function ConvertsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? Array.from({ length: loadingRowCount }).map((_, index) => (
-                    <TableRow key={`converts-skeleton-${index}`}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Skeleton className="h-10 w-10 rounded-xl" />
-                          <div className="space-y-2">
-                            <Skeleton className="h-3 w-32" />
-                            <Skeleton className="h-2.5 w-24" />
-                          </div>
+              {isLoading ? (
+                Array.from({ length: loadingRowCount }).map((_, index) => (
+                  <TableRow key={`converts-skeleton-${index}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-xl" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-3 w-32" />
+                          <Skeleton className="h-2.5 w-24" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-2.5 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-20 rounded-full" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-20 rounded-full" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-2.5 w-36" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="ml-auto h-9 w-9 rounded-md" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : filteredConverts.map((nc) => (
-                    <TableRow key={nc.id} className="hover:bg-slate-50/50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                            {fullName(nc).charAt(0)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold truncate">{fullName(nc)}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {nc.residential_address}
-                            </p>
-                          </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-2.5 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-2.5 w-36" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="ml-auto h-9 w-9 rounded-md" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : filteredConverts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0 align-middle">
+                    {converts.length === 0 ? (
+                      <EmptyState
+                        icon={UserPlus}
+                        title="No new converts yet"
+                        description="Registered converts for your jurisdiction will appear here."
+                        action={
+                          <Button asChild size="sm">
+                            <Link href="/app/converts/new">
+                              <Plus className="h-4 w-4" />
+                              Register convert
+                            </Link>
+                          </Button>
+                        }
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={Search}
+                        title="No matching converts"
+                        description="Try another name or phone number in the search box."
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredConverts.map((nc) => (
+                  <TableRow key={nc.id} className="hover:bg-slate-50/50">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                          {fullName(nc).charAt(0)}
                         </div>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm">
-                        {nc.phone_number}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className="rounded-lg py-1">
-                          {nc.integration_status_display}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-slate-100 text-slate-700 rounded-lg py-1"
-                        >
-                          {nc.cell_name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[320px]">
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {nc.initial_notes || "—"}
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label={`Actions for ${fullName(nc)}`}
-                            >
-                              <MoreHorizontal />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/converts/${nc.id}`}>
-                                View profile
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/converts/${nc.id}/edit`}>
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={promoteLoadingId === nc.id}
-                              onSelect={() => void promoteConvert(nc)}
-                            >
-                              Promote to member
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                toast.info("WhatsApp", {
-                                  description: `Opening WhatsApp for ${fullName(nc)}.`,
-                                })
-                              }
-                            >
-                              WhatsApp
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                setDeleteTarget(nc);
-                              }}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <div className="min-w-0">
+                          <p className="font-bold truncate">{fullName(nc)}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {nc.residential_address}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {nc.phone_number}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="rounded-lg py-1">
+                        {nc.integration_status_display}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className="bg-slate-100 text-slate-700 rounded-lg py-1"
+                      >
+                        {nc.cell_name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[320px]">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {nc.initial_notes || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            aria-label={`Actions for ${fullName(nc)}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/converts/${nc.id}`}>
+                              View profile
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/app/converts/${nc.id}/edit`}>
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={promoteLoadingId === nc.id}
+                            onSelect={() => void promoteConvert(nc)}
+                          >
+                            Promote to member
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              toast.info("WhatsApp", {
+                                description: `Opening WhatsApp for ${fullName(nc)}.`,
+                              })
+                            }
+                          >
+                            WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setDeleteTarget(nc);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
-          {filteredConverts.length === 0 && (
-            <p className="text-center text-muted-foreground py-12 text-sm px-4">
-              No converts listed yet for your jurisdiction.
-            </p>
-          )}
         </CardContent>
         <PaginationControls
           page={page}

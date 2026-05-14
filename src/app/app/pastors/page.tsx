@@ -33,6 +33,7 @@ import { listZones } from "@/lib/zones-api";
 import type { Cell } from "@/types/cell";
 import type { Zone } from "@/types/zone";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useFormFields } from "@/hooks/use-form-fields";
 import {
   DropdownMenu,
@@ -530,11 +531,13 @@ export default function PastorsManagementPage() {
                   ))
                 ) : filteredPastors.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-sm text-muted-foreground"
-                    >
-                      No pastors found.
+                    <TableCell colSpan={5} className="p-0 align-middle">
+                      <EmptyState
+                        size="sm"
+                        icon={Users}
+                        title="No pastors found"
+                        description="Adjust your search or add a pastor using the form above."
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (

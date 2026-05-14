@@ -26,6 +26,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Combobox } from "@/components/ui/combobox";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ActivityAuditPage() {
   const { user } = useStore();
@@ -218,71 +219,81 @@ export default function ActivityAuditPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {filteredLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-6 rounded-lg border border-slate-50 hover:bg-slate-50/50 transition-all group flex items-start justify-between gap-6"
-                  >
-                    <div className="flex items-start gap-5">
-                      <div
-                        className={cn(
-                          "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 border border-slate-100",
-                          log.bg,
-                          log.color,
-                        )}
-                      >
-                        <log.icon className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge className="bg-white border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                            {log.category}
-                          </Badge>
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase">
-                              {log.time}
+                {filteredLogs.length === 0 ? (
+                  <EmptyState
+                    icon={History}
+                    title="No audit entries match"
+                    description="Try another keyword, or clear the search to see the full sample trail."
+                  />
+                ) : (
+                  filteredLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-6 rounded-lg border border-slate-50 hover:bg-slate-50/50 transition-all group flex items-start justify-between gap-6"
+                    >
+                      <div className="flex items-start gap-5">
+                        <div
+                          className={cn(
+                            "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 border border-slate-100",
+                            log.bg,
+                            log.color,
+                          )}
+                        >
+                          <log.icon className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className="bg-white border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                              {log.category}
+                            </Badge>
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span className="text-[10px] font-bold uppercase">
+                                {log.time}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-lg font-medium text-slate-700 leading-snug">
+                            <span className="font-bold text-slate-900 underline decoration-primary/20 decoration-2 underline-offset-4 cursor-pointer hover:text-primary transition-colors">
+                              {log.user}
+                            </span>{" "}
+                            {log.action.toLowerCase()}{" "}
+                            <span className="font-bold text-slate-900 border-b border-dashed border-slate-300">
+                              {log.target}
                             </span>
+                          </p>
+                          <div className="mt-3 flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-slate-300" />
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                              Executor Rank: {log.role}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-lg font-medium text-slate-700 leading-snug">
-                          <span className="font-bold text-slate-900 underline decoration-primary/20 decoration-2 underline-offset-4 cursor-pointer hover:text-primary transition-colors">
-                            {log.user}
-                          </span>{" "}
-                          {log.action.toLowerCase()}{" "}
-                          <span className="font-bold text-slate-900 border-b border-dashed border-slate-300">
-                            {log.target}
-                          </span>
-                        </p>
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-slate-300" />
-                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                            Executor Rank: {log.role}
-                          </p>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-3">
+                        <button className="cursor-pointer h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:border-primary/20 transition-all">
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                        <div className="text-[9px] font-black text-slate-300 uppercase select-none">
+                          ID-{log.id.toString().padStart(5, "0")}
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex flex-col items-end gap-3">
-                      <button className="cursor-pointer h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:border-primary/20 transition-all">
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                      <div className="text-[9px] font-black text-slate-300 uppercase select-none">
-                        ID-{log.id.toString().padStart(5, "0")}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
-              <div className="mt-10 py-6 text-center border-t border-dashed border-slate-100">
-                <p className="text-xs font-bold text-muted-foreground">
-                  End of current trail. Load more historical data.
-                </p>
-                <button className="cursor-pointer mt-4 px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:scale-105 transition-transform">
-                  Load archive for March 2024
-                </button>
-              </div>
+              {filteredLogs.length > 0 ? (
+                <div className="mt-10 py-6 text-center border-t border-dashed border-slate-100">
+                  <p className="text-xs font-bold text-muted-foreground">
+                    End of current trail. Load more historical data.
+                  </p>
+                  <button className="cursor-pointer mt-4 px-8 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:scale-105 transition-transform">
+                    Load archive for March 2024
+                  </button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

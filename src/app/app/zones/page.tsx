@@ -29,6 +29,7 @@ import type { Zone } from "@/types/zone";
 import dayjs from "dayjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ZonesDirectoryPage() {
   const { user } = useStore();
@@ -232,9 +233,29 @@ export default function ZonesDirectoryPage() {
             </Table>
           )}
           {!isLoading && filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-12 text-sm">
-              No zones match your search.
-            </p>
+            <div className="border-t border-slate-50">
+              {zones.length === 0 ? (
+                <EmptyState
+                  icon={Layers}
+                  title="No zones yet"
+                  description="Add zones within areas to assign cells and leaders."
+                  action={
+                    <Button asChild size="sm">
+                      <Link href="/app/zones/new">
+                        <Plus className="h-4 w-4" />
+                        Add zone
+                      </Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching zones"
+                  description="Try a different name in the search box."
+                />
+              )}
+            </div>
           )}
         </CardContent>
         <PaginationControls

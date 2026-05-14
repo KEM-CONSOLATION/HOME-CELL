@@ -17,6 +17,7 @@ import { deleteAttendance, getAttendance } from "@/lib/attendance-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -199,9 +200,12 @@ export default function AttendanceDetailsPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {row.member_details.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No member details were returned in this report.
-            </p>
+            <EmptyState
+              size="sm"
+              icon={Users}
+              title="No member details in this report"
+              description="The server did not return a list of members for this submission."
+            />
           ) : (
             row.member_details.map((member) => (
               <div

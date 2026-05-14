@@ -23,6 +23,7 @@ import { listCells } from "@/lib/cells-api";
 import type { Cell } from "@/types/cell";
 import { getDeletedCellIds } from "@/lib/cell-deletions";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type SearchHit = {
   id: string;
@@ -292,14 +293,20 @@ export function GlobalSearch() {
           )}
         >
           {loadingCells ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Loading search index...
-            </p>
+            <EmptyState
+              variant="loading"
+              size="sm"
+              className="px-3 py-6"
+              title="Loading search index"
+            />
           ) : results.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              No matches for &quot;{query.trim()}&quot;. Try another name,
-              phone, or page.
-            </p>
+            <EmptyState
+              size="sm"
+              className="px-3 py-6"
+              icon={Search}
+              title="No matches"
+              description={`Nothing matched "${query.trim()}". Try another name, phone, or page.`}
+            />
           ) : (
             <ul className="space-y-0.5">
               {results.map((hit, i) => {

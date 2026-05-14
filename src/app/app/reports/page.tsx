@@ -30,6 +30,7 @@ import {
   resolveDateRange,
 } from "@/lib/reports-api";
 import type { RecentReportRecord, ReportType } from "@/types/models";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ReportsPage() {
   const { user } = useStore();
@@ -316,17 +317,27 @@ export default function ReportsPage() {
             <CardContent className="pt-6">
               <div className="space-y-4">
                 {isLoadingRecent ? (
-                  <div className="py-8 text-sm text-muted-foreground text-center">
-                    Loading recent reports...
-                  </div>
+                  <EmptyState
+                    variant="loading"
+                    size="sm"
+                    title="Loading recent reports"
+                    description="Fetching your latest downloads."
+                  />
                 ) : recentLoadError ? (
-                  <div className="py-8 text-sm text-rose-600 text-center">
-                    Failed to load recent history.
-                  </div>
+                  <EmptyState
+                    variant="error"
+                    size="sm"
+                    icon={FileText}
+                    title="Failed to load recent history"
+                    description="Check your connection and use Refresh History below."
+                  />
                 ) : recentReports.length === 0 ? (
-                  <div className="py-8 text-sm text-muted-foreground text-center">
-                    No recent downloads yet.
-                  </div>
+                  <EmptyState
+                    size="sm"
+                    icon={FileText}
+                    title="No recent downloads yet"
+                    description="Generate a report to see it listed here."
+                  />
                 ) : (
                   recentReports.map((report) => (
                     <div

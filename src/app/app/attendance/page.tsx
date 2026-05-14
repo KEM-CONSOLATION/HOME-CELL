@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Trash2, Eye } from "lucide-react";
+import { Search, Plus, Trash2, Eye, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AttendanceRecord } from "@/types/models";
@@ -22,6 +22,7 @@ import { extractErrorMessage } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AttendanceListPage() {
   const { user } = useStore();
@@ -194,9 +195,29 @@ export default function AttendanceListPage() {
             </TableBody>
           </Table>
           {!isLoading && filteredRows.length === 0 && (
-            <p className="text-center text-muted-foreground py-12 text-sm px-4">
-              No attendance reports found.
-            </p>
+            <div className="border-t border-slate-50">
+              {rows.length === 0 ? (
+                <EmptyState
+                  icon={CalendarCheck}
+                  title="No attendance reports yet"
+                  description="Submit your first weekly report to see it listed here."
+                  action={
+                    <Button asChild size="sm">
+                      <Link href="/app/attendance/new">
+                        <Plus className="h-4 w-4" />
+                        Submit report
+                      </Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching reports"
+                  description="Try another date or cell name in the search box."
+                />
+              )}
+            </div>
           )}
         </CardContent>
         <PaginationControls

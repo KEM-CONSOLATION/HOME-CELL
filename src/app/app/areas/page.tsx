@@ -29,6 +29,7 @@ import type { Area } from "@/types/area";
 import dayjs from "dayjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AreasDirectoryPage() {
   const { user } = useStore();
@@ -228,9 +229,29 @@ export default function AreasDirectoryPage() {
             </Table>
           )}
           {!isLoading && filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-12 text-sm">
-              No areas match your search.
-            </p>
+            <div className="border-t border-slate-50">
+              {areas.length === 0 ? (
+                <EmptyState
+                  icon={MapPinned}
+                  title="No areas yet"
+                  description="Create areas under your states to group zones and cells."
+                  action={
+                    <Button asChild size="sm">
+                      <Link href="/app/areas/new">
+                        <Plus className="h-4 w-4" />
+                        Add area
+                      </Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching areas"
+                  description="Try a different name in the search box."
+                />
+              )}
+            </div>
           )}
         </CardContent>
         <PaginationControls

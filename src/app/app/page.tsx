@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronRight,
   Target,
+  History,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/auth-user";
 import { useEffect } from "react";
 import { getDashboardStats } from "@/lib/dashboard-api";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function formatRelativeTime(isoDate: string): string {
   const timestamp = new Date(isoDate).getTime();
@@ -428,9 +430,12 @@ export default function DashboardPage() {
                   );
                 })
               ) : (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  No activity feed data available.
-                </div>
+                <EmptyState
+                  size="sm"
+                  icon={History}
+                  title="No activity yet"
+                  description="Recent events across your network will show here when available."
+                />
               )}
             </div>
           </CardContent>

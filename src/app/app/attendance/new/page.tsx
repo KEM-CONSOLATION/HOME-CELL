@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft, Save, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { extractErrorMessage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Combobox } from "@/components/ui/combobox";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NewAttendancePage() {
   const router = useRouter();
@@ -186,9 +187,12 @@ export default function NewAttendancePage() {
                 ))}
               </div>
             ) : visibleMembers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Select a cell to load members.
-              </p>
+              <EmptyState
+                size="sm"
+                icon={Users}
+                title="Select a cell first"
+                description="Choose a fellowship cell above to load members for attendance."
+              />
             ) : (
               <div className="grid gap-2 md:grid-cols-2">
                 {visibleMembers.map((member) => {

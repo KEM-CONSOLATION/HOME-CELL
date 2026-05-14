@@ -21,6 +21,7 @@ import {
   Phone,
   MapPin,
   UserCircle2,
+  Plus,
 } from "lucide-react";
 import type { MemberRecord } from "@/types/models";
 import { useEffect, useMemo, useState } from "react";
@@ -36,6 +37,7 @@ import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import { deleteMember, listMembersPage } from "@/lib/members-api";
 import { extractErrorMessage } from "@/lib/utils";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function MembersPage() {
   const { user } = useStore();
@@ -281,12 +283,28 @@ export default function MembersPage() {
             </TableBody>
           </Table>
           {!isLoading && filteredMembers.length === 0 && (
-            <div className="py-12 text-center">
-              <UserCircle2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No members yet</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                No member records match your current search.
-              </p>
+            <div className="border-t border-slate-50">
+              {members.length === 0 ? (
+                <EmptyState
+                  icon={UserCircle2}
+                  title="No members yet"
+                  description="Add members to your directory to track attendance and assignments."
+                  action={
+                    <Button asChild size="sm">
+                      <Link href="/app/members/new">
+                        <Plus className="h-4 w-4" />
+                        Add member
+                      </Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching members"
+                  description="Try another name, phone number, or cell in the search box."
+                />
+              )}
             </div>
           )}
         </CardContent>

@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getComplianceSnapshot } from "@/lib/compliance-api";
+import { EmptyState } from "@/components/ui/empty-state";
 import type {
   ComplianceSnapshot,
   ComplianceUnitSnapshot,
@@ -235,17 +236,32 @@ export default function CompliancePage() {
         <CardContent className="pt-6">
           <div className="grid gap-4">
             {isLoading ? (
-              <div className="py-10 text-center text-sm text-muted-foreground">
-                Loading compliance dashboard...
-              </div>
+              <EmptyState
+                variant="loading"
+                title="Loading compliance dashboard"
+                description="Fetching unit directory and metrics."
+              />
             ) : isError ? (
-              <div className="py-10 text-center text-sm text-rose-600">
-                Could not load compliance data.
-              </div>
+              <EmptyState
+                variant="error"
+                icon={AlertCircle}
+                title="Could not load compliance data"
+                description="Please refresh the page or try again in a moment."
+              />
             ) : filteredUnits.length === 0 ? (
-              <div className="py-10 text-center text-sm text-muted-foreground">
-                No units found for this search.
-              </div>
+              (snapshot?.unitDirectory.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={ShieldCheck}
+                  title="No units in this snapshot"
+                  description="When sub-units are available for your scope, they will appear here with status and discipline."
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching units"
+                  description="Try another unit or leader name in the search box."
+                />
+              )
             ) : (
               filteredUnits.map((unit, i) => (
                 <div

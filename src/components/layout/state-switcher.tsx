@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import { listStates } from "@/lib/states-api";
 import type { State } from "@/types/state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function stateInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -122,13 +123,20 @@ export function StateSwitcher({ collapsed }: { collapsed: boolean }) {
               Switch States
             </div>
             {loading ? (
-              <div className="px-3 py-5 text-sm text-muted-foreground">
-                Loading states...
-              </div>
+              <EmptyState
+                variant="loading"
+                size="sm"
+                className="px-3"
+                title="Loading states"
+              />
             ) : states.length === 0 ? (
-              <div className="px-3 py-5 text-sm text-muted-foreground">
-                No states available.
-              </div>
+              <EmptyState
+                size="sm"
+                className="px-3"
+                icon={Globe}
+                title="No states available"
+                description="States could not be loaded, or none are assigned to your account."
+              />
             ) : (
               <div className="max-h-[250px] overflow-y-auto space-y-1">
                 {states.map((state) => (

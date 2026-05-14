@@ -29,6 +29,7 @@ import type { State } from "@/types/state";
 import dayjs from "dayjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function StatesDirectoryPage() {
   const { user } = useStore();
@@ -222,9 +223,29 @@ export default function StatesDirectoryPage() {
             </Table>
           )}
           {!isLoading && filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-12 text-sm">
-              No states match your search.
-            </p>
+            <div className="border-t border-slate-50">
+              {states.length === 0 ? (
+                <EmptyState
+                  icon={Landmark}
+                  title="No states yet"
+                  description="Register states to organize areas, zones, and fellowship cells."
+                  action={
+                    <Button asChild size="sm">
+                      <Link href="/app/states/new">
+                        <Plus className="h-4 w-4" />
+                        Add state
+                      </Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No matching states"
+                  description="Try a different name in the search box."
+                />
+              )}
+            </div>
           )}
         </CardContent>
         <PaginationControls

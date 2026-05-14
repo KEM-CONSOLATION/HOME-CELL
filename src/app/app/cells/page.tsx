@@ -29,6 +29,7 @@ import { listCellsPage, deleteCell } from "@/lib/cells-api";
 import type { Cell } from "@/types/cell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function CellsDirectoryPage() {
   const { user } = useStore();
@@ -205,6 +206,35 @@ export default function CellsDirectoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {filteredCells.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="p-0 align-middle">
+                      {cells.length === 0 ? (
+                        <EmptyState
+                          icon={Shield}
+                          size="md"
+                          title="No fellowship cells yet"
+                          description="Create your first cell to assign leaders and track members in this directory."
+                          action={
+                            <Button asChild size="sm">
+                              <Link href="/app/cells/new">
+                                <Plus className="h-4 w-4" />
+                                Create New Cell
+                              </Link>
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <EmptyState
+                          icon={Search}
+                          size="md"
+                          title="No matching cells"
+                          description="Try a different search term, or clear the filter to see all cells on this page."
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
                 {filteredCells.map((cell) => {
                   return (
                     <TableRow key={cell.id} className="hover:bg-slate-50/50">
