@@ -60,7 +60,9 @@ export default function EditAreaPage() {
         if (cancelled) return;
         setName(area.name);
         setStateId(String(area.state));
-        setAreaLeaderId(String(area.area_leader));
+        setAreaLeaderId(
+          area.area_leader != null ? String(area.area_leader) : "",
+        );
         const sortedStates = [...statesList].sort((a, b) =>
           a.name.localeCompare(b.name),
         );

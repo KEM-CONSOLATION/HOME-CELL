@@ -1,11 +1,9 @@
+/** Leadership roles returned by the auth API (matches backend). */
 export type Role =
-  | "MEMBER"
-  | "CELL_LEADER"
-  | "ZONAL_LEADER"
-  | "AREA_LEADER"
   | "STATE_LEADER"
-  | "STATE_PASTOR"
-  | "ADMIN";
+  | "AREA_LEADER"
+  | "ZONAL_LEADER"
+  | "CELL_LEADER";
 
 export interface User {
   id: string;

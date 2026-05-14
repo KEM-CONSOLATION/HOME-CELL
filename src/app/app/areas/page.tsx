@@ -63,11 +63,15 @@ export default function AreasDirectoryPage() {
     }
   };
 
-  const filtered = areas.filter(
-    (a) =>
-      a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.state_name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filtered = areas.filter((a) => {
+    const q = searchTerm.toLowerCase();
+    const leader = (a.leader_name ?? "").toLowerCase();
+    return (
+      a.name.toLowerCase().includes(q) ||
+      a.state_name.toLowerCase().includes(q) ||
+      leader.includes(q)
+    );
+  });
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
@@ -130,7 +134,7 @@ export default function AreasDirectoryPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by area or state name..."
+                placeholder="Search by area, state, or leader name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 rounded-lg"
@@ -160,7 +164,7 @@ export default function AreasDirectoryPage() {
                 <TableRow className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                   <TableHead>Area</TableHead>
                   <TableHead>State</TableHead>
-                  <TableHead>Area leader (ID)</TableHead>
+                  <TableHead>Area leader</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -175,16 +179,30 @@ export default function AreasDirectoryPage() {
                         </div>
                         <div>
                           <p className="font-bold">{area.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            ID {area.id}
-                          </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
                       {area.state_name}
                     </TableCell>
-                    <TableCell>{area.area_leader}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-foreground">
+                          {area.leader_name?.trim()
+                            ? area.leader_name.trim()
+                            : area.area_leader != null && area.area_leader !== 0
+                              ? `User #${area.area_leader}`
+                              : "—"}
+                        </span>
+                        {area.leader_name?.trim() &&
+                        area.area_leader != null &&
+                        area.area_leader !== 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            ID {area.area_leader}
+                          </span>
+                        ) : null}
+                      </div>
+                    </TableCell>
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {dayjs(area.created_at).format("MMM D, YYYY")}
                     </TableCell>

@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BarChart3,
   Users,
   UserPlus,
   CalendarCheck,
@@ -18,159 +17,120 @@ import {
   FileText,
   LayoutGrid,
   MapPinned,
-  Landmark,
   Layers,
-  UserCog,
   ChevronDown,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Role } from "@/types/models";
 import { StateSwitcher } from "./state-switcher";
 import { LogoutModal } from "./logout-modal";
 
-const navItems = [
-  {
-    title: "Dashboard",
-    href: "/app",
-    icon: LayoutDashboard,
-    roles: [
-      "MEMBER",
-      "CELL_LEADER",
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
-    title: "Attendance",
-    href: "/app/attendance",
-    icon: CalendarCheck,
-    roles: [
-      "MEMBER",
-      "CELL_LEADER",
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
-    title: "Members",
-    href: "/app/members",
-    icon: Users,
-    roles: [
-      "MEMBER",
-      "CELL_LEADER",
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
-    title: "New Converts",
-    href: "/app/converts",
-    icon: UserPlus,
-    roles: [
-      "MEMBER",
-      "CELL_LEADER",
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
+/** Sidebar entry keys — order is defined per role below. */
+type NavKey =
+  | "areas"
+  | "zones"
+  | "fellowship"
+  | "dashboard"
+  | "attendance"
+  | "members"
+  | "converts"
+  | "compliance"
+  | "reports"
+  | "communications";
+
+type NavItemDef = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+const NAV: Record<NavKey, NavItemDef> = {
+  dashboard: { title: "Dashboard", href: "/app", icon: LayoutDashboard },
+  areas: { title: "Areas", href: "/app/areas", icon: MapPinned },
+  zones: { title: "Zones", href: "/app/zones", icon: Layers },
+  fellowship: {
     title: "Fellowship Cells",
     href: "/app/cells",
     icon: LayoutGrid,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
   },
-  {
-    title: "States",
-    href: "/app/states",
-    icon: Landmark,
-    roles: ["STATE_LEADER", "STATE_PASTOR", "ADMIN"],
+  attendance: {
+    title: "Attendance",
+    href: "/app/attendance",
+    icon: CalendarCheck,
   },
-  {
-    title: "Areas",
-    href: "/app/areas",
-    icon: MapPinned,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
-    title: "Zones",
-    href: "/app/zones",
-    icon: Layers,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  // {
-  //   title: "Pastors",
-  //   href: "/app/pastors",
-  //   icon: UserCog,
-  //   roles: ["AREA_LEADER", "STATE_LEADER", "STATE_PASTOR", "ADMIN"],
-  // },
-  {
+  members: { title: "Members", href: "/app/members", icon: Users },
+  converts: { title: "New Converts", href: "/app/converts", icon: UserPlus },
+  compliance: {
     title: "Compliance",
     href: "/app/compliance",
     icon: ShieldCheck,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
   },
-  {
-    title: "Reports",
-    href: "/app/reports",
-    icon: FileText,
-    roles: [
-      "ZONAL_LEADER",
-      "AREA_LEADER",
-      "STATE_LEADER",
-      "STATE_PASTOR",
-      "ADMIN",
-    ],
-  },
-  {
-    title: "Analytics",
-    href: "/app/analytics",
-    icon: BarChart3,
-    roles: ["STATE_PASTOR", "ADMIN"],
-  },
-  {
+  reports: { title: "Reports", href: "/app/reports", icon: FileText },
+  communications: {
     title: "Communications",
     href: "/app/chat",
     icon: MessageSquare,
-    roles: ["STATE_LEADER", "STATE_PASTOR", "ADMIN"],
   },
-];
+};
+
+/**
+ * Backend roles only: STATE_LEADER, AREA_LEADER, ZONAL_LEADER, CELL_LEADER.
+ * Higher roles get more structure tabs (Areas → Zones → Fellowship), then ops.
+ */
+const SIDEBAR_ORDER_BY_ROLE: Record<Role, NavKey[]> = {
+  CELL_LEADER: [
+    "dashboard",
+    "attendance",
+    "members",
+    "converts",
+    "compliance",
+    "reports",
+    "communications",
+  ],
+  ZONAL_LEADER: [
+    "dashboard",
+    "attendance",
+    "members",
+    "converts",
+    "fellowship",
+    "compliance",
+    "reports",
+    "communications",
+  ],
+  AREA_LEADER: [
+    "dashboard",
+    "attendance",
+    "members",
+    "converts",
+    "zones",
+    "fellowship",
+    "compliance",
+    "reports",
+    "communications",
+  ],
+  STATE_LEADER: [
+    "dashboard",
+    "attendance",
+    "members",
+    "converts",
+    "areas",
+    "zones",
+    "fellowship",
+    "compliance",
+    "reports",
+    "communications",
+  ],
+};
+
+function navItemsForRole(role: Role | undefined): NavItemDef[] {
+  if (!role) return [];
+  const keys = SIDEBAR_ORDER_BY_ROLE[role];
+  if (!keys?.length) return [];
+  return keys.map((k) => NAV[k]).filter(Boolean);
+}
 
 export function Sidebar({
   mobile,
@@ -192,8 +152,9 @@ export function Sidebar({
     router.push("/");
   };
 
-  const filteredNavItems = navItems.filter(
-    (item) => user && item.roles.includes(user.role),
+  const filteredNavItems = useMemo(
+    () => navItemsForRole(user?.role),
+    [user?.role],
   );
 
   const isCollapsed = mobile ? false : collapsed;
@@ -289,6 +250,7 @@ export function Sidebar({
         >
           {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -301,7 +263,7 @@ export function Sidebar({
                   isCollapsed && "justify-center px-0",
                 )}
               >
-                <item.icon
+                <Icon
                   className={cn(
                     "h-5 w-5 transition-transform duration-200",
                     !isActive && "group-hover:scale-110",

@@ -172,13 +172,10 @@ export default function StatesDirectoryPage() {
                         </div>
                         <div>
                           <p className="font-bold">{row.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            ID {row.id}
-                          </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{row.state_pastor}</TableCell>
+                    <TableCell>{row.pastor_name ?? "N/A"}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {dayjs(row.created_at).format("MMM D, YYYY")}
                     </TableCell>

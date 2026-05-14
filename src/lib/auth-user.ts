@@ -1,5 +1,4 @@
-import type { User } from "@/types/models";
-import type { DashboardSnapshot } from "@/types/models";
+import type { DashboardSnapshot, Role, User } from "@/types/models";
 
 export type LoginResponse = {
   access?: string;
@@ -19,11 +18,31 @@ export type LoginResponse = {
   activity_feed?: unknown[];
 };
 
+const AUTH_ROLES: readonly Role[] = [
+  "STATE_LEADER",
+  "AREA_LEADER",
+  "ZONAL_LEADER",
+  "CELL_LEADER",
+];
+
+/** Map API / legacy role strings to a valid `Role` (backend only defines four). */
+export function normalizeAuthRole(raw: unknown): Role {
+  const s = String(raw ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+  if (AUTH_ROLES.includes(s as Role)) return s as Role;
+  // Legacy tokens from older backends
+  if (s === "STATE_PASTOR") return "STATE_LEADER";
+  if (s === "ADMIN" || s === "MEMBER") return "CELL_LEADER";
+  return "CELL_LEADER";
+}
+
 export function userFromLoginResponse(data: LoginResponse): User | null {
   const u = data.user;
   if (!u || typeof u !== "object") return null;
 
-  const roleRaw = String(data.role ?? u.role ?? "MEMBER");
+  const roleRaw = normalizeAuthRole(data.role ?? u.role);
   const first = String(u.first_name ?? "").trim();
   const last = String(u.last_name ?? "").trim();
   const email = String(u.email ?? "");
@@ -33,7 +52,7 @@ export function userFromLoginResponse(data: LoginResponse): User | null {
     id: String(u.id ?? ""),
     name,
     email,
-    role: roleRaw as User["role"],
+    role: roleRaw,
     unitId: String(u.unit_id ?? u.unitId ?? ""),
     unitName: String(u.unit_name ?? u.unitName ?? "Region"),
     avatar: typeof u.avatar === "string" ? u.avatar : undefined,

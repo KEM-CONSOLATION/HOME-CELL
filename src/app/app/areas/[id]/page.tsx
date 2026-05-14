@@ -187,7 +187,22 @@ export default function AreaDetailsPage() {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Area leader</span>
-              <span className="font-semibold">{area.area_leader}</span>
+              <span className="text-right font-semibold">
+                {area.leader_name?.trim() ? (
+                  <>
+                    <span className="block">{area.leader_name.trim()}</span>
+                    {area.area_leader != null && area.area_leader !== 0 ? (
+                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                        User ID {area.area_leader}
+                      </span>
+                    ) : null}
+                  </>
+                ) : area.area_leader != null && area.area_leader !== 0 ? (
+                  `User #${area.area_leader}`
+                ) : (
+                  "—"
+                )}
+              </span>
             </div>
           </CardContent>
         </Card>

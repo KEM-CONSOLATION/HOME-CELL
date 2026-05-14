@@ -163,7 +163,7 @@ export default function ZonesDirectoryPage() {
                   <TableHead>Zone</TableHead>
                   <TableHead>Area</TableHead>
                   <TableHead>State</TableHead>
-                  <TableHead>Zonal leader (ID)</TableHead>
+                  <TableHead>Zonal leader</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -178,9 +178,6 @@ export default function ZonesDirectoryPage() {
                         </div>
                         <div>
                           <p className="font-bold">{row.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            ID {row.id}
-                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -190,7 +187,7 @@ export default function ZonesDirectoryPage() {
                     <TableCell className="text-muted-foreground">
                       {row.state_name}
                     </TableCell>
-                    <TableCell>{row.zonal_leader}</TableCell>
+                    <TableCell>{row.leader_name}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {dayjs(row.created_at).format("MMM D, YYYY")}
                     </TableCell>

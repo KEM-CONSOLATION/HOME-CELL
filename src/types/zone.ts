@@ -1,5 +1,6 @@
 export type Zone = {
   id: number;
+  leader_name: string;
   area_name: string;
   state_name: string;
   name: string;

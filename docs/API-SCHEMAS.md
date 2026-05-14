@@ -279,7 +279,7 @@ Returned inside **TokenResponse** as `user`. The client expects:
   "id": "string",
   "name": "string",
   "email": "string",
-  "role": "CELL_LEADER | ZONAL_LEADER | AREA_LEADER | STATE_LEADER | STATE_PASTOR | ADMIN",
+  "role": "CELL_LEADER | ZONAL_LEADER | AREA_LEADER | STATE_LEADER",
   "unitId": "string",
   "unitName": "string",
   "avatar": "string (optional URL)"

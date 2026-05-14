@@ -134,8 +134,6 @@ The app filters navigation by **role**. Align your auth system with these **stri
 - `ZONAL_LEADER`
 - `AREA_LEADER`
 - `STATE_LEADER`
-- `STATE_PASTOR`
-- `ADMIN`
 
 **Your developer should:** map each role to **who may CRUD** State / Area / Zone / Cell (you already hinted at “access restricted by role” in Swagger). Document the matrix for the team.
 
